@@ -1,4 +1,11 @@
-# Round 3 — Brand AI-Readiness Audit Marketplace: base repo scaffold
+# Round 3 — Brand AI-Readiness Audit Marketplace
+
+> **Status: the base repository is built.** Contracts frozen, collector,
+> orchestrator and the reference implementation complete, 91 checks specified,
+> 57 tests passing, corpus measured. What remains is five check scripts, tracked
+> in [`TODO.md`](TODO.md) and detailed in `docs/todo/`. Sections below are kept
+> as written where they are still the spec, and marked **DONE** where they
+> describe work that has landed.
 
 ## Context
 
@@ -6,7 +13,7 @@ Adobe University Hackathon 2026, Round 3 (`6a8ffdf33590a_round3-handout-updated.
 
 Grading is on **the marketplace itself**, not any report it produces: detection accuracy (evidence-backed, few false positives), fix quality (mechanism-sound, specific), composition quality (real separation of concerns, not padding), proactive recommendations, and generalization to unseen sites.
 
-**This plan builds the base repository, not the finished submission.** Aryan + 1 do R&D, contracts, and unblocking; two teammates do mechanical implementation against frozen contracts and detailed TODO packets (written as paste-ready prompts for Copilot / Antigravity / Claude Code). So the priority order is: **freeze the contracts → build one worked vertical slice → generate the work packets.**
+**This plan builds the base repository, not the finished submission.** Aryan does R&D, contracts, and unblocking; Lakshay and Mayank do the implementation against frozen contracts and detailed TODO packets (written as paste-ready prompts for Copilot / Antigravity / Claude Code). So the priority order was: **freeze the contracts → build one worked vertical slice → generate the work packets.** All three are done.
 
 ### Environment constraints (verified on this machine)
 
@@ -14,11 +21,11 @@ Python 3.14, **no node/npm**, and of the relevant packages only `lxml` is instal
 
 **The stdlib boundary applies to the submission only.** Everything under `brand-ai-readiness-audit/scripts/` is stdlib-only Python (`urllib.request`, `html.parser`, `json`, `re`, `xml.etree`, `gzip`, `concurrent.futures`) — zero third-party imports inside the zip, enforced by `tools/validate.py`. A check that always runs beats a stronger check that can't.
 
-Dev tooling outside the zip (`tools/`, `bench/`, `tests/`) may take dependencies; see `tools/requirements-dev.txt`. The handout places no format restriction on `references/` or `scripts/` ("any structure is fine as long as the rules below hold"), so **check registries are YAML** — they are read by the agent and by humans, both of which handle YAML natively, and comments plus multi-line severity rules matter when hand-authoring ~90 entries. No submission script ever parses YAML: scripts take signals in and emit JSON out.
+Dev tooling outside the zip (`tools/`, `bench/`, `tests/`) may take dependencies; see `tools/requirements-dev.txt`. The handout places no format restriction on `references/` or `scripts/` ("any structure is fine as long as the rules below hold"), so **check registries are YAML** — they are read by the agent and by humans, both of which handle YAML natively, and comments plus multi-line severity rules matter when hand-authoring 107 entries. No submission script ever parses YAML: scripts take signals in and emit JSON out.
 
 ---
 
-## Architecture
+## Architecture — **DONE**
 
 ### Composition mechanic (the thing that's easy to get wrong)
 
@@ -53,7 +60,7 @@ Two structural decisions that carry the "genuine separation of concerns" rubric 
 
 ---
 
-## Contracts (freeze these first — everything else depends on them)
+## Contracts — **FROZEN.** Do not change these without telling Lakshay and Mayank
 
 Source of truth lives inside the skill folders (so each skill stays self-contained and the zip is complete); `tools/validate.py` enforces cross-skill consistency rather than duplicating files.
 
@@ -138,7 +145,7 @@ Every check pre-specified before implementation. This is the artifact that lets 
 
 ---
 
-## Severity, determinism, and false-positive control
+## Severity, determinism, and false-positive control — **DONE**
 
 Severity is computed, not vibed: `f(blocking-ness, scope, mechanism stage)`.
 
@@ -164,35 +171,54 @@ Escalate one level when scope is site-wide; de-escalate when confidence is low.
 
 ---
 
-## Checks to implement (~90, full enumeration lands in the registries)
+## Checks — **DONE as specification, 13 of 91 implemented**
 
-| Skill | Count | Representative / novel checks |
+All 91 are fully specified in the six `checks.yaml` registries, plus 16
+`proactive` entries (`*-P01…`) for recommendations where no defect was found —
+107 registry entries in total. `crawl-access-audit` implements 13 of its 18; the
+other five skills are scripts-pending. Counts below are exact, not estimates.
+
+| Skill | Checks · owner | Representative / novel checks |
 |---|---|---|
-| `crawl-access-audit` | ~18 | REACH-002 AI retrieval agents disallowed · REACH-003 training-crawler blocks (informational, **not** a defect) · REACH-005 CDN 403s bot UAs despite robots allow · REACH-009 `nosnippet`/`max-snippet:0` suppressing quotable text · REACH-016 `llms.txt` absent (proactive only) |
-| `render-extractability-audit` | ~16 | READ-001 main content absent from raw HTML · READ-004 key facts locked in images (pricing/menu/specs) · READ-011 content behind tabs/accordions not in DOM · READ-013 content behind consent wall (blocks bots *and* visitors) |
-| `structured-data-audit` | ~14 | PARSE-004 missing required properties per `@type` · PARSE-006 no stable `@id` entity graph · **PARSE-007 structured data contradicts visible text** · PARSE-008 marked-up content not visible on page |
-| `answerability-audit` | ~12 | **QUOTE-001 chunk fails standalone comprehension** (unresolved pronouns, orphaned numbers — "it starts at $29" is unusable when retrieved alone) · QUOTE-002 no explicit identity sentence · QUOTE-005 no answer-shaped pages (FAQ/comparison/pricing) · QUOTE-006 buyer-question coverage gap |
-| `freshness-corroboration-audit` | ~15 | TRUST-003 dishonest sitemap `lastmod` · **TRUST-006 claim corroboration ledger** (which claims appear nowhere off-site) · TRUST-007 brand-name entity collision · TRUST-008 no disambiguating identity sentence · TRUST-009 missing identity anchors (Wikidata/LinkedIn/directories) |
-| `engagement-audit` | ~16 | STAY-001 above-the-fold doesn't answer "am I in the right place" · **STAY-002 AI-referral landing mismatch** (page restarts the conversation instead of continuing it) · STAY-006 context loss (search discards query, filters reset on back) · STAY-008 CWV proxies from static analysis |
+| `crawl-access-audit` | 18 · 13 done | REACH-002 AI retrieval agents disallowed · REACH-003 training-crawler blocks (informational, **not** a defect) · REACH-005 CDN 403s bot UAs despite robots allow · REACH-009 `nosnippet`/`max-snippet:0` suppressing quotable text · REACH-016 `llms.txt` absent (proactive only) |
+| `render-extractability-audit` | 16 · Lakshay | READ-001 main content absent from raw HTML · READ-004 key facts locked in images (pricing/menu/specs) · READ-011 content behind tabs/accordions not in DOM · READ-013 content behind consent wall (blocks bots *and* visitors) |
+| `structured-data-audit` | 14 · Lakshay | PARSE-004 missing required properties per `@type` · PARSE-006 no stable `@id` entity graph · **PARSE-007 structured data contradicts visible text** · PARSE-008 marked-up content not visible on page |
+| `answerability-audit` | 12 · Mayank | **QUOTE-001 chunk fails standalone comprehension** (unresolved pronouns, orphaned numbers — "it starts at $29" is unusable when retrieved alone) · QUOTE-002 no explicit identity sentence · QUOTE-005 no answer-shaped pages (FAQ/comparison/pricing) · QUOTE-006 buyer-question coverage gap |
+| `freshness-corroboration-audit` | 15 · Mayank | TRUST-003 dishonest sitemap `lastmod` · **TRUST-006 claim corroboration ledger** (which claims appear nowhere off-site) · TRUST-007 brand-name entity collision · TRUST-008 no disambiguating identity sentence · TRUST-009 missing identity anchors (Wikidata/LinkedIn/directories) |
+| `engagement-audit` | 16 · Mayank | STAY-001 above-the-fold doesn't answer "am I in the right place" · **STAY-002 AI-referral landing mismatch** (page restarts the conversation instead of continuing it) · STAY-006 context loss (search discards query, filters reset on back) · STAY-008 CWV proxies from static analysis |
 
 The four differentiators approved for v1 — chunk-level retrieval simulation, the purpose-split crawler access matrix + live UA probe, contradiction detection + corroboration ledger, and question-answerability + AI-referral landing quality — are all in the table above.
 
 ---
 
-## Repository layout
+## Repository layout — **DONE**
 
 ```
 <repo root>/
+  README.md                     landing page: repo map, the 8 skills, status table
+  TODO.md                       who builds what, in what order; index into docs/todo/
+  PLAN.md                       this file
   brand-ai-readiness-audit/     <- THE SUBMISSION (only this gets zipped)
     marketplace.json
     README.md                   what each skill does, how the entrypoint composes them
     skills/                     8 folders
-  bench/                        corpus.yaml, run.py, snapshots/ (gitignored), scoreboard/
-  tests/                        fixtures/, golden/, test_*.py
-  tools/                        validate.py, package.py, run_audit.py, install_local.py
+  bench/                        candidates.yaml, corpus.yaml, build_corpus.py, run.py,
+                                snapshots/ (gitignored, ~179 MB), scoreboard/
+  tests/                        fixtures/, golden/, bundles/ (gitignored),
+                                make_fixtures.py, make_bundles.py, test_marketplace.py
+  tools/                        validate.py, package.py, install_local.py,
+                                requirements-dev.txt
   docs/                         ROLES.md, CONTRIBUTING.md, todo/<skill>.md
-  research/                     Round-2 field notes, quadrant rationale
+  research/                     Round-2 field notes, quadrant rationale (empty so far)
 ```
+
+Pushed to `github.com/aryanmishra777/AdobeHackathon`. `bench/snapshots/`,
+`tests/bundles/` and `dist/` are gitignored — all three are regenerable, and
+snapshots alone are larger than everything tracked put together.
+
+`bench/build_corpus.py` is the piece this plan did not originally anticipate:
+corpus labels are **measured by crawling each candidate**, never asserted by
+hand. That is what makes the quadrant chart evidence instead of an opinion.
 
 `tools/package.py` validates, then zips `brand-ai-readiness-audit/` alone.
 
@@ -200,62 +226,124 @@ Assumptions: `license: MIT` on every skill; `compatibility:` declared where netw
 
 ---
 
-## Test strategy (three layers)
+## Test strategy (three layers) — **DONE**
 
-**Layer 1 — local fixtures** (`tests/fixtures/`, hard assertions + golden reports). ~6 tiny hand-written HTML sites with deliberately injected defects, one per mechanism, plus **one clean site that must produce zero critical/high findings** — the false-positive tripwire. Fast, deterministic, runs on every change.
+**Layer 1 — local fixtures** — **DONE.** (`tests/fixtures/`, hard assertions + golden reports.) **7** tiny hand-written HTML sites: six with deliberately injected defects, one per mechanism (`js-shell`, `blocked-crawlers`, `contradictory-markup`, `stale-content`, `unquotable-chunks`, `low-engagement`), plus **`clean`, which must produce zero critical and zero high findings** — the false-positive tripwire. Each is served on its own port and crawled by the real collector, so the bundles under test are the same shape as a live run. 57 assertions in `tests/test_marketplace.py`, all passing.
 
-**Layer 2 — corpus replay** (`bench/`). 40 real sites, ≥10 per SEO×GEO quadrant, each labeled with an engagement tier:
+**Layer 2 — corpus replay** — **DONE, and bigger than planned.** (`bench/`.) The original target was 40 hand-labelled sites. What shipped is **76 candidates in `candidates.yaml`, crawled by `build_corpus.py` into 57 measured entries in `corpus.yaml`**, every quadrant at or above the 10-site requirement:
 
-```yaml
-- url: https://example.com
-  seo: good            # good | poor
-  geo: poor            # good | poor   <- good-SEO/poor-GEO is the money quadrant
-  engagement: moderate # high | moderate | low
-  site_type: saas
-  notes: "ranks #1 for its category but ships an empty app shell"
-  smoke: true          # member of the pinned 8-site live dev subset
-  expect_findings: [READ-001]
-  expect_absent: [REACH-002]
+```
+                        n    disc
+SEO good / GEO good    20     97
+SEO good / GEO poor    10     74   <- the money quadrant
+SEO poor / GEO good    14     67
+SEO poor / GEO poor    13     61
 ```
 
+The change that matters: **both axes are measured, never asserted.** GEO comes from the blocking mechanism actually observed (robots disallow, edge 403/429/challenge, soft-block serving crawlers a stripped page, content absent from raw HTML, no structured data, passages failing standalone comprehension); SEO from technical hygiene (sitemap, canonicals, titles, descriptions, h1, internal linking). Hand-editing a label makes it stop being evidence. Entries carry the score and the derivation:
+
+```yaml
+  - url: https://asana.com
+    seo: good
+    geo: good
+    engagement: moderate
+    site_type: saas
+    vertical: productivity
+    smoke: true          # member of the pinned 8-site live dev subset
+    geo_score: 70
+    seo_score: 80
+    measurement: measured        # measured | crawler-refused | inconclusive
+    notes: 'Measured 2026-09-06 from a 5-page crawl (GEO score 70/100).
+      Mechanisms found: median 59 words of body text in raw HTML across 5
+      pages with an app-shell mount on 5.'
+    expect_findings: [READ-001]
+    expect_absent: [REACH-005]
+```
+
+**Ten further sites are recorded as `inconclusive` and excluded from the chart**, with the reason written into `corpus.yaml` as a comment. They refused our *browser* probe too, so we cannot separate a site-level block from our own address being filtered. Claiming a defect there would be exactly the confident false positive the rubric punishes. Retry them from a different network before drawing a conclusion.
+
 Snapshot each site's evidence bundle once (gzipped, ≤8 pages/site, gitignored, `--refresh` to re-pull) and replay deterministically. Real-world messiness without the rot.
+
+**Live sites drift, and corpus entries are therefore smoke signals, not assertions.** Between two runs a day apart, `apnews.com` began blocking retrieval crawlers and `gymshark.com` went from 1 word of body text to 1743. Hard assertions live in Layer 1, against fixtures that cannot move.
 
 **Layer 3 — live bench** (`bench/run.py --live`). Runs the marketplace against live sites. Drift-tolerant scoreboard, not assertions. Two modes:
 
 - **Dev loop (default): a fixed 8-site subset.** Marked `smoke: true` in `corpus.yaml` — **2 per SEO×GEO quadrant**, collectively covering all three engagement tiers. The set is pinned, not sampled, so runs stay comparable across days and across teammates. This is what anyone runs while iterating; ~8 sites × <5 min is a tolerable inner loop.
-- **Full run (pre-submission): all 40.** `bench/run.py --live --all`. Rigorous quadrant coverage, run before packaging and after any change to the collector, severity model, or orchestrator merge logic.
+- **Full run (pre-submission): the whole corpus.** `bench/run.py --live --all` — 57 sites. Rigorous quadrant coverage, run before packaging and after any change to the collector, severity model, or orchestrator merge logic. The runner scores misses and false positives **only for skills that are actually implemented**; checks belonging to a scaffold skill are reported separately as "not yet checked" rather than counted against us.
 
 **The money chart:** the good-SEO/poor-GEO quadrant must score *poorly* on discoverability — sites a conventional SEO linter would pass clean. That single result is the evidence that we built a GEO auditor and not an SEO checker.
 
 ---
 
-## Build order
+## Build order — **tasks 0-9 complete**
 
-| # | Task | Owner | Output |
-|---|---|---|---|
-| 0 | Write this plan to `PLAN.md` at the project root as the team's shared reference | Aryan | Teammates read the same spec we do |
-| 1 | Repo skeleton, `marketplace.json`, 8 SKILL.md frontmatter stubs, `tools/validate.py` | Aryan | `validate.py` green on empty skills |
-| 2 | **Freeze contracts** — evidence-bundle, finding, report schemas + severity rubric | Aryan | Nothing else starts until this lands |
-| 3 | **Author the full ~90-check registry** across the 6 analysis skills | Aryan | `checks.yaml` per skill; the parallelization key |
-| 4 | `site-evidence-collector` complete — crawl, robots, UA probe, normalized extraction, budgets | Aryan | Real bundles on disk |
-| 5 | `audit-orchestrator` complete — site-type detection, subskill registry, merge/dedupe/severity/FP-suppression, `report.json` + `report.md` | Aryan | End-to-end run with one analysis skill |
-| 6 | `crawl-access-audit` complete — **the worked reference implementation** | Aryan | The pattern teammates copy |
-| 7 | Fixture suite + golden reports + clean-site tripwire | partner | `pytest` green |
-| 8 | `bench/` corpus (40 sites, 8 flagged `smoke`), runner, snapshot/replay, scoreboard | partner | Quadrant chart |
-| 9 | TODO packets — 5 remaining skills, each with contract refs, exact check IDs, acceptance criteria, target fixture, and a paste-ready agent prompt | Aryan | `docs/todo/*.md` |
-| 10 | Lakshay: `render-extractability` + `structured-data` · Mayank: `answerability` + `freshness-corroboration` + `engagement` | Teammates | — |
+| # | Task | Owner | Output | State |
+|---|---|---|---|---|
+| 0 | Write this plan to `PLAN.md` at the project root as the team's shared reference | Aryan | Teammates read the same spec we do | done |
+| 1 | Repo skeleton, `marketplace.json`, 8 SKILL.md frontmatter stubs, `tools/validate.py` | Aryan | `validate.py` green on empty skills | done |
+| 2 | **Freeze contracts** — evidence-bundle, finding, report schemas + severity rubric | Aryan | Nothing else starts until this lands | done |
+| 3 | **Author the full check registry** across the 6 analysis skills | Aryan | 91 checks + 16 proactive entries; the parallelization key | done |
+| 4 | `site-evidence-collector` complete — crawl, robots, UA probe, normalized extraction, budgets | Aryan | Real bundles on disk | done |
+| 5 | `audit-orchestrator` complete — site-type detection, subskill registry, merge/dedupe/severity/FP-suppression, `report.json` + `report.md` | Aryan | End-to-end run with one analysis skill | done |
+| 6 | `crawl-access-audit` — **the worked reference implementation** | Aryan | The pattern teammates copy; 13 of 18 checks | done |
+| 7 | Fixture suite + golden reports + clean-site tripwire | Aryan | 7 fixtures, 57 assertions, `pytest` green | done |
+| 8 | `bench/` corpus, runner, snapshot/replay, scoreboard | Aryan | 76 candidates → 57 measured entries; quadrant chart PASS | done |
+| 9 | TODO packets — 5 remaining skills, each with contract refs, exact check IDs, acceptance criteria, target fixture, and a paste-ready agent prompt | Aryan | `docs/todo/*.md` + `TODO.md` index | done |
+| 10 | Lakshay: `render-extractability` + `structured-data` · Mayank: `answerability` + `freshness-corroboration` + `engagement` | Teammates | 5 check scripts + their fix templates | **open** |
 
-Tasks 1–6 and 9 are this scaffold. 7–8 can run in parallel once contracts (2) land.
+Tasks 0-9 were the scaffold and are finished. Task 10 is three parallel tracks
+with nothing blocking anything, because the contracts are frozen.
+
+### What changed from the original plan
+
+Worth recording, because each was a correction forced by evidence rather than a
+change of mind:
+
+- **Task 7 and 8 were planned for a partner and done by Aryan.** No impact
+  beyond who typed them.
+- **The corpus grew from 40 hand-labelled sites to 76 crawled candidates**, and
+  labels became measurements. See Layer 2 above.
+- **Sample diversity needed fixing.** Lexicographic BFS is deterministic but
+  samples one directory deeply — a live crawl of `python.org` put all 8 pages
+  under `/about/`. `Collector._diversify()` now ranks frontier candidates by how
+  many pages their section has already contributed, so sections are visited
+  round-robin.
+- **Severity gates needed two exemptions.** Site-level findings (no sitemap, no
+  `llms.txt`) have no `pages_affected`, so the sample-size gate was demoting
+  them; they now carry a site-level artifact exemption. And site-wide scope
+  escalation was inflating them a level, including one check whose registry
+  guard explicitly forbids escalation — hence `severity_locked` on the finding
+  schema.
+- **Soft-blocking turned out to matter more than hard refusal.** `khanacademy.org`
+  serves 227 KB to a browser and to `ChatGPT-User`, but **3 KB to `GPTBot`,
+  `ClaudeBot`, `PerplexityBot` and `Googlebot`**. Counting only 401/403/429/
+  challenge would have missed it. The corpus labeller now flags a `degraded`
+  response at under 50% of the browser baseline.
+- **Sites that refuse our crawler are the most valuable data, not garbage.**
+  Eleven were nearly discarded as unusable before the `outcome` classification
+  split them into `measured` / `crawler-refused` / `inconclusive` / `unusable`.
 
 ---
 
 ## Verification
 
-1. **Spec compliance** — `python tools/validate.py`: `marketplace.json` well-formed with exactly one entrypoint; every `SKILL.md` has valid frontmatter (`name` ≤64 chars, lowercase/hyphen only, matches folder; non-empty `description` ≤1024); every referenced path resolves; no duplicate check IDs; every check ID a SKILL.md cites exists in a registry. Optionally cross-check with `skills-ref validate ./skill-folder`.
-2. **No forbidden imports** — grep the submission for non-stdlib imports; must be empty.
-3. **Fixtures** — `python -m pytest tests/`. Defect fixtures produce their expected check IDs; **the clean fixture produces zero critical/high**.
-4. **Determinism** — run the same fixture twice, `diff` the reports; must be byte-identical.
+Every step below is wired and currently green, except #7, which needs a human in
+a fresh agent session.
+
+1. **Spec compliance** — `python tools/validate.py`: `marketplace.json` well-formed with exactly one entrypoint; every `SKILL.md` has valid frontmatter (`name` ≤64 chars, lowercase/hyphen only, matches folder; non-empty `description` ≤1024); every referenced path resolves; no duplicate check IDs; every check ID a SKILL.md cites exists in a registry. It distinguishes an **error** from a **TODO**, so a scaffold skill reports as outstanding work rather than as a failure. → `PASS (23 TODOs outstanding)`; the 23 are task 10.
+2. **No forbidden imports** — `tools/validate.py` walks the AST of every shipped script against an allowed-stdlib set, rather than grepping. → clean.
+3. **Fixtures** — `python -m pytest tests/ -q`. Defect fixtures produce their expected check IDs; **the clean fixture produces zero critical/high**. → `57 passed`.
+4. **Determinism** — run the same fixture twice, `diff` the reports; must be byte-identical. Asserted in `test_analysis_is_deterministic`.
 5. **Replay bench** — `python bench/run.py --replay`, review scoreboard for misses and FP candidates against `expect_findings` / `expect_absent`.
-6. **Live bench** — `python bench/run.py --live` (pinned 8-site smoke subset, 2 per quadrant) during development; `--live --all` across all 40 before submission. Confirm every site completes under 5 minutes and the good-SEO/poor-GEO quadrant scores poorly on discoverability.
-7. **Real agent end-to-end** — `python tools/install_local.py` to drop the skills into `.claude/skills/`, start a fresh Claude Code session, ask *"audit example.com"*, and confirm the **orchestrator alone** activates (not a sub-skill), dispatches the others, and emits a schema-valid `report.json` + readable `report.md`.
-8. **Package** — `python tools/package.py`, confirm the zip contains only the marketplace root and is well under 50 MB.
+6. **Live bench** — `python bench/run.py --live` (pinned 8-site smoke subset, 2 per quadrant) during development; `--live --all` across the full 57 before submission. Confirm every site completes under 5 minutes and the good-SEO/poor-GEO quadrant scores poorly on discoverability. → latest full run: **57/57 audited, 0 false positives, 0 misses**, money quadrant 23 points below the control.
+7. **Real agent end-to-end** — `python tools/install_local.py` to drop the skills into `.claude/skills/`, start a fresh Claude Code session, ask *"audit example.com"*, and confirm the **orchestrator alone** activates (not a sub-skill), dispatches the others, and emits a schema-valid `report.json` + readable `report.md`. **Re-run this after task 10 lands** — activation hygiene is the one property no script can check.
+8. **Package** — `python tools/package.py`, confirm the zip contains only the marketplace root and is well under 50 MB. → `39 files, 0.14 MB, manifest matches. OK: ready to submit.`
+
+### The one result that matters
+
+The good-SEO/poor-GEO quadrant scores **74** against the control's **97**. Those
+ten sites are ones a conventional SEO linter passes clean — BBC and Slack both
+score 100 on technical SEO while the edge returns 429 to `ClaudeBot` or
+robots.txt disallows the retrieval crawlers outright. That gap is the evidence
+that this is a GEO auditor and not an SEO checker, and it is the single number to
+re-check after any change to the collector or the severity model.
