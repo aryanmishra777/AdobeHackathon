@@ -1,0 +1,27 @@
+# Evidence bundles from ad-hoc runs
+.audit/
+brand-ai-readiness-audit/.audit/
+
+# Generated test artifacts -- rebuild with tests/make_fixtures.py + make_bundles.py
+tests/bundles/
+tests/_*.json
+
+# Bench snapshots are large and regenerable: bench/run.py --snapshot
+bench/snapshots/
+bench/scoreboard/_tmp/
+
+# Submission artifact
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

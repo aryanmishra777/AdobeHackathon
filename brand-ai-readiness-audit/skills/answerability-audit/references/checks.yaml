@@ -1,0 +1,269 @@
+# QUOTE check registry -- answerability-audit
+#
+# Mechanism: can a machine lift a CLEAR, SELF-CONTAINED fact out of this page?
+#
+# This is the distinctly generative-search concern and the one conventional SEO
+# tooling does not measure at all. A page can be reachable, readable and
+# perfectly marked up, and still never be quoted, because retrieval happens at
+# CHUNK level: a passage is pulled out of the page and shown to a model without
+# the surrounding context. A paragraph reading "It starts at 29 GBP per month"
+# is useless once separated from the heading that named the product.
+#
+# This skill carries the highest proportion of model-judged checks in the
+# marketplace. The model-judged ceiling (false-positive gate 3) therefore applies
+# with full force: no check here may emit `critical` without a deterministic
+# finding corroborating it. Prefer lower confidence over a confident guess.
+#
+# The collector precomputes deterministic chunk signals (names_subject,
+# leading_pronoun, bare_numbers, has_date, deictic_terms) in chunks.json. The
+# script counts; the model judges. Never re-chunk the page -- identical chunking
+# across runs is what makes these findings reproducible.
+
+meta:
+  skill: answerability-audit
+  mechanism: quote
+  category: discoverability
+  check_prefix: QUOTE
+  version: "0.1.0"
+
+checks:
+
+  - id: QUOTE-001
+    title_template: "Passages do not make sense when retrieved on their own"
+    applies_when: always
+    inputs: [pages/*/chunks.json, pages/*/extracted.json]
+    detection: deterministic
+    severity_rule: >-
+      high when a large share of chunks across the site fail standalone
+      comprehension (no subject named, opening pronoun unresolved, bare figures);
+      medium when confined to a section;
+      never critical -- see the model-judged ceiling.
+    evidence_template: >-
+      "{n} of {m} content chunks across {p} pages neither name their subject nor
+      resolve their opening reference. Example from {page}: {excerpt}"
+    verification: "Read the passage under '{heading}' on {page} on its own and ask what product it describes"
+    fix_ref: references/fixes/self-contained-writing.md
+    false_positive_guards:
+      - "Signals are precomputed but their MEANING needs judgment. A chunk opening
+         'It' immediately under a heading naming the product is usually fine,
+         because heading_path travels with the chunk. Weigh heading_path before
+         counting a chunk as failing."
+      - "Navigation, footer and boilerplate chunks are not content. Only assess
+         chunks with a real heading_path and a reasonable word count."
+      - "Do not fire on pages where READ-001 fires -- there is no content to
+         assess and the root cause is rendering. Supersession handles this."
+      - "A single failing chunk is not a finding. Require a pattern: several
+         chunks, or a chunk carrying a fact a buyer would actually ask about."
+      - "Short list items and table rows legitimately lack a subject. Exclude
+         chunks under ~25 words from the failure count."
+
+  - id: QUOTE-002
+    title_template: "The site never states plainly what the organization is"
+    applies_when: always
+    inputs: [pages/*/extracted.json#text, pages/*/chunks.json]
+    detection: model-judged
+    severity_rule: >-
+      high when no page states, in one explicit sentence, what the organisation
+      is and what it does; medium when it appears only deep in an about page.
+    evidence_template: >-
+      "No sampled page contains a sentence of the form '{Brand} is a {category}
+      that {does what} for {whom}'. The home page opens with: {excerpt}"
+    verification: "Read the first screen of the home page and try to write one sentence saying what the company does"
+    fix_ref: references/fixes/self-contained-writing.md
+    false_positive_guards:
+      - "The sentence need not be literally formulaic. Accept any explicit,
+         quotable statement of identity. Only report when no such sentence exists
+         anywhere in the sample."
+      - "Well-known brands genuinely need less explanation, but a machine
+         resolving an ambiguous name does not know that. Report anyway, and lower
+         severity when the brand is clearly established."
+      - "Model-judged: cap at 'high' and give a verification step the reader can
+         perform themselves."
+
+  - id: QUOTE-003
+    title_template: "Facts buyers ask about are absent or unextractable"
+    applies_when: [ecommerce, saas, local-business, marketplace, nonprofit-gov]
+    inputs: [pages/*/extracted.json#text, pages/*/chunks.json, MANIFEST.json#pages.page_type]
+    detection: model-judged
+    severity_rule: >-
+      high when a fact class central to the business (price, location, hours,
+      contact, eligibility, delivery) is nowhere stated as extractable text;
+      medium when stated only vaguely.
+    evidence_template: "No sampled page states {fact_type} as extractable text; {where_looked}."
+    verification: "Search the site for {fact_type} and try to copy it as text"
+    fix_ref: references/fixes/answer-shaped-content.md
+    false_positive_guards:
+      - "Gate by site_profile AND by what the business plausibly publishes.
+         Enterprise software deliberately withholding pricing behind a sales
+         conversation is a strategy, not an omission -- report at most 'low' and
+         recommend stating the model (per seat, annual contract, from GBP X)
+         rather than the number."
+      - "Absence in our SAMPLE is not absence from the SITE. Check
+         coverage.skipped, and require that a page where the fact belongs was
+         actually fetched before claiming it is missing."
+      - "A fact locked in an image is READ-004, not this. Do not double-report."
+
+  - id: QUOTE-004
+    title_template: "Claims are abstract where they need to be concrete"
+    applies_when: always
+    inputs: [pages/*/extracted.json#text, pages/*/chunks.json]
+    detection: model-judged
+    severity_rule: "medium when key pages carry no numbers, named entities or dates; low otherwise."
+    evidence_template: "{page} contains {words} words with {n} concrete figures or named entities. Example: {excerpt}"
+    verification: "Read {page} and list the specific verifiable facts it states"
+    fix_ref: references/fixes/self-contained-writing.md
+    false_positive_guards:
+      - "Aspirational brand copy is a legitimate style choice, and this check must
+         not become a critique of the site's voice. Report only where a page's
+         PURPOSE is to convey facts (pricing, product, about) and it does not."
+      - "Never above 'medium'. This is a quality observation, not a mechanism
+         failure."
+
+  - id: QUOTE-005
+    title_template: "The site has none of the page types assistants cite most"
+    applies_when: [ecommerce, saas, local-business, marketplace]
+    inputs: [MANIFEST.json#pages, MANIFEST.json#sitemaps]
+    detection: deterministic
+    severity_rule: "medium when no FAQ, pricing, comparison or how-it-works page exists anywhere."
+    evidence_template: "Neither the sitemap nor {m} sampled pages include an FAQ, pricing or comparison page."
+    verification: "Search the site's navigation and sitemap for an FAQ or pricing page"
+    fix_ref: references/fixes/answer-shaped-content.md
+    false_positive_guards:
+      - "Check the SITEMAP as well as sampled pages before concluding a page type
+         is absent; our sample is partial and this check is easy to get wrong."
+      - "Never applies to docs or portfolio-brochure sites."
+      - "This is an opportunity, not a defect. Frame it as content the site does
+         not yet have, and consider emitting it as a proactive recommendation
+         instead when nothing else on the site is wrong."
+
+  - id: QUOTE-006
+    title_template: "Common buyer questions have no answer on the site"
+    applies_when: [ecommerce, saas, local-business, marketplace, nonprofit-gov]
+    inputs: [pages/*/chunks.json, pages/*/extracted.json#text]
+    detection: model-judged
+    severity_rule: "medium; high when the unanswered questions are central to the category."
+    evidence_template: "{n} of {m} common questions for a {site_type} have no retrievable answer: {examples}."
+    verification: "Search the site for an answer to '{question}'"
+    fix_ref: references/fixes/answer-shaped-content.md
+    false_positive_guards:
+      - "Derive the question set from the site's OWN category and offering, not
+         from a generic list. A question the business has no reason to answer is
+         not a gap."
+      - "Our sample is partial: an answer may exist on an unsampled page. Cap
+         confidence at 'medium' and say the check covers sampled pages only."
+      - "Limit to a handful of genuinely central questions. Enumerating twenty
+         hypothetical questions manufactures findings and is exactly the padding
+         the rubric penalises."
+
+  - id: QUOTE-007
+    title_template: "Answers are buried below long preamble"
+    applies_when: always
+    inputs: [pages/*/chunks.json]
+    detection: model-judged
+    severity_rule: "medium when the fact a page exists to convey appears only after substantial preamble; low otherwise."
+    evidence_template: "On {page} the {fact_type} first appears {n} words in, after {preamble_description}."
+    verification: "Open {page} and count how far you scroll before reaching {fact_type}"
+    fix_ref: references/fixes/answer-shaped-content.md
+    false_positive_guards:
+      - "Long-form editorial legitimately builds to its point. Apply only to pages
+         whose purpose is to answer something directly."
+      - "Never above 'medium'."
+
+  - id: QUOTE-008
+    title_template: "Domain terms are used without being defined"
+    applies_when: always
+    inputs: [pages/*/extracted.json#text, pages/*/chunks.json]
+    detection: model-judged
+    severity_rule: "low; medium when proprietary terms replace the words customers would search for."
+    evidence_template: "{page} uses {terms} without defining them or pairing them with a category term."
+    verification: "Read {page} as someone new to the category and list what you could not follow"
+    fix_ref: references/fixes/self-contained-writing.md
+    false_positive_guards:
+      - "Documentation for practitioners may legitimately assume vocabulary.
+         Never apply to docs pages aimed at existing users."
+      - "Report only where a proprietary name REPLACES a category term entirely,
+         so nothing on the page connects the product to what it actually is."
+
+  - id: QUOTE-009
+    title_template: "Specifications are prose or images rather than structured text"
+    applies_when: [ecommerce, saas, marketplace]
+    inputs: [pages/*/extracted.json#text, pages/*/extracted.json#images, pages/*/raw.html]
+    detection: deterministic
+    severity_rule: "medium when comparable attributes appear as prose or images rather than a table or list."
+    evidence_template: "{page} presents {n} specification values in {form}."
+    verification: "Try to copy the specification table from {page} as text"
+    fix_ref: references/fixes/answer-shaped-content.md
+    false_positive_guards:
+      - "Prose descriptions are fine when the page is not primarily a
+         specification page. Gate on page_type."
+      - "Specs in an image are READ-004. Report there, not here."
+
+  - id: QUOTE-010
+    title_template: "The brand or product is named inconsistently"
+    applies_when: always
+    inputs: [pages/*/extracted.json#title, pages/*/extracted.json#headings, pages/*/extracted.json#jsonld]
+    detection: deterministic
+    severity_rule: "medium when the same entity appears under materially different names across pages."
+    evidence_template: "The product is referred to as {variants} across {n} pages."
+    verification: "Compare the product name in the title, h1 and markup on {page} and {other_page}"
+    fix_ref: references/fixes/self-contained-writing.md
+    false_positive_guards:
+      - "Capitalisation, punctuation and a trailing legal suffix (Ltd, Inc) are
+         not inconsistencies. Normalise before comparing."
+      - "A short form alongside a full form is normal usage. Report only when a
+         reader could not tell the names refer to the same thing."
+      - "Overlaps TRUST-007 (entity ambiguity). This check is about internal
+         consistency; that one is about collision with other entities."
+
+  - id: QUOTE-011
+    title_template: "Titles and headings do not say what the page answers"
+    applies_when: always
+    inputs: [pages/*/extracted.json#title, pages/*/extracted.json#headings]
+    detection: model-judged
+    severity_rule: "medium when titles and h1s are generic where they should be specific."
+    evidence_template: "{n} of {m} pages carry non-descriptive titles: {examples}."
+    verification: "Read only the title and h1 of {page} and say what the page contains"
+    fix_ref: references/fixes/answer-shaped-content.md
+    false_positive_guards:
+      - "'Home', 'About' and 'Contact' are conventional and understood. Never
+         report those."
+      - "Overlaps PARSE-010, which covers missing and duplicated titles
+         mechanically. This check is about descriptiveness only -- do not
+         re-report the same pages."
+
+  - id: QUOTE-012
+    title_template: "Long pages carry no summary a machine can lift"
+    applies_when: always
+    inputs: [pages/*/chunks.json, pages/*/extracted.json#text]
+    detection: model-judged
+    severity_rule: "low -- emit as a proactive recommendation unless the page is central and long."
+    evidence_template: "{page} runs to {words} words with no summary, key-takeaways or TL;DR block."
+    verification: "Look for a summary block near the top of {page}"
+    fix_ref: references/fixes/answer-shaped-content.md
+    false_positive_guards:
+      - "Prefer proactive_recommendations over a finding. The absence of a summary
+         is an opportunity, not a defect, and reporting it as a defect on every
+         long page inflates the count."
+
+proactive:
+  - id: QUOTE-P01
+    title: "Open each key page with one self-contained sentence naming the subject"
+    gate: "always, when QUOTE-001 or QUOTE-002 did not reach reporting threshold"
+    rationale_template: >-
+      "Retrieval pulls a passage away from its page. A first sentence that names
+      the subject explicitly survives that separation, and it costs one line per
+      page."
+  - id: QUOTE-P02
+    title: "Add an FAQ answering the questions sales and support actually receive"
+    gate: "no FAQ page exists"
+    rationale_template: >-
+      "Question-and-answer pairs match how people phrase queries to assistants,
+      and each answer is a self-contained passage that can be quoted whole. The
+      source material already exists in the support inbox."
+  - id: QUOTE-P03
+    title: "State pricing structure even where exact figures are withheld"
+    gate: "no pricing information of any kind is published"
+    rationale_template: >-
+      "'Per seat, annual contract, from GBP X' is quotable and answers the
+      question a buyer actually asks, without publishing a rate card. Saying
+      nothing leaves an assistant to infer or to recommend a competitor who did."

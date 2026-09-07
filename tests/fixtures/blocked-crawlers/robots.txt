@@ -1,0 +1,14 @@
+# Retrieval agents blocked -- this IS a defect (REACH-002)
+User-agent: ChatGPT-User
+User-agent: Claude-User
+User-agent: PerplexityBot
+Disallow: /
+
+# Training crawlers blocked -- this is NOT a defect (REACH-003)
+User-agent: GPTBot
+User-agent: Google-Extended
+User-agent: CCBot
+Disallow: /
+
+User-agent: *
+Allow: /

@@ -1,0 +1,270 @@
+# PARSE check registry -- structured-data-audit
+#
+# Mechanism: can a machine parse a SPECIFIC fact out of the page? The crawler got
+# in (REACH) and can read the text (READ). Structured data is how a machine goes
+# from "there is prose here" to "the price is 29 GBP and it is in stock".
+#
+# The highest-value check here is PARSE-007: markup that CONTRADICTS the visible
+# page. A source that disagrees with itself is worse than a source with no markup
+# at all, because it teaches the consumer that the site cannot be trusted.
+#
+# Requirements are gated hard by site_profile -- see
+# audit-orchestrator/references/site-profiles.md. Reporting missing Product
+# markup on a site that sells nothing is the canonical false positive.
+
+meta:
+  skill: structured-data-audit
+  mechanism: parse
+  category: discoverability
+  check_prefix: PARSE
+  version: "0.1.0"
+
+checks:
+
+  - id: PARSE-001
+    title_template: "The site publishes no structured data at all"
+    applies_when: always
+    inputs: [pages/*/extracted.json#jsonld, pages/*/extracted.json#microdata]
+    detection: deterministic
+    severity_rule: >-
+      high for ecommerce, saas, local-business, media-publisher and marketplace,
+      where specific facts are the point;
+      medium for docs and nonprofit-gov;
+      low for portfolio-brochure.
+    evidence_template: "0 of {m} sampled pages contain any JSON-LD, microdata or RDFa."
+    verification: "curl -s {page} | grep -c 'application/ld+json'"
+    fix_ref: references/fixes/jsonld-templates.md
+    false_positive_guards:
+      - "Do not report when READ-001 fires on the same pages -- markup injected
+         client-side is absent for the same root cause, and the fix is rendering,
+         not markup. Let the orchestrator's supersession rule handle it."
+      - "Check microdata and RDFa, not only JSON-LD. Older sites frequently carry
+         valid itemscope markup and would be wrongly reported as having none."
+
+  - id: PARSE-002
+    title_template: "Structured data is present but does not parse"
+    applies_when: always
+    inputs: [pages/*/extracted.json#jsonld]
+    detection: deterministic
+    severity_rule: >-
+      high -- broken markup is silently discarded, so the site pays the
+      engineering cost of structured data and receives none of the benefit.
+    evidence_template: "{n} of {k} JSON-LD blocks fail to parse: {errors}."
+    verification: "Extract the ld+json block from {page} and run it through any JSON validator"
+    fix_ref: references/fixes/jsonld-templates.md
+    false_positive_guards:
+      - "The collector records parse_ok and parse_error verbatim. Quote the actual
+         parser error rather than describing the problem generically."
+      - "A common cause is unescaped quotes from a CMS template. Say so in the fix
+         -- it points at the template rather than the page."
+
+  - id: PARSE-003
+    title_template: "Structured data uses the wrong type for the page"
+    applies_when: always
+    inputs: [pages/*/extracted.json#jsonld, MANIFEST.json#pages.page_type]
+    detection: deterministic
+    severity_rule: "medium; high when a commercial page type is mismarked."
+    evidence_template: "{page} is a {page_type} page but declares only @type {types}."
+    verification: "Compare the @type on {page} with what the page is actually about"
+    fix_ref: references/fixes/schema-requirements.md
+    false_positive_guards:
+      - "WebPage, WebSite, BreadcrumbList and Organization are legitimate on any
+         page and are not a substitute for a page-specific type -- but their
+         presence alone is not an error either."
+      - "page_type is heuristic. When it is 'other', skip this check and record it
+         in coverage.checks_skipped rather than guessing."
+
+  - id: PARSE-004
+    title_template: "Structured data omits properties consumers need"
+    applies_when: always
+    inputs: [pages/*/extracted.json#jsonld]
+    detection: deterministic
+    severity_rule: >-
+      high when a required property is absent (Product without name or offers,
+      Article without headline, LocalBusiness without address);
+      medium for recommended-but-absent properties.
+    evidence_template: "{n} {type} entities omit {properties}: {examples}."
+    verification: "Inspect the {type} block on {page} for the {property} field"
+    fix_ref: references/fixes/schema-requirements.md
+    false_positive_guards:
+      - "Gate requirements by site_profile. Never expect Product/Offer on a
+         services business, or openingHours on a SaaS company."
+      - "Consult references/fixes/schema-requirements.md for what is genuinely
+         required versus merely recommended. Reporting a recommended property as
+         required inflates the finding count with things nobody needs to fix."
+      - "Properties may be inherited through @id references to another entity in
+         the graph. Resolve the graph before declaring a property missing."
+
+  - id: PARSE-005
+    title_template: "The organization entity has no sameAs links"
+    applies_when: always
+    inputs: [pages/*/extracted.json#jsonld]
+    detection: deterministic
+    severity_rule: "medium -- this is the primary machine-readable bridge between the site and the brand's identity elsewhere."
+    evidence_template: "The Organization entity on {page} declares no sameAs array."
+    verification: "Inspect the Organization block on {page} for sameAs"
+    fix_ref: references/fixes/entity-graph.md
+    false_positive_guards:
+      - "sameAs must point at profiles the organisation genuinely controls or is
+         genuinely described by. Never recommend inventing links."
+      - "Closely related to TRUST-011. Report the markup gap here and the identity
+         gap there; do not duplicate the same recommendation in both."
+
+  - id: PARSE-006
+    title_template: "Entities are not linked into a stable graph"
+    applies_when: always
+    inputs: [pages/*/extracted.json#jsonld]
+    detection: deterministic
+    severity_rule: "medium when entities are redefined per page with no @id, so nothing connects them."
+    evidence_template: "{n} pages each declare a separate Organization entity with no @id."
+    verification: "Compare the Organization blocks across two pages on the site"
+    fix_ref: references/fixes/entity-graph.md
+    false_positive_guards:
+      - "Repeating an Organization block per page is common and harmless in
+         isolation. Report only when it is combined with inconsistent values, or
+         frame it as a proactive improvement instead of a defect."
+
+  - id: PARSE-007
+    title_template: "Structured data contradicts the visible page"
+    applies_when: always
+    inputs: [pages/*/extracted.json#jsonld, pages/*/extracted.json#text]
+    detection: deterministic
+    severity_rule: >-
+      high -- a source that disagrees with itself is worse than one with no
+      markup, because a consumer that detects the conflict discounts the whole
+      site rather than the one field.
+    evidence_template: "{page} marks up {field} as {markup_value} but the page text states {visible_value}."
+    verification: "Compare the {field} in the ld+json block on {page} with the visible page"
+    fix_ref: references/fixes/jsonld-templates.md
+    false_positive_guards:
+      - "Formatting differences are not contradictions. Normalise currency,
+         thousands separators, date formats and whitespace before comparing."
+      - "A price range on the page and a single 'from' price in markup is
+         consistent, not contradictory. Check lowPrice/highPrice."
+      - "Only compare fields whose visible counterpart can be located with
+         confidence. When the visible value cannot be found, the finding is
+         'markup not verifiable', not 'markup wrong' -- and it belongs at 'low'."
+
+  - id: PARSE-008
+    title_template: "Marked-up content does not appear on the page"
+    applies_when: always
+    inputs: [pages/*/extracted.json#jsonld, pages/*/extracted.json#text]
+    detection: deterministic
+    severity_rule: "high -- markup describing content a visitor cannot see risks a manual penalty as well as mistrust."
+    evidence_template: "{page} declares {type} entities ({examples}) whose content appears nowhere in the page text."
+    verification: "Search {page} for the text marked up in the {type} block"
+    fix_ref: references/fixes/jsonld-templates.md
+    false_positive_guards:
+      - "Do not fire when READ-001 or READ-011 fires on the page -- the content
+         is hidden from us, not from users, and the root cause is rendering."
+      - "AggregateRating sourced from a third-party widget is a common and mostly
+         benign case. Report at 'medium' and recommend surfacing the value as
+         text rather than removing the markup."
+
+  - id: PARSE-009
+    title_template: "Conflicting or duplicated markup formats"
+    applies_when: always
+    inputs: [pages/*/extracted.json#jsonld, pages/*/extracted.json#microdata]
+    detection: deterministic
+    severity_rule: "medium when JSON-LD and microdata describe the same entity with different values; low when merely duplicated."
+    evidence_template: "{page} declares {entity} in both JSON-LD and microdata with differing {field}."
+    verification: "Compare the two markup blocks on {page}"
+    fix_ref: references/fixes/jsonld-templates.md
+    false_positive_guards:
+      - "Carrying both formats with identical values is redundant but harmless.
+         Report only genuine value conflicts."
+
+  - id: PARSE-010
+    title_template: "Titles and meta descriptions are missing, duplicated or conflicting"
+    applies_when: always
+    inputs: [pages/*/extracted.json#title, pages/*/extracted.json#meta, pages/*/extracted.json#headings]
+    detection: deterministic
+    severity_rule: >-
+      medium when titles are absent or duplicated across pages;
+      medium when the title and h1 describe different things;
+      low for length issues alone.
+    evidence_template: "{n} of {m} pages {problem}: {examples}."
+    verification: "curl -s {page} | grep -E '<title>|<h1'"
+    fix_ref: references/fixes/page-metadata.md
+    false_positive_guards:
+      - "Title length limits are soft and display-dependent. Never report length
+         above 'low', and never as a discoverability defect on its own."
+      - "A title with a brand suffix that the h1 omits is normal, not a conflict.
+         Compare the substantive part."
+      - "Meta descriptions are not a ranking factor. Frame the recommendation
+         around giving a consumer a clean summary, not around ranking."
+
+  - id: PARSE-011
+    title_template: "Social metadata is missing or contradicts the page"
+    applies_when: always
+    inputs: [pages/*/extracted.json#meta]
+    detection: deterministic
+    severity_rule: "low; medium when og values contradict the page's own title or description."
+    evidence_template: "{n} pages omit og:title/og:description, or declare values differing from the page."
+    verification: "curl -s {page} | grep 'og:'"
+    fix_ref: references/fixes/page-metadata.md
+    false_positive_guards:
+      - "OpenGraph mainly affects social preview cards, not AI citation. Keep this
+         at 'low' unless values contradict the page, and never overstate impact."
+
+  - id: PARSE-012
+    title_template: "Q&A or step-by-step content is not marked up as such"
+    applies_when: always
+    inputs: [pages/*/extracted.json#headings, pages/*/extracted.json#jsonld, MANIFEST.json#pages.page_type]
+    detection: model-judged
+    severity_rule: "medium on pages whose content is genuinely question-and-answer or stepwise and carries no FAQPage or HowTo markup."
+    evidence_template: "{page} contains {n} question-shaped headings with answers but declares no FAQPage entity."
+    verification: "Read {page} and confirm the content is genuinely Q&A"
+    fix_ref: references/fixes/schema-requirements.md
+    false_positive_guards:
+      - "Do not mark up as FAQ anything that is not genuinely a question with an
+         answer on the page. Marketing copy shaped like a question is not an FAQ."
+      - "FAQPage rich-result eligibility has narrowed considerably in search. The
+         value here is machine extractability, so frame the rationale that way and
+         do not promise rich results."
+      - "Requires judgment about content shape; keep determinism model-judged."
+
+  - id: PARSE-013
+    title_template: "No breadcrumb markup or navigation"
+    applies_when: always
+    inputs: [pages/*/extracted.json#jsonld, pages/*/extracted.json#links]
+    detection: deterministic
+    severity_rule: "low; medium on deep sites where a page's place in the hierarchy is otherwise unstated."
+    evidence_template: "{n} of {m} pages declare no BreadcrumbList and show no breadcrumb navigation."
+    verification: "Open {page} and look for a breadcrumb trail"
+    fix_ref: references/fixes/schema-requirements.md
+    false_positive_guards:
+      - "A flat site of under ~20 pages does not need breadcrumbs. Gate on depth."
+      - "This overlaps STAY-005 (orientation). Report the markup gap here and the
+         user-facing orientation gap there; do not double-count one problem."
+
+  - id: PARSE-014
+    title_template: "Editorial content declares no author or publisher"
+    applies_when: [media-publisher, saas, nonprofit-gov]
+    inputs: [pages/*/extracted.json#jsonld, pages/*/extracted.json#meta]
+    detection: deterministic
+    severity_rule: "medium on article pages with no author or publisher entity."
+    evidence_template: "{n} of {m} article pages declare no author or publisher."
+    verification: "Inspect the Article block on {page} for author and publisher"
+    fix_ref: references/fixes/schema-requirements.md
+    false_positive_guards:
+      - "Applies only to genuinely editorial pages. Never report on product,
+         pricing, legal or landing pages."
+      - "A corporate byline (author = the Organization) is legitimate. Report only
+         a complete absence of attribution."
+
+proactive:
+  - id: PARSE-P01
+    title: "Publish one canonical Organization entity with a stable @id and link every page to it"
+    gate: "Organization markup exists but is redefined per page"
+    rationale_template: >-
+      "One authoritative entity with a stable identifier lets a consumer resolve
+      every page to the same organisation instead of inferring that connection
+      from repeated names."
+  - id: PARSE-P02
+    title: "Mark up the facts buyers ask about, not merely the page type"
+    gate: "basic markup exists but carries no commercial detail"
+    rationale_template: >-
+      "WebPage markup states that a page exists. Price, availability, location,
+      hours and eligibility are the facts an assistant is asked for, and each one
+      marked up is one more question the site can answer directly."

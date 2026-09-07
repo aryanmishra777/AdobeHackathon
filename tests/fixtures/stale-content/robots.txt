@@ -1,0 +1,12 @@
+User-agent: ChatGPT-User
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: *
+Allow: /
+Disallow: /cart
+Disallow: /checkout
+
+Sitemap: http://localhost:8905/sitemap.xml

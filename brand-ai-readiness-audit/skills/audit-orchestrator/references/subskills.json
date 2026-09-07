@@ -1,0 +1,132 @@
+{
+  "$comment": "Machine-readable dispatch table for the orchestrator. The Agent Skills spec has no skill-calls-skill primitive, so composition is: read ../<path>/SKILL.md and follow it against the shared evidence bundle. Order is listed order; the mechanism sequence is meaningful (an earlier-stage failure makes later stages moot) but the analyses themselves are independent and may run in parallel.",
+  "bundle_contract": "../site-evidence-collector/references/evidence-bundle.schema.json",
+  "finding_contract": "references/finding.schema.json",
+  "stages": [
+    {
+      "stage": 0,
+      "id": "site-evidence-collector",
+      "path": "../site-evidence-collector",
+      "concern": "acquire",
+      "role": "collector",
+      "question": "What is literally on this site?",
+      "inputs": ["target_url", "budget_overrides"],
+      "outputs": ["evidence bundle at .audit/<domain>/<run-id>/"],
+      "emits_findings": false,
+      "parallelizable": false,
+      "skip_when": "never — every other stage depends on its output",
+      "notes": "The only skill permitted to touch the network. Extracts, never judges."
+    },
+    {
+      "stage": 1,
+      "id": "crawl-access-audit",
+      "path": "../crawl-access-audit",
+      "concern": "reach",
+      "check_prefix": "REACH",
+      "category": "discoverability",
+      "question": "Can a machine get in?",
+      "inputs": ["robots.txt.raw", "ua_probe.json", "sitemaps/", "pages/*/request.json", "pages/*/response.headers.json", "pages/*/extracted.json"],
+      "emits_findings": true,
+      "parallelizable": true,
+      "skip_when": "never",
+      "notes": "Runs first conceptually: if the crawler cannot get in, every later finding is downstream of that one cause."
+    },
+    {
+      "stage": 2,
+      "id": "render-extractability-audit",
+      "path": "../render-extractability-audit",
+      "concern": "read",
+      "check_prefix": "READ",
+      "category": "discoverability",
+      "question": "Can a machine read what is there?",
+      "inputs": ["pages/*/raw.html", "pages/*/rendered.html", "pages/*/extracted.json"],
+      "emits_findings": true,
+      "parallelizable": true,
+      "skip_when": "never",
+      "notes": "READ-001 (content absent from raw HTML) is a root cause that supersedes most PARSE and QUOTE findings on the same pages."
+    },
+    {
+      "stage": 3,
+      "id": "structured-data-audit",
+      "path": "../structured-data-audit",
+      "concern": "parse",
+      "check_prefix": "PARSE",
+      "category": "discoverability",
+      "question": "Can a machine parse specific facts out?",
+      "inputs": ["pages/*/extracted.json"],
+      "emits_findings": true,
+      "parallelizable": true,
+      "skip_when": "never",
+      "notes": "Required-property expectations are gated by site_profile; see references/schema-requirements.md in that skill."
+    },
+    {
+      "stage": 4,
+      "id": "answerability-audit",
+      "path": "../answerability-audit",
+      "concern": "quote",
+      "check_prefix": "QUOTE",
+      "category": "discoverability",
+      "question": "Can a machine lift a clear, self-contained fact?",
+      "inputs": ["pages/*/extracted.json", "pages/*/chunks.json"],
+      "emits_findings": true,
+      "parallelizable": true,
+      "skip_when": "never",
+      "notes": "Highest proportion of model-judged checks in the marketplace. The model-judged ceiling in gate 3 applies with full force here."
+    },
+    {
+      "stage": 5,
+      "id": "freshness-corroboration-audit",
+      "path": "../freshness-corroboration-audit",
+      "concern": "trust",
+      "check_prefix": "TRUST",
+      "category": "discoverability",
+      "question": "Will a machine believe and repeat the fact?",
+      "inputs": ["pages/*/extracted.json", "sitemaps/", "external/"],
+      "emits_findings": true,
+      "parallelizable": true,
+      "requires_tool": "web search or fetch, for off-site corroboration only",
+      "skip_when": "skip_offsite is set, or no search/fetch tool is available — in that case run the on-site freshness checks only and record the skipped check_ids in coverage.checks_skipped",
+      "notes": "The only analysis skill with an optional off-site component. On-site freshness checks always run."
+    },
+    {
+      "stage": 6,
+      "id": "engagement-audit",
+      "path": "../engagement-audit",
+      "concern": "stay",
+      "check_prefix": "STAY",
+      "category": "engagement",
+      "question": "Does the visitor who arrives stay?",
+      "inputs": ["pages/*/extracted.json", "pages/*/raw.html", "pages/*/response.headers.json", "pages/*/request.json"],
+      "emits_findings": true,
+      "parallelizable": true,
+      "skip_when": "never — this is the entire engagement half of the report and must always appear"
+    }
+  ],
+  "merge_order": ["reach", "read", "parse", "quote", "trust", "stay"],
+  "supersession_rules": [
+    {
+      "root_cause": "READ-001",
+      "supersedes": ["PARSE-001", "QUOTE-001", "QUOTE-002", "QUOTE-003"],
+      "scope": "same page",
+      "rationale": "If the main content is absent from the raw HTML, the absence of structured data and quotable facts on that page is a symptom of one root cause, not four independent defects."
+    },
+    {
+      "root_cause": "REACH-002",
+      "supersedes": ["REACH-005", "REACH-006", "REACH-007"],
+      "scope": "site-wide",
+      "rationale": "If retrieval agents are disallowed outright, sitemap quality and CDN behaviour cannot matter until that is fixed."
+    },
+    {
+      "root_cause": "REACH-008",
+      "supersedes": ["PARSE-001", "PARSE-004"],
+      "scope": "same page",
+      "rationale": "A noindexed page's markup gaps are moot while the page is excluded from indexes."
+    },
+    {
+      "root_cause": "READ-013",
+      "supersedes": ["READ-001", "QUOTE-001", "STAY-001"],
+      "scope": "same page",
+      "rationale": "A consent wall serving no content pre-consent explains the empty body, the unquotable chunks, and the missing orientation simultaneously."
+    }
+  ]
+}

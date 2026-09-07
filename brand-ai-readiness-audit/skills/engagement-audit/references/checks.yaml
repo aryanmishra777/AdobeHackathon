@@ -1,0 +1,311 @@
+# STAY check registry -- engagement-audit
+#
+# Mechanism: does the visitor who ARRIVES actually stay?
+#
+# This is the entire second half of the problem, and it must always appear in the
+# report. Everything upstream is about getting found and cited; this stage is
+# about what happens in the seconds after someone clicks through.
+#
+# The distinctive check here is STAY-002. A visitor arriving from an AI answer is
+# not a cold search visitor: they already have context and a specific question
+# the assistant partly answered. If the landing page restarts that conversation
+# from scratch -- a generic home page, a hero with no relation to the query --
+# the visitor bounces despite everything upstream having worked. That is the
+# "no context retention" failure from the Round-2 appendix, and it is the point
+# where the two halves of this audit meet.
+#
+# Performance checks here are STATIC PROXIES derived from the HTML, not lab or
+# field measurements. Never present them as Core Web Vitals scores.
+
+meta:
+  skill: engagement-audit
+  mechanism: stay
+  category: engagement
+  check_prefix: STAY
+  version: "0.1.0"
+
+checks:
+
+  - id: STAY-001
+    title_template: "The top of the page does not say what this is"
+    applies_when: always
+    inputs: [pages/*/extracted.json#headings, pages/*/extracted.json#text, pages/*/raw.html]
+    detection: model-judged
+    severity_rule: >-
+      high on the home page when nothing above the fold states what the
+      organisation offers and to whom;
+      medium on other landing pages.
+    evidence_template: "The first content on {page} is {excerpt}, which does not state what is offered."
+    verification: "Load {page} and read only what is visible without scrolling"
+    fix_ref: references/fixes/orientation.md
+    false_positive_guards:
+      - "We cannot measure the fold. Approximate it from document order, and say
+         so -- never claim to know what was visible on a given viewport."
+      - "A well-known brand needs less explanation on its own home page. Weigh
+         this before reporting, and lower severity accordingly."
+      - "Do not fire where READ-001 or READ-013 fires: the content is missing from
+         our view, not from the visitor's."
+      - "Model-judged: cap at 'high'."
+
+  - id: STAY-002
+    title_template: "Pages do not continue the conversation visitors arrive from"
+    applies_when: always
+    inputs: [pages/*/extracted.json, pages/*/chunks.json, MANIFEST.json#pages]
+    detection: model-judged
+    severity_rule: >-
+      medium normally; high when the site's only entry points are generic and the
+      specific questions an assistant would cite are answered nowhere a visitor
+      could land directly.
+    evidence_template: >-
+      "A visitor arriving with the question '{question}' lands on {page}, which
+      opens with {excerpt} and does not address it. No deep-linkable page answers
+      it directly."
+    verification: "Ask an assistant about {topic}, follow the link it gives, and see whether the page answers the question you asked"
+    fix_ref: references/fixes/ai-referral-landing.md
+    false_positive_guards:
+      - "This is inherently a judgment call and must never be stated as measured
+         fact. Model-judged, confidence at most 'medium'."
+      - "Derive the likely arrival questions from the SITE'S OWN content and
+         category, not from a generic list. An invented question produces an
+         invented finding."
+      - "A home page is allowed to be general. The finding is that no SPECIFIC
+         page exists to land on, not that the home page is broad."
+      - "Do not report this on docs sites, where deep pages already answer
+         specific questions by construction."
+
+  - id: STAY-003
+    title_template: "No clear next action"
+    applies_when: always
+    inputs: [pages/*/extracted.json#links, pages/*/extracted.json#forms]
+    detection: deterministic
+    severity_rule: "medium when key pages present no primary action, or so many competing ones that none is primary."
+    evidence_template: "{page} presents {n} calls to action of equal prominence."
+    verification: "Open {page} and identify the single action it wants from you"
+    fix_ref: references/fixes/orientation.md
+    false_positive_guards:
+      - "Prominence cannot be judged from HTML alone; we see link text and
+         position, not visual weight. Keep confidence at 'medium'."
+      - "Editorial, documentation and legal pages need no call to action. Gate on
+         page_type."
+
+  - id: STAY-004
+    title_template: "Pages dead-end with nowhere to go next"
+    applies_when: always
+    inputs: [pages/*/extracted.json#links]
+    detection: deterministic
+    severity_rule: "medium when content pages carry few or no onward links beyond global navigation."
+    evidence_template: "{n} of {m} pages contain {k} or fewer in-content internal links."
+    verification: "Read to the end of {page} and look for a next step"
+    fix_ref: references/fixes/orientation.md
+    false_positive_guards:
+      - "Count in-content links only; the bundle marks nav links with in_nav.
+         Global navigation is not a next step."
+      - "Contact, thank-you and legal pages are legitimate endpoints."
+
+  - id: STAY-005
+    title_template: "Visitors cannot tell where they are in the site"
+    applies_when: always
+    inputs: [pages/*/extracted.json#links, pages/*/extracted.json#jsonld]
+    detection: deterministic
+    severity_rule: "medium on sites more than two levels deep with no breadcrumbs or sectional navigation; low otherwise."
+    evidence_template: "{n} of {m} pages at depth {d} or greater show no breadcrumb or section navigation."
+    verification: "Open {page} directly and try to identify which section it belongs to"
+    fix_ref: references/fixes/orientation.md
+    false_positive_guards:
+      - "Flat sites need no breadcrumbs. Gate on actual URL depth."
+      - "Overlaps PARSE-013, which covers the markup. Report the visitor-facing
+         orientation gap here and the markup gap there -- never both for one
+         problem."
+
+  - id: STAY-006
+    title_template: "The site discards the context a visitor arrived with"
+    applies_when: always
+    inputs: [pages/*/extracted.json#forms, pages/*/extracted.json#links, pages/*/raw.html]
+    detection: model-judged
+    severity_rule: "medium when search or filter state is not carried in the URL, so results cannot be linked, shared or returned to."
+    evidence_template: "{page} uses a {mechanism} whose state does not appear in the URL."
+    verification: "Run a search or apply a filter on {page} and check whether the URL changes"
+    fix_ref: references/fixes/context-retention.md
+    false_positive_guards:
+      - "We cannot execute JavaScript, so this is inferred from form markup and
+         URL patterns. Cap confidence at 'medium' and say it is inferred."
+      - "A form with method=GET already puts state in the URL. Check the method
+         before reporting."
+
+  - id: STAY-007
+    title_template: "An interstitial blocks the page on arrival"
+    applies_when: always
+    inputs: [pages/*/raw.html, pages/*/extracted.json#text]
+    detection: deterministic
+    severity_rule: "medium for a modal or overlay on entry; high when it also hides content from crawlers."
+    evidence_template: "{page} includes {overlay_type} presented on entry."
+    verification: "Open {page} in a private window and note what appears before the content"
+    fix_ref: references/fixes/consent-and-interstitials.md
+    false_positive_guards:
+      - "Legally required consent notices are not defects. Recommend serving
+         content beneath them rather than removing them."
+      - "A cookie banner that overlays fully-served content is a STAY finding at
+         most. Only when content is withheld until consent does it become
+         READ-013, and then that check owns it."
+      - "We cannot see delayed pop-ups. Report only overlays present in the
+         initial HTML."
+
+  - id: STAY-008
+    title_template: "Pages are heavy enough to slow first render"
+    applies_when: always
+    inputs: [pages/*/extracted.json#scripts, pages/*/extracted.json#images, pages/*/request.json#timing]
+    detection: deterministic
+    severity_rule: "medium when pages carry large transfer sizes and several render-blocking scripts; low for isolated cases."
+    evidence_template: "{page} transfers {bytes} with {n} render-blocking scripts and {k} images lacking lazy loading."
+    verification: "Open {page} with the browser network panel and check transfer size and blocking requests"
+    fix_ref: references/fixes/performance-proxies.md
+    false_positive_guards:
+      - "These are STATIC PROXIES from the HTML, not Core Web Vitals. Never
+         present them as CWV or LCP scores, and never quote a score we did not
+         measure."
+      - "We do not fetch subresources, so image and script byte sizes are usually
+         unknown. Report counts and the page's own transfer size only."
+      - "Never exceed 'medium' on proxy evidence alone."
+
+  - id: STAY-009
+    title_template: "Images without dimensions risk layout shift"
+    applies_when: always
+    inputs: [pages/*/extracted.json#images]
+    detection: deterministic
+    severity_rule: "low; medium when most images above the fold lack dimensions."
+    evidence_template: "{n} of {m} images declare neither width nor height."
+    verification: "curl -s {page} | grep -c '<img' and compare with the count carrying width"
+    fix_ref: references/fixes/performance-proxies.md
+    false_positive_guards:
+      - "CSS aspect-ratio also reserves space and we cannot see stylesheets. Cap
+         confidence at 'medium' and phrase as a risk, not a measured shift."
+
+  - id: STAY-010
+    title_template: "The site is not usable on mobile"
+    applies_when: always
+    inputs: [pages/*/extracted.json#meta, pages/*/raw.html]
+    detection: deterministic
+    severity_rule: "high when no viewport meta tag is present; medium for a fixed-width or zoom-disabled viewport."
+    evidence_template: "{n} of {m} pages declare {viewport_state}."
+    verification: "curl -s {page} | grep -i 'name=\"viewport\"'"
+    fix_ref: references/fixes/performance-proxies.md
+    false_positive_guards:
+      - "A missing viewport tag is strong evidence; anything beyond it is not
+         visible to us. Do not claim the site is unusable on mobile in any richer
+         sense than the tag supports."
+      - "user-scalable=no is an accessibility problem worth reporting separately
+         at 'low'."
+
+  - id: STAY-011
+    title_template: "Content is hard to read"
+    applies_when: always
+    inputs: [pages/*/extracted.json#text, pages/*/extracted.json#headings]
+    detection: deterministic
+    severity_rule: "low; medium when long pages run without subheadings."
+    evidence_template: "{page} runs {words} words with {n} subheadings."
+    verification: "Scroll {page} and look for structure breaking up the text"
+    fix_ref: references/fixes/orientation.md
+    false_positive_guards:
+      - "We cannot assess typography, contrast or line length from HTML. Restrict
+         this to structural density -- words per heading -- and never comment on
+         visual design."
+      - "Reading-level scoring is unreliable across domains and must not be used."
+
+  - id: STAY-012
+    title_template: "Forms ask for more than the visitor is ready to give"
+    applies_when: always
+    inputs: [pages/*/extracted.json#forms]
+    detection: deterministic
+    severity_rule: "medium when a top-of-funnel form has many required fields; low otherwise."
+    evidence_template: "The form on {page} has {n} fields, {r} required."
+    verification: "Open {page} and count the required fields before submission"
+    fix_ref: references/fixes/orientation.md
+    false_positive_guards:
+      - "Only fires where a form exists. Checkout, application and account forms
+         legitimately need many fields -- gate on page_type and funnel position."
+      - "Hidden and submit inputs are excluded by the collector; do not re-count
+         them."
+
+  - id: STAY-013
+    title_template: "Accessibility basics are missing"
+    applies_when: always
+    inputs: [pages/*/extracted.json#images, pages/*/extracted.json#forms, pages/*/raw.html]
+    detection: deterministic
+    severity_rule: "medium when form inputs lack labels or landmarks are absent; low for isolated issues."
+    evidence_template: "{n} form inputs have no associated label across {m} pages."
+    verification: "Tab through {page} using only the keyboard"
+    fix_ref: references/fixes/orientation.md
+    false_positive_guards:
+      - "This is not a full accessibility audit and must not be presented as one.
+         Report only the mechanical checks the bundle supports, and say the scope
+         is limited."
+      - "aria-label and aria-labelledby are valid labelling. Check for those
+         before reporting a missing label."
+
+  - id: STAY-014
+    title_template: "Third-party scripts dominate the page"
+    applies_when: always
+    inputs: [pages/*/extracted.json#scripts]
+    detection: deterministic
+    severity_rule: "medium when many third-party scripts load render-blocking; low otherwise."
+    evidence_template: "{page} loads {n} third-party scripts from {hosts}, {b} of them render-blocking."
+    verification: "Open the network panel on {page} and sort by domain"
+    fix_ref: references/fixes/performance-proxies.md
+    false_positive_guards:
+      - "Tag managers, analytics and consent tools are near-universal and
+         generally deliberate. Report the render-blocking ones only, and never
+         recommend removing analytics outright."
+
+  - id: STAY-015
+    title_template: "Related content is not linked"
+    applies_when: [ecommerce, media-publisher, saas, marketplace, docs]
+    inputs: [pages/*/extracted.json#links]
+    detection: deterministic
+    severity_rule: "low; medium on content sites where every page is an entry point."
+    evidence_template: "{n} of {m} content pages link to no related content."
+    verification: "Read to the end of {page} and look for related items"
+    fix_ref: references/fixes/orientation.md
+    false_positive_guards:
+      - "Related-content modules are often rendered client-side and invisible to
+         us. Check render_signals before reporting, and cap confidence at
+         'medium'."
+
+  - id: STAY-016
+    title_template: "No trust signals near the point of decision"
+    applies_when: [ecommerce, saas, local-business, marketplace, nonprofit-gov]
+    inputs: [pages/*/extracted.json#text, pages/*/extracted.json#links, pages/*/extracted.json#jsonld]
+    detection: model-judged
+    severity_rule: "medium when conversion pages carry no reviews, guarantees, contact details or credentials."
+    evidence_template: "{page} asks for {action} and shows no reviews, guarantee, contact route or credentials."
+    verification: "Open {page} and look for reasons to trust the transaction"
+    fix_ref: references/fixes/orientation.md
+    false_positive_guards:
+      - "Trust signals are often rendered by third-party widgets we cannot see.
+         Check iframes and render_signals before reporting."
+      - "Never recommend adding reviews or credentials the organisation does not
+         genuinely have. Recommend surfacing what exists."
+
+proactive:
+  - id: STAY-P01
+    title: "Build a landing page for each question assistants are likely to cite"
+    gate: always
+    rationale_template: >-
+      "A visitor arriving from an AI answer already has context and a specific
+      question. A page that continues that conversation converts far better than
+      a home page that restarts it, and the same page is what the assistant needs
+      in order to cite something specific."
+  - id: STAY-P02
+    title: "Carry search and filter state in the URL"
+    gate: "site has search or faceted filtering"
+    rationale_template: >-
+      "URL-carried state makes a result set linkable, shareable and reachable via
+      the back button, and it turns each meaningful combination into a page that
+      can be discovered on its own."
+  - id: STAY-P03
+    title: "State the answer above the fold, then elaborate below it"
+    gate: always
+    rationale_template: >-
+      "The same structure serves both halves of this audit: a visitor sees
+      immediately that they are in the right place, and a retrieval system finds
+      a self-contained answer at the top of the page instead of after the
+      preamble."

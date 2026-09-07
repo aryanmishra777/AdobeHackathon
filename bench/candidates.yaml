@@ -1,0 +1,116 @@
+# Candidate pool for the benchmark corpus.
+#
+# This file holds PRIORS ONLY. It is the input to bench/build_corpus.py, which
+# crawls each site and writes bench/corpus.yaml with MEASURED labels. Where a
+# measurement disagrees with the prior below, the measurement wins and the
+# disagreement is recorded -- those are the most interesting entries in the
+# corpus, because they are the cases human intuition gets wrong.
+#
+#   seo_prior   our expectation of conventional SEO health, from whether the
+#               site ranks for its own category terms and is broadly cited.
+#               Not measured by our tooling; confirm by hand for entries you
+#               care about.
+#   site_type   drives which checks apply (see site-profiles.md).
+#   vertical    for spread only; not used by any check.
+#
+# Selection criteria: publicly reachable, no authentication, stable, varied
+# verticals and architectures, and a deliberate mix of server-rendered and
+# client-rendered front ends so every quadrant has a chance of being populated.
+#
+# Refresh with:  python bench/build_corpus.py
+
+candidates:
+
+  # --- reference, documentation and standards ---------------------------
+  - {url: "https://www.python.org",          seo_prior: good, site_type: docs,             vertical: programming}
+  - {url: "https://developer.mozilla.org",   seo_prior: good, site_type: docs,             vertical: programming}
+  - {url: "https://www.postgresql.org",      seo_prior: good, site_type: docs,             vertical: programming}
+  - {url: "https://www.w3.org",              seo_prior: good, site_type: docs,             vertical: standards}
+  - {url: "https://www.ietf.org",            seo_prior: good, site_type: docs,             vertical: standards}
+  - {url: "https://arxiv.org",               seo_prior: good, site_type: docs,             vertical: research}
+  - {url: "https://en.wikipedia.org",        seo_prior: good, site_type: media-publisher,  vertical: reference}
+  - {url: "https://stackoverflow.com",       seo_prior: good, site_type: marketplace,      vertical: programming}
+
+  # --- public sector and NGO --------------------------------------------
+  - {url: "https://www.gov.uk",              seo_prior: good, site_type: nonprofit-gov,    vertical: government}
+  - {url: "https://www.nhs.uk",              seo_prior: good, site_type: nonprofit-gov,    vertical: health}
+  - {url: "https://www.who.int",             seo_prior: good, site_type: nonprofit-gov,    vertical: health}
+  - {url: "https://www.nasa.gov",            seo_prior: good, site_type: nonprofit-gov,    vertical: science}
+  - {url: "https://www.eff.org",             seo_prior: good, site_type: nonprofit-gov,    vertical: advocacy}
+  - {url: "https://www.redcross.org",        seo_prior: good, site_type: nonprofit-gov,    vertical: charity}
+  - {url: "https://archive.org",             seo_prior: good, site_type: nonprofit-gov,    vertical: reference}
+  - {url: "https://www.khanacademy.org",     seo_prior: good, site_type: nonprofit-gov,    vertical: education}
+
+  # --- news and publishing (expect paywalls and bot management) ---------
+  - {url: "https://www.bbc.co.uk",           seo_prior: good, site_type: media-publisher,  vertical: news}
+  - {url: "https://www.theguardian.com",     seo_prior: good, site_type: media-publisher,  vertical: news}
+  - {url: "https://www.reuters.com",         seo_prior: good, site_type: media-publisher,  vertical: news}
+  - {url: "https://apnews.com",              seo_prior: good, site_type: media-publisher,  vertical: news}
+  - {url: "https://www.npr.org",             seo_prior: good, site_type: media-publisher,  vertical: news}
+  - {url: "https://arstechnica.com",         seo_prior: good, site_type: media-publisher,  vertical: tech-news}
+
+  # --- SaaS marketing sites (mixed SSR and client-rendered) -------------
+  - {url: "https://stripe.com",              seo_prior: good, site_type: saas,             vertical: payments}
+  - {url: "https://vercel.com",              seo_prior: good, site_type: saas,             vertical: devtools}
+  - {url: "https://linear.app",              seo_prior: good, site_type: saas,             vertical: devtools}
+  - {url: "https://www.notion.com",          seo_prior: good, site_type: saas,             vertical: productivity}
+  - {url: "https://www.figma.com",           seo_prior: good, site_type: saas,             vertical: design}
+  - {url: "https://slack.com",               seo_prior: good, site_type: saas,             vertical: productivity}
+  - {url: "https://asana.com",               seo_prior: good, site_type: saas,             vertical: productivity}
+  - {url: "https://www.airtable.com",        seo_prior: good, site_type: saas,             vertical: productivity}
+  - {url: "https://www.atlassian.com",       seo_prior: good, site_type: saas,             vertical: productivity}
+  - {url: "https://www.hubspot.com",         seo_prior: good, site_type: saas,             vertical: marketing}
+
+  # --- commerce and marketplaces (expect bot management) ----------------
+  - {url: "https://www.etsy.com",            seo_prior: good, site_type: marketplace,      vertical: retail}
+  - {url: "https://www.ikea.com",            seo_prior: good, site_type: ecommerce,        vertical: retail}
+  - {url: "https://www.patagonia.com",       seo_prior: good, site_type: ecommerce,        vertical: apparel}
+  - {url: "https://www.allbirds.com",        seo_prior: good, site_type: ecommerce,        vertical: apparel}
+  - {url: "https://www.gymshark.com",        seo_prior: good, site_type: ecommerce,        vertical: apparel}
+  - {url: "https://www.warbyparker.com",     seo_prior: good, site_type: ecommerce,        vertical: eyewear}
+  - {url: "https://www.rei.com",             seo_prior: good, site_type: ecommerce,        vertical: outdoor}
+  - {url: "https://www.chewy.com",           seo_prior: good, site_type: ecommerce,        vertical: pet}
+
+  # --- older, hand-built and minimal sites ------------------------------
+  # Added to fill the poor-SEO quadrants. "Poor SEO" here means the technical
+  # hygiene a conventional audit checks -- sitemap, canonicals, meta
+  # descriptions, h1s, internal linking -- which hand-maintained sites from
+  # before those conventions hardened routinely lack, while often having
+  # excellent plain-text content. That combination is what makes them useful:
+  # they separate technical SEO health from machine readability.
+  - {url: "https://www.stroustrup.com",      seo_prior: poor, site_type: portfolio-brochure, vertical: personal}
+  - {url: "https://norvig.com",              seo_prior: poor, site_type: portfolio-brochure, vertical: personal}
+  - {url: "https://cr.yp.to",                seo_prior: poor, site_type: portfolio-brochure, vertical: personal}
+  - {url: "https://danluu.com",              seo_prior: poor, site_type: media-publisher,    vertical: personal}
+  - {url: "https://jvns.ca",                 seo_prior: poor, site_type: media-publisher,    vertical: personal}
+  - {url: "https://sive.rs",                 seo_prior: poor, site_type: media-publisher,    vertical: personal}
+  - {url: "http://www.catb.org",             seo_prior: poor, site_type: portfolio-brochure, vertical: personal}
+  - {url: "https://suckless.org",            seo_prior: poor, site_type: docs,               vertical: opensource}
+  - {url: "https://www.openbsd.org",         seo_prior: poor, site_type: docs,               vertical: opensource}
+  - {url: "https://www.netbsd.org",          seo_prior: poor, site_type: docs,               vertical: opensource}
+  - {url: "https://sqlite.org",              seo_prior: poor, site_type: docs,               vertical: opensource}
+  - {url: "https://www.lua.org",             seo_prior: poor, site_type: docs,               vertical: opensource}
+  - {url: "http://www.mutt.org",             seo_prior: poor, site_type: docs,               vertical: opensource}
+  - {url: "https://www.vim.org",             seo_prior: poor, site_type: docs,               vertical: opensource}
+  - {url: "https://9p.io",                   seo_prior: poor, site_type: docs,               vertical: opensource}
+  - {url: "https://nginx.org",               seo_prior: poor, site_type: docs,               vertical: opensource}
+  - {url: "https://curl.se",                 seo_prior: poor, site_type: docs,               vertical: opensource}
+  - {url: "https://www.lighttpd.net",        seo_prior: poor, site_type: docs,               vertical: opensource}
+  - {url: "https://www.openssl.org",         seo_prior: poor, site_type: docs,               vertical: opensource}
+  - {url: "https://www.varnish-cache.org",   seo_prior: poor, site_type: docs,               vertical: opensource}
+  - {url: "https://www.gnu.org",             seo_prior: poor, site_type: nonprofit-gov,      vertical: opensource}
+  - {url: "https://www.fsf.org",             seo_prior: poor, site_type: nonprofit-gov,      vertical: advocacy}
+  - {url: "https://www.rfc-editor.org",      seo_prior: poor, site_type: docs,               vertical: standards}
+  - {url: "https://tug.org",                 seo_prior: poor, site_type: nonprofit-gov,      vertical: publishing}
+  - {url: "https://ctan.org",                seo_prior: poor, site_type: docs,               vertical: publishing}
+  - {url: "https://www.gutenberg.org",       seo_prior: poor, site_type: media-publisher,    vertical: books}
+  - {url: "https://textfiles.com",           seo_prior: poor, site_type: media-publisher,    vertical: archive}
+  - {url: "https://www.tuhs.org",            seo_prior: poor, site_type: nonprofit-gov,      vertical: archive}
+  - {url: "https://news.ycombinator.com",    seo_prior: poor, site_type: marketplace,        vertical: community}
+  - {url: "https://lobste.rs",               seo_prior: poor, site_type: marketplace,        vertical: community}
+  - {url: "https://www.berkshirehathaway.com", seo_prior: poor, site_type: portfolio-brochure, vertical: finance}
+  - {url: "https://craigslist.org",          seo_prior: poor, site_type: marketplace,        vertical: classifieds}
+  - {url: "https://motherfuckingwebsite.com", seo_prior: poor, site_type: portfolio-brochure, vertical: satire}
+  - {url: "https://www.ams.org",             seo_prior: poor, site_type: nonprofit-gov,      vertical: research}
+  - {url: "https://www.jwz.org",             seo_prior: poor, site_type: media-publisher,    vertical: personal}
+  - {url: "https://blog.codinghorror.com",   seo_prior: poor, site_type: media-publisher,    vertical: personal}

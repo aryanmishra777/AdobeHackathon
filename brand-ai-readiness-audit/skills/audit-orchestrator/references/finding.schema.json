@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://brand-ai-readiness-audit/finding.schema.json",
+  "title": "Finding",
+  "description": "One evidence-backed problem detected by an analysis skill. Every analysis skill in this marketplace emits candidates in exactly this shape; the orchestrator merges them and assigns the final sequential id.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "check_id",
+    "title",
+    "severity",
+    "confidence",
+    "determinism",
+    "category",
+    "mechanism",
+    "evidence",
+    "evidence_detail",
+    "affected_scope",
+    "verification",
+    "suggested_action"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^F-[0-9]{3,}$",
+      "description": "Sequential id assigned by the orchestrator after sorting. Analysis skills may emit a placeholder; it is always overwritten."
+    },
+    "check_id": {
+      "type": "string",
+      "pattern": "^(REACH|READ|PARSE|QUOTE|TRUST|STAY)-[0-9]{3}$",
+      "description": "Stable registry id. Must exist in the owning skill's references/checks.yaml. Never renumber a check id once published; retire it instead."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 120,
+      "description": "One line naming the problem in the site owner's language, not ours. State the defect, not the check."
+    },
+    "severity": { "$ref": "#/$defs/level" },
+    "confidence": {
+      "enum": ["high", "medium", "low"],
+      "description": "high: the evidence is dispositive. medium: strongly indicated, a benign explanation exists. low: suspected, needs human confirmation."
+    },
+    "determinism": {
+      "enum": ["deterministic", "model-judged"],
+      "description": "deterministic: derived from a bundled script over the evidence bundle; re-running yields the identical result. model-judged: reached by agent judgment. A model-judged finding may not be critical without deterministic corroboration."
+    },
+    "category": {
+      "enum": ["discoverability", "engagement"],
+      "description": "Which half of the Round-2 problem this belongs to."
+    },
+    "mechanism": {
+      "enum": ["reach", "read", "parse", "quote", "trust", "stay"],
+      "description": "Which stage of the pipeline fails. Ordered: a failure at an earlier stage makes later stages moot."
+    },
+    "evidence": {
+      "type": "string",
+      "minLength": 20,
+      "description": "Quantified and human-readable, citing what was observed on how many pages. 'Crawled 12 product pages; 0/12 contain schema.org markup.' Never a restatement of the title."
+    },
+    "evidence_detail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_refs"],
+      "properties": {
+        "pages_affected": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "URLs or bundle page-ids exhibiting the problem. Must be EXHAUSTIVE within the sampled set, never a sample of a sample -- the orchestrator derives scope from this list's length, so a truncated list gets the finding demoted under false-positive gate 5. The sample is capped at 25 pages, so an exhaustive list is always short."
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": { "type": "number" },
+          "description": "The numbers quoted in `evidence`, machine-readable."
+        },
+        "artifact_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Bundle-relative paths backing this finding, e.g. 'pages/p003/extracted.json' or 'robots.txt.raw'. A finding whose refs are empty or unresolvable is dropped by the orchestrator, not downgraded."
+        },
+        "excerpt": {
+          "type": "string",
+          "maxLength": 1200,
+          "description": "Verbatim snippet from the artifact, when a quote makes the finding self-evident."
+        }
+      }
+    },
+    "affected_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pages_checked", "pages_affected", "scope"],
+      "properties": {
+        "pages_checked": { "type": "integer", "minimum": 0 },
+        "pages_affected": { "type": "integer", "minimum": 0 },
+        "scope": {
+          "enum": ["site-wide", "section", "page"],
+          "description": "site-wide requires >=3 pages checked and >=60% affected."
+        },
+        "section": {
+          "type": "string",
+          "description": "Path prefix when scope is 'section', e.g. '/blog/'."
+        }
+      }
+    },
+    "verification": {
+      "type": "string",
+      "minLength": 15,
+      "description": "One concrete step letting a human re-check this without our tooling. 'curl -A ChatGPT-User https://site/robots.txt and look for the Disallow.' This is what makes the report trustworthy rather than oracular."
+    },
+    "severity_locked": {
+      "type": "boolean",
+      "description": "When true the orchestrator applies no scope or confidence modifier to this finding. Set only by checks whose registry entry fixes the level -- informational findings such as a deliberate training-crawler opt-out, where escalation would contradict a binding false-positive guard."
+    },
+    "superseded_by": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "check_ids of earlier-stage root causes that explain this finding. Set by the orchestrator during cross-mechanism merge."
+    },
+    "suggested_action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "priority", "steps", "effort", "impact_rationale"],
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200,
+          "description": "The fix in one imperative line. 'Add Product/Offer JSON-LD to every product page.'"
+        },
+        "priority": { "$ref": "#/$defs/level" },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" },
+          "description": "Ordered, concrete steps. Name the file, directive, tag or template to change. Never 'improve your structured data'."
+        },
+        "code": {
+          "type": "string",
+          "description": "Copy-pasteable snippet — JSON-LD block, robots.txt stanza, meta tag. Must be tailored to this site using values observed in the bundle, not a generic template with placeholders."
+        },
+        "effort": {
+          "enum": ["S", "M", "L"],
+          "description": "S: a config or template edit, under an hour. M: a scoped content or code change, days. L: structural, weeks."
+        },
+        "impact_rationale": {
+          "type": "string",
+          "minLength": 20,
+          "description": "Why this fix resolves the mechanism that is failing. Must reference the mechanism, not restate the fix. This is the field that proves the recommendation is mechanism-sound rather than cargo-culted."
+        },
+        "owner": {
+          "enum": ["engineering", "content", "marketing", "seo", "infrastructure"],
+          "description": "Who typically executes this, to help route the backlog."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "level": { "enum": ["critical", "high", "medium", "low"] }
+  }
+}

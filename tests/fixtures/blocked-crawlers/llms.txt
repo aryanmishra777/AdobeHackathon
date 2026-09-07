@@ -1,0 +1,10 @@
+# Northwind Coffee Roasters
+
+> Small-batch specialty coffee roaster based in Leeds, United Kingdom,
+> shipping across the UK since 2014.
+
+## Key pages
+
+- [Pricing](http://localhost:8903/pricing.html): Subscriptions from GBP 29 per month, delivery included.
+- [About](http://localhost:8903/about.html): Founded 2014, 12 staff, Leeds.
+- [Contact](http://localhost:8903/contact.html): Address, hours, phone.

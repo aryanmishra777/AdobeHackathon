@@ -1,0 +1,75 @@
+{
+  "name": "brand-ai-readiness-audit",
+  "version": "0.1.0",
+  "description": "Audits any website for the reasons AI assistants fail to find, trust and cite it, and the reasons visitors who do arrive fail to engage. Emits one evidence-backed report of findings plus prioritized, mechanism-sound fixes. Recommend-only: never modifies the audited site.",
+  "license": "MIT",
+  "entrypoint": "audit-orchestrator",
+  "skills": [
+    {
+      "id": "audit-orchestrator",
+      "path": "skills/audit-orchestrator",
+      "entrypoint": true,
+      "concern": "compose",
+      "summary": "Receives the audit request, profiles the site, dispatches every analysis skill over one shared evidence bundle, merges and de-duplicates their findings, applies the severity and false-positive rules, and emits the final report.",
+      "status": "complete",
+      "owner": "aryan"
+    },
+    {
+      "id": "site-evidence-collector",
+      "path": "skills/site-evidence-collector",
+      "concern": "acquire",
+      "summary": "The only skill that touches the network. Performs one polite, robots-respecting, budget-bounded crawl and writes a normalized evidence bundle to disk for every other skill to analyze.",
+      "status": "complete",
+      "owner": "aryan"
+    },
+    {
+      "id": "crawl-access-audit",
+      "path": "skills/crawl-access-audit",
+      "concern": "reach",
+      "summary": "Can a machine get in at all? robots.txt per AI user-agent, CDN bot-blocking, sitemaps, indexability directives, canonicals, redirects, reachability.",
+      "status": "complete",
+      "owner": "aryan"
+    },
+    {
+      "id": "render-extractability-audit",
+      "path": "skills/render-extractability-audit",
+      "concern": "read",
+      "summary": "Can a machine read what is there? JS-dependent content, facts locked in images or PDFs, content behind interaction or consent walls, semantic structure.",
+      "status": "scaffold",
+      "owner": "lakshay"
+    },
+    {
+      "id": "structured-data-audit",
+      "path": "skills/structured-data-audit",
+      "concern": "parse",
+      "summary": "Can a machine parse specific facts out? schema.org coverage and validity, required properties by type, entity graph, and markup that contradicts the visible page.",
+      "status": "scaffold",
+      "owner": "lakshay"
+    },
+    {
+      "id": "answerability-audit",
+      "path": "skills/answerability-audit",
+      "concern": "quote",
+      "summary": "Can a machine lift a clear, self-contained fact? Chunk-level retrieval simulation, explicit identity and key-fact statements, and coverage of the questions buyers actually ask.",
+      "status": "scaffold",
+      "owner": "mayank"
+    },
+    {
+      "id": "freshness-corroboration-audit",
+      "path": "skills/freshness-corroboration-audit",
+      "concern": "trust",
+      "summary": "Will a machine believe and repeat the fact? Content recency and date honesty, off-site corroboration of key claims, brand entity ambiguity, and identity anchors.",
+      "status": "scaffold",
+      "owner": "mayank"
+    },
+    {
+      "id": "engagement-audit",
+      "path": "skills/engagement-audit",
+      "concern": "stay",
+      "summary": "Does the visitor who arrives stay? Above-the-fold orientation, AI-referral landing continuity, context retention, friction, interstitials, and performance proxies.",
+      "status": "scaffold",
+      "owner": "mayank"
+    }
+  ],
+  "$comment": "status is build-tracking metadata for this team, not part of the contest convention: 'complete' skills are implemented and tested; 'scaffold' skills have a frozen SKILL.md and check registry with the check script still to be written. tools/validate.py reports a scaffold skill's missing scripts as TODO rather than as a spec violation. Every skill is agentskills.io-valid either way."
+}

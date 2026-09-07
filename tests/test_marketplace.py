@@ -1,0 +1,298 @@
+"""Deterministic tests over the local fixture bundles.
+
+Dev tooling -- outside the submission.
+
+Layer 1 of the three-layer test strategy: hand-built fixture sites with known
+defects, plus one clean site that acts as the false-positive tripwire. Fast,
+offline, and asserted hard.
+
+    python tests/make_fixtures.py && python tests/make_bundles.py
+    python -m pytest tests/ -v
+
+Layers 2 and 3 (corpus replay and the live bench) live in bench/.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+
+import pytest
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(HERE)
+BUNDLES = os.path.join(HERE, "bundles")
+SKILLS = os.path.join(REPO, "brand-ai-readiness-audit", "skills")
+
+CHECK_ACCESS = os.path.join(SKILLS, "crawl-access-audit", "scripts", "check_access.py")
+VALIDATE_BUNDLE = os.path.join(SKILLS, "site-evidence-collector", "scripts",
+                               "validate_bundle.py")
+MERGE = os.path.join(SKILLS, "audit-orchestrator", "scripts", "merge_findings.py")
+VALIDATE_REPORT = os.path.join(SKILLS, "audit-orchestrator", "scripts",
+                               "validate_report.py")
+
+ALL_FIXTURES = ["clean", "js-shell", "blocked-crawlers", "contradictory-markup",
+                "stale-content", "unquotable-chunks", "low-engagement"]
+
+
+def bundle(name: str) -> str:
+    path = os.path.join(BUNDLES, name)
+    if not os.path.isdir(path):
+        pytest.skip(f"bundle {name!r} not built; run tests/make_bundles.py")
+    return path
+
+
+def run(*args) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, *args], capture_output=True, text=True)
+
+
+def reach_findings(name: str) -> list[dict]:
+    proc = run(CHECK_ACCESS, bundle(name), "--stdout")
+    assert proc.returncode == 0, proc.stderr
+    return json.loads(proc.stdout)["findings"]
+
+
+def manifest(name: str) -> dict:
+    with open(os.path.join(bundle(name), "MANIFEST.json"), encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+# --------------------------------------------------------------------------
+# The bundle contract
+# --------------------------------------------------------------------------
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_bundle_is_valid(name):
+    proc = run(VALIDATE_BUNDLE, bundle(name), "--quiet")
+    assert proc.returncode == 0, proc.stderr
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_bundle_preserves_alt_distinction(name):
+    """alt=null (absent) and alt="" (decorative) must stay distinguishable, or
+    READ-008 cannot avoid its central false positive."""
+    m = manifest(name)
+    for page in [p for p in m["pages"] if p.get("status") == 200]:
+        path = os.path.join(bundle(name), "pages", page["page_id"], "extracted.json")
+        with open(path, encoding="utf-8") as fh:
+            for img in json.load(fh).get("images", []):
+                assert "alt" in img, f"{page['page_id']} dropped the alt key"
+
+
+# --------------------------------------------------------------------------
+# The false-positive tripwire
+# --------------------------------------------------------------------------
+
+def test_clean_site_produces_no_serious_findings():
+    """The single most important test in the repo.
+
+    The clean fixture is correct by construction: retrieval agents explicitly
+    allowed, sitemap present and honest, canonicals on every page, structured
+    data consistent with the visible text, explicit identity sentences, dated
+    content, viewport declared. Any check that fires here at critical or high is
+    wrong, and would cost the reader's trust in every other finding.
+    """
+    serious = [f for f in reach_findings("clean")
+               if f["severity"] in ("critical", "high")]
+    assert not serious, (
+        "checks fired on the clean fixture: "
+        + "; ".join(f"{f['check_id']} ({f['severity']}) {f['title']}" for f in serious))
+
+
+def test_clean_site_reports_no_blocked_agents():
+    m = manifest("clean")
+    blocked = [t for t, e in m["robots"]["agent_matrix"].items()
+               if e.get("root_allowed") is False]
+    assert blocked == [], f"clean fixture should block nothing, blocks {blocked}"
+
+
+# --------------------------------------------------------------------------
+# The retrieval-versus-training split
+# --------------------------------------------------------------------------
+
+def test_blocked_retrieval_agents_are_a_defect():
+    ids = {f["check_id"] for f in reach_findings("blocked-crawlers")}
+    assert "REACH-002" in ids, "blocking ChatGPT-User must produce REACH-002"
+
+
+def test_blocked_training_agents_are_informational_only():
+    """The distinction the whole marketplace turns on.
+
+    Blocking GPTBot is a business decision taken after legal review at many
+    organisations. Reporting it as a defect discredits the report.
+    """
+    findings = reach_findings("blocked-crawlers")
+    trust = [f for f in findings if f["check_id"] == "REACH-003"]
+    assert trust, "blocking GPTBot must still be reported, as information"
+    assert trust[0]["severity"] == "low", (
+        f"REACH-003 must stay 'low', got {trust[0]['severity']}")
+    assert trust[0].get("severity_locked") is True, (
+        "REACH-003 must be severity_locked so no scope modifier can escalate it")
+    text = (trust[0]["evidence"] + trust[0]["suggested_action"]["summary"]).lower()
+    for word in ("error", "defect", "bug", "problem", "fix this"):
+        assert word not in text, f"REACH-003 must not frame a legal opt-out as a {word!r}"
+
+
+def test_training_block_survives_the_merge_at_low():
+    """Regression: a site-wide scope modifier must not escalate an informational
+    finding. This inflated REACH-003 to 'medium' before severity_locked existed.
+    """
+    proc = run(CHECK_ACCESS, bundle("blocked-crawlers"), "--out", "_t.json")
+    assert proc.returncode == 0, proc.stderr
+    try:
+        merged = run(MERGE, "_t.json", "--pages-sampled", "5", "--stdout")
+        assert merged.returncode == 0, merged.stderr
+        doc = json.loads(merged.stdout)
+        t = [f for f in doc["findings"] if f["check_id"] == "REACH-003"]
+        assert t and t[0]["severity"] == "low", (
+            f"REACH-003 escalated to {t[0]['severity'] if t else 'missing'}")
+    finally:
+        if os.path.exists("_t.json"):
+            os.remove("_t.json")
+
+
+# --------------------------------------------------------------------------
+# Determinism
+# --------------------------------------------------------------------------
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_analysis_is_deterministic(name):
+    """The same bundle twice must produce byte-identical findings, or golden
+    tests are meaningless and findings are unreproducible."""
+    a = run(CHECK_ACCESS, bundle(name), "--stdout")
+    b = run(CHECK_ACCESS, bundle(name), "--stdout")
+    assert a.returncode == 0 and b.returncode == 0
+    assert a.stdout == b.stdout, f"{name}: two runs over one bundle disagreed"
+
+
+def test_finding_ids_are_content_addressed():
+    """Merging the same candidates in a different input order must yield the
+    same ids, because ordering is a pure function of content."""
+    findings = reach_findings("blocked-crawlers")
+    forward = os.path.join(HERE, "_fwd.json")
+    reverse = os.path.join(HERE, "_rev.json")
+    try:
+        with open(forward, "w", encoding="utf-8") as fh:
+            json.dump(findings, fh)
+        with open(reverse, "w", encoding="utf-8") as fh:
+            json.dump(list(reversed(findings)), fh)
+        a = run(MERGE, forward, "--pages-sampled", "5", "--stdout")
+        b = run(MERGE, reverse, "--pages-sampled", "5", "--stdout")
+        assert a.returncode == 0 and b.returncode == 0, a.stderr + b.stderr
+        pair_a = [(f["id"], f["check_id"]) for f in json.loads(a.stdout)["findings"]]
+        pair_b = [(f["id"], f["check_id"]) for f in json.loads(b.stdout)["findings"]]
+        assert pair_a == pair_b, "id assignment depends on input order"
+    finally:
+        for p in (forward, reverse):
+            if os.path.exists(p):
+                os.remove(p)
+
+
+# --------------------------------------------------------------------------
+# The finding contract
+# --------------------------------------------------------------------------
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_every_finding_cites_resolvable_evidence(name):
+    """False-positive gate 2: a finding that cannot point at its own evidence is
+    deleted, not downgraded."""
+    root = bundle(name)
+    for f in reach_findings(name):
+        refs = f["evidence_detail"]["artifact_refs"]
+        assert refs, f"{f['check_id']} cites no artifact"
+        for ref in refs:
+            path = os.path.join(root, ref.replace("/", os.sep))
+            assert os.path.exists(path), f"{f['check_id']} cites missing {ref}"
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_findings_satisfy_the_schema_fields(name):
+    required = ["id", "check_id", "title", "severity", "confidence", "determinism",
+                "category", "mechanism", "evidence", "evidence_detail",
+                "affected_scope", "verification", "suggested_action"]
+    for f in reach_findings(name):
+        for key in required:
+            assert key in f, f"{f.get('check_id')} missing {key!r}"
+        assert f["evidence"].strip().lower() != f["title"].strip().lower(), (
+            f"{f['check_id']}: evidence restates the title")
+        action = f["suggested_action"]
+        for key in ("summary", "priority", "steps", "effort", "impact_rationale"):
+            assert key in action, f"{f['check_id']}.suggested_action missing {key!r}"
+        assert action["steps"], f"{f['check_id']} has no fix steps"
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_model_judged_findings_are_never_critical(name):
+    """False-positive gate 3."""
+    for f in reach_findings(name):
+        if f["determinism"] == "model-judged":
+            assert f["severity"] != "critical", (
+                f"{f['check_id']} is model-judged and critical")
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_fix_snippets_are_tailored_not_templated(name):
+    """A snippet containing a placeholder gets pasted into production verbatim."""
+    for f in reach_findings(name):
+        code = f["suggested_action"].get("code") or ""
+        for placeholder in ("YOUR_", "<your ", "REPLACE_ME", "XXX", "TODO"):
+            assert placeholder.lower() not in code.lower(), (
+                f"{f['check_id']} ships an untailored snippet containing "
+                f"{placeholder!r}")
+
+
+# --------------------------------------------------------------------------
+# End to end
+# --------------------------------------------------------------------------
+
+def test_pipeline_produces_a_schema_valid_report():
+    """collect -> check -> merge -> validate, over a fixture bundle."""
+    root = bundle("blocked-crawlers")
+    cand = os.path.join(HERE, "_cand.json")
+    merged = os.path.join(HERE, "_merged.json")
+    report = os.path.join(HERE, "_report.json")
+    try:
+        assert run(CHECK_ACCESS, root, "--out", cand).returncode == 0
+        assert run(MERGE, cand, "--pages-sampled", "5", "--out", merged).returncode == 0
+
+        with open(merged, encoding="utf-8") as fh:
+            m = json.load(fh)
+        sc = m["scorecard_input"]
+        doc = {
+            "schema_version": "1.0",
+            "site": "localhost",
+            "audited_at": "2026-09-06T00:00:00Z",
+            "summary": m["summary"],
+            "scorecard": {
+                "discoverability": {**sc["discoverability"],
+                                    "headline": "Retrieval crawlers are blocked."},
+                "engagement": {**sc["engagement"],
+                               "headline": "Not assessed in this REACH-only test."},
+                "verdict": ("robots.txt blocks the crawlers that fetch pages when a "
+                            "user asks a question, so the brand cannot appear in "
+                            "those answers at all."),
+            },
+            "coverage": {
+                "pages_sampled": 5, "complete": False,
+                "limitations": ["REACH-only pipeline test; other stages did not run."],
+                "checks_skipped": [{"check_id": "STAY-001",
+                                    "reason": "engagement-audit not run in this test"}],
+            },
+            "findings": m["findings"],
+        }
+        with open(report, "w", encoding="utf-8") as fh:
+            json.dump(doc, fh, indent=2)
+
+        proc = run(VALIDATE_REPORT, report, "--bundle", root)
+        assert proc.returncode == 0, proc.stderr
+    finally:
+        for p in (cand, merged, report):
+            if os.path.exists(p):
+                os.remove(p)
+
+
+def test_marketplace_validates():
+    proc = run(os.path.join(REPO, "tools", "validate.py"), "--quiet")
+    assert proc.returncode == 0, proc.stdout + proc.stderr

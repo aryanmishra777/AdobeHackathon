@@ -1,0 +1,410 @@
+# REACH check registry -- crawl-access-audit
+#
+# Mechanism: can a machine get in at all? This is the first gate in the chain.
+# If it fails, every later finding is downstream of this one cause.
+#
+# Contract for every entry:
+#   id                     stable, never renumbered; retire instead
+#   title_template         becomes the finding title; {placeholders} filled from evidence
+#   applies_when           site-profile gate, or "always"
+#   inputs                 bundle-relative artifacts this check reads
+#   detection              deterministic | model-judged
+#   severity_rule          how the base severity is chosen (modifiers live in
+#                          audit-orchestrator/references/severity-rubric.md)
+#   evidence_template      what the evidence string must state
+#   verification           the one step a human takes to disagree with us
+#   fix_ref                references/fixes/*.md
+#   false_positive_guards  binding, not advisory
+#
+# Every check here is deterministic. Reachability is measurable, so there is no
+# reason for a model to guess at it.
+
+meta:
+  skill: crawl-access-audit
+  mechanism: reach
+  category: discoverability
+  check_prefix: REACH
+  version: "0.1.0"
+
+checks:
+
+  - id: REACH-001
+    title_template: "robots.txt is missing, unreachable or malformed"
+    applies_when: always
+    inputs: [robots.txt.raw, robots_fetch.json]
+    detection: deterministic
+    severity_rule: >-
+      medium when absent or 404 (everything is implicitly allowed, but the site
+      has no way to steer crawlers and no place to declare a sitemap);
+      high when it returns 5xx (crawlers back off entirely and treat the site as
+      temporarily forbidden); low when it parses with recoverable errors.
+    evidence_template: "GET /robots.txt returned {status}. {parse_error_summary}"
+    verification: "curl -sI https://{site}/robots.txt"
+    fix_ref: references/fixes/robots-ai-agents.md
+    false_positive_guards:
+      - "A 404 is NOT an error condition -- it means everything is allowed. Report
+         it as an opportunity to declare a sitemap, never as a blocking defect."
+      - "Do not report parse errors for non-standard but harmless directives
+         (Host, Clean-param, Request-rate). Only report lines that break group
+         resolution."
+
+  - id: REACH-002
+    title_template: "AI retrieval crawlers are blocked from the whole site"
+    applies_when: always
+    inputs: [MANIFEST.json#robots.agent_matrix]
+    detection: deterministic
+    severity_rule: >-
+      critical when every retrieval-purpose agent is disallowed at "/";
+      high when at least one but not all are;
+      medium when retrieval agents are blocked only on a content section.
+    evidence_template: >-
+      "robots.txt disallows {agents} from {paths}. These agents fetch pages in
+      real time when a user asks a question, so the brand cannot appear in those
+      answers."
+    verification: "Read the User-agent groups in https://{site}/robots.txt for {agents}"
+    fix_ref: references/fixes/robots-ai-agents.md
+    false_positive_guards:
+      - "ONLY agents whose purpose is 'retrieval' or 'search-index' count here.
+         Never include GPTBot, Google-Extended, CCBot, Applebot-Extended or
+         meta-externalagent in this finding -- those are training-corpus opt-outs
+         and a legitimate business decision. They belong to REACH-003."
+      - "Google-Extended does NOT affect Google Search or AI Overviews ranking.
+         Claiming otherwise is a common and highly visible error."
+      - "Check the resolved agent_matrix, not raw text. A Disallow under one group
+         does not apply to an agent matched by a more specific group -- robots
+         directives do not accumulate across groups."
+
+  - id: REACH-003
+    title_template: "AI training crawlers are blocked (informational)"
+    applies_when: always
+    inputs: [MANIFEST.json#robots.agent_matrix]
+    detection: deterministic
+    severity_rule: "always low -- this is a business decision, not a defect."
+    evidence_template: >-
+      "robots.txt disallows the training-corpus crawlers {agents}. This does not
+      affect whether assistants can cite the site today; it affects whether its
+      content trains future models."
+    verification: "Read the User-agent groups in https://{site}/robots.txt"
+    fix_ref: references/fixes/robots-ai-agents.md
+    false_positive_guards:
+      - "Never phrase this as an error, a problem, or something to fix. State the
+         trade-off and stop. Many organisations block these deliberately after
+         legal review, and telling them it is a bug discredits the whole report."
+      - "Do not raise severity even when every training crawler is blocked."
+
+  - id: REACH-004
+    title_template: "A major search crawler is blocked"
+    applies_when: always
+    inputs: [MANIFEST.json#robots.agent_matrix]
+    detection: deterministic
+    severity_rule: >-
+      critical when Googlebot or Bingbot is disallowed at "/" -- assistants lean
+      heavily on these indexes to find candidate sources;
+      high when blocked on a major content section.
+    evidence_template: "robots.txt disallows {agents} from {paths}."
+    verification: "Read the User-agent groups in https://{site}/robots.txt"
+    fix_ref: references/fixes/robots-ai-agents.md
+    false_positive_guards:
+      - "Blocking Googlebot on /search, /cart, /checkout, /account or faceted
+         filter paths is correct practice. Only report content paths."
+      - "A staging or preview subdomain blocking everything is intentional. If the
+         host looks non-production, record it in coverage.limitations instead."
+
+  - id: REACH-005
+    title_template: "The CDN blocks bot user-agents regardless of robots.txt"
+    applies_when: always
+    inputs: [ua_probe.json]
+    detection: deterministic
+    severity_rule: >-
+      critical when every probed agent gets 403, 429 or a challenge page while
+      the browser baseline gets 200;
+      high when some agents are blocked;
+      medium when bots receive a materially smaller body than the baseline
+      (soft-blocking or degraded content).
+    evidence_template: >-
+      "Fetching {url} returns {baseline_status} ({baseline_bytes} bytes) with a
+      browser user-agent but {agent_status} with {agent}. robots.txt permits
+      this path."
+    verification: >-
+      "curl -s -o /dev/null -w '%{http_code}' -A 'ChatGPT-User' https://{site}/
+       and compare with a normal browser user-agent"
+    fix_ref: references/fixes/cdn-bot-blocking.md
+    false_positive_guards:
+      - "A 200 that returns a challenge page is a block. Trust challenge_detected,
+         not the status code alone."
+      - "Do not report when robots.txt already disallows the agent -- the CDN is
+         enforcing a stated policy and REACH-002 or REACH-003 already covers it."
+      - "Rate limiting on a burst is not bot-blocking. If only later probes return
+         429, lower confidence to 'low' and say so; our own probe may have caused it."
+      - "Byte-size differences under 10% are normal (personalisation, CSRF tokens).
+         Require a large gap before reporting soft-blocking."
+
+  - id: REACH-006
+    title_template: "No XML sitemap is published or declared"
+    applies_when: always
+    inputs: [MANIFEST.json#sitemaps, robots.txt.raw]
+    detection: deterministic
+    severity_rule: >-
+      medium normally; high when the site has more than ~50 discoverable URLs or
+      deep sections that crawling alone reaches slowly; low for a site under ~20
+      pages where crawling is trivially complete.
+    evidence_template: >-
+      "No Sitemap directive in robots.txt and GET /sitemap.xml returned {status}."
+    verification: "curl -sI https://{site}/sitemap.xml and grep -i sitemap https://{site}/robots.txt"
+    fix_ref: references/fixes/sitemap.md
+    false_positive_guards:
+      - "A small brochure site does not need a sitemap. Gate severity on site size,
+         and never report this above 'low' for a site under 20 pages."
+      - "The sitemap may live at a non-standard path declared in robots.txt. Check
+         robots.sitemap_urls before concluding none exists."
+
+  - id: REACH-007
+    title_template: "The sitemap is invalid, stale or lists the wrong URLs"
+    applies_when: always
+    inputs: [MANIFEST.json#sitemaps, pages/*/request.json]
+    detection: deterministic
+    severity_rule: >-
+      high when the sitemap fails to parse (crawlers discard it silently, so the
+      site is in the worst of both worlds);
+      medium when it lists URLs that redirect, 404, or are non-canonical;
+      medium when key sampled sections are absent from it.
+    evidence_template: >-
+      "{detail}: {count} of {total} sitemap URLs {problem}."
+    verification: "Fetch the sitemap and spot-check the listed URLs return 200"
+    fix_ref: references/fixes/sitemap.md
+    false_positive_guards:
+      - "Do not report URLs as missing when they were never sampled -- absence from
+         our crawl is not absence from the sitemap. Compare against sitemap
+         entries, not against our page list."
+      - "A sitemap index pointing at child sitemaps is valid, not an error."
+      - "lastmod honesty belongs to TRUST-003, not here. Do not double-report."
+
+  - id: REACH-008
+    title_template: "Content pages are excluded from indexes by a noindex directive"
+    applies_when: always
+    inputs: [pages/*/extracted.json#meta.robots, pages/*/response.headers.json]
+    detection: deterministic
+    severity_rule: >-
+      critical when noindex appears site-wide;
+      high when it appears on content, product or landing pages;
+      not reported at all on utility pages.
+    evidence_template: >-
+      "{n} of {m} sampled pages carry noindex ({source}): {examples}."
+    verification: "curl -s https://{site}/{path} | grep -i 'name=\"robots\"' and check the X-Robots-Tag header"
+    fix_ref: references/fixes/indexability.md
+    false_positive_guards:
+      - "noindex on cart, checkout, account, login, internal search results, tag
+         archives, filter and pagination pages is CORRECT PRACTICE. Never report it."
+      - "Check the X-Robots-Tag response header as well as the meta tag; a header
+         directive is invisible in the page source and is frequently the cause."
+      - "'noindex, follow' is still noindex for our purposes."
+
+  - id: REACH-009
+    title_template: "Snippet directives prevent assistants from quoting the page"
+    applies_when: always
+    inputs: [pages/*/extracted.json#meta.robots, pages/*/response.headers.json]
+    detection: deterministic
+    severity_rule: >-
+      high when nosnippet or max-snippet:0 appears on content pages -- the page
+      may be indexed but cannot be quoted, which is precisely the failure this
+      marketplace exists to catch;
+      medium for a restrictive but non-zero max-snippet;
+      medium for noarchive.
+    evidence_template: >-
+      "{n} of {m} sampled pages set {directive}, which permits indexing but
+      forbids reproducing text from the page in a generated answer."
+    verification: "curl -s https://{site}/{path} | grep -iE 'nosnippet|max-snippet'"
+    fix_ref: references/fixes/indexability.md
+    false_positive_guards:
+      - "Publishers sometimes set nosnippet deliberately to protect paywalled
+         content. If the page is paywalled, report at 'low' as a trade-off and
+         recommend max-snippet with a small positive value instead of removal."
+      - "max-snippet:-1 means 'no limit'. Do not report it."
+
+  - id: REACH-010
+    title_template: "Canonical tags are missing, conflicting or point elsewhere"
+    applies_when: always
+    inputs: [pages/*/extracted.json#canonical, pages/*/request.json]
+    detection: deterministic
+    severity_rule: >-
+      high when canonicals point to a different domain or to a redirecting URL
+      (the page's authority is handed away or lost);
+      medium when absent site-wide, or when they disagree with the sitemap;
+      low on a single page.
+    evidence_template: "{n} of {m} sampled pages {problem}: {examples}."
+    verification: "curl -s https://{site}/{path} | grep -i 'rel=\"canonical\"'"
+    fix_ref: references/fixes/canonical-redirects.md
+    false_positive_guards:
+      - "A cross-domain canonical is legitimate for syndicated content. Lower
+         confidence and frame as 'verify this is intentional'."
+      - "A missing canonical on a site with no duplicate-URL patterns is harmless.
+         Require evidence of duplication (query params, www split, trailing-slash
+         variants) before reporting above 'low'."
+      - "Self-referential canonicals are correct, not redundant."
+
+  - id: REACH-011
+    title_template: "The site answers on multiple origins without redirecting"
+    applies_when: always
+    inputs: [MANIFEST.json#run.origin_variants]
+    detection: deterministic
+    severity_rule: >-
+      high when http and https, or www and non-www, both return 200 without
+      redirecting -- signals and citations split across duplicate origins;
+      medium when only a redirect chain is inefficient.
+    evidence_template: >-
+      "{variants} each return 200 without redirecting to a single canonical origin."
+    verification: "curl -sI http://{site}/ and curl -sI https://www.{site}/ and compare Location headers"
+    fix_ref: references/fixes/canonical-redirects.md
+    false_positive_guards:
+      - "DO NOT REPORT when every sampled page carries a canonical and all of them
+         point at the same host. The duplication is already collapsed onto one
+         origin; that is a valid, if suboptimal, configuration, and calling it a
+         high-severity defect is a false positive. (Implemented in
+         scripts/check_access.py:check_reach_011.)"
+      - "When canonicals are present but partial or inconsistent, report at
+         'medium' and say the canonical is doing the work a redirect should do.
+         Reserve 'high' for duplication that nothing resolves."
+      - "www.localhost and similar hostnames resolve on some machines, so local
+         fixtures can appear to serve several origins. Judge on the canonical
+         evidence, not on the variant count alone."
+
+  - id: REACH-012
+    title_template: "Internal links point to pages that error"
+    applies_when: always
+    inputs: [MANIFEST.json#pages, pages/*/extracted.json#links]
+    detection: deterministic
+    severity_rule: >-
+      medium normally; high when broken links appear in primary navigation, since
+      crawlers and visitors both follow those first; low for a single broken link
+      in body copy.
+    evidence_template: "{n} internal links returned {statuses}: {examples}."
+    verification: "curl -sI https://{site}/{path}"
+    fix_ref: references/fixes/broken-links.md
+    false_positive_guards:
+      - "Only report links we actually fetched and saw fail. Never infer breakage
+         from URL shape."
+      - "A 403 to our audit user-agent is REACH-005, not a broken link. Check the
+         probe before attributing it here."
+      - "Soft 404s (a 200 that renders a 'not found' page) belong to READ, not here."
+
+  - id: REACH-013
+    title_template: "Pages are orphaned or buried too deep to be crawled"
+    applies_when: always
+    inputs: [MANIFEST.json#sitemaps, MANIFEST.json#pages, pages/*/extracted.json#links]
+    detection: deterministic
+    severity_rule: >-
+      medium when sitemap URLs are reachable by no internal link;
+      medium when important pages sit more than 3 clicks from the home page;
+      low otherwise.
+    evidence_template: "{n} sitemap URLs have no internal link from any sampled page: {examples}."
+    verification: "Search the site's navigation and body links for {example}"
+    fix_ref: references/fixes/sitemap.md
+    false_positive_guards:
+      - "Our sample is partial. A page may be linked from a page we never fetched.
+         Report only when the sample is >=10 pages and confidence is at most
+         'medium', and say so in the evidence."
+      - "Landing pages deliberately excluded from navigation (campaign pages) are
+         not orphans. Check for noindex or a campaign URL pattern first."
+
+  - id: REACH-014
+    title_template: "TLS or mixed-content problems block secure fetching"
+    applies_when: always
+    inputs: [MANIFEST.json#run.origin_variants, pages/*/extracted.json]
+    detection: deterministic
+    severity_rule: >-
+      critical when https fails entirely while http works;
+      medium when pages reference http subresources from an https document.
+    evidence_template: "{detail}"
+    verification: "curl -svI https://{site}/ 2>&1 | grep -i 'SSL\\|certificate'"
+    fix_ref: references/fixes/canonical-redirects.md
+    false_positive_guards:
+      - "A certificate our Python build distrusts may be fine elsewhere. Report a
+         TLS failure only when https fails and http succeeds, and set confidence
+         to 'medium'."
+
+  - id: REACH-015
+    title_template: "The server responds too slowly for reliable crawling"
+    applies_when: always
+    inputs: [pages/*/request.json#timing]
+    detection: deterministic
+    severity_rule: >-
+      medium when median TTFB across sampled pages exceeds 1500 ms;
+      high when it exceeds 3000 ms or any sampled page times out.
+    evidence_template: "Median time to first byte across {m} sampled pages was {ttfb} ms."
+    verification: "curl -s -o /dev/null -w '%{time_starttransfer}' https://{site}/"
+    fix_ref: references/fixes/performance.md
+    false_positive_guards:
+      - "Our measurement includes network latency from the auditing machine, which
+         may be far from the site. Never report above 'medium' from timing alone,
+         and state that the figure is one-shot and location-dependent."
+      - "A single slow page among fast ones is noise. Use the median, never the max."
+
+  - id: REACH-016
+    title_template: "No llms.txt is published"
+    applies_when: always
+    inputs: [MANIFEST.json#robots.llms_txt]
+    detection: deterministic
+    severity_rule: "never a defect -- emit as a proactive recommendation only."
+    evidence_template: "GET /llms.txt returned {status}."
+    verification: "curl -sI https://{site}/llms.txt"
+    fix_ref: references/fixes/llms-txt.md
+    false_positive_guards:
+      - "llms.txt is an emerging convention with no guaranteed consumer today.
+         It MUST be emitted as a proactive_recommendation, never as a finding, and
+         must be described as forward-looking rather than expected."
+
+  - id: REACH-017
+    title_template: "Faceted or parameterised URLs create a crawl trap"
+    applies_when: [ecommerce, marketplace, media-publisher]
+    inputs: [pages/*/extracted.json#links, MANIFEST.json#sitemaps]
+    detection: deterministic
+    severity_rule: >-
+      medium when many URL variants differ only by filter or sort parameters and
+      nothing constrains them; high when combined with an absent canonical.
+    evidence_template: "{n} internal links differ only by the parameters {params}."
+    verification: "Browse a category page and compare the URLs produced by each filter"
+    fix_ref: references/fixes/canonical-redirects.md
+    false_positive_guards:
+      - "Pagination is not a crawl trap. Only report combinatorial filter and sort
+         parameters."
+      - "If canonicals already collapse the variants, do not report."
+
+  - id: REACH-018
+    title_template: "Language or region targeting is mis-declared"
+    applies_when: always
+    inputs: [pages/*/extracted.json#hreflang, pages/*/extracted.json#lang]
+    detection: deterministic
+    severity_rule: >-
+      medium when hreflang annotations are non-reciprocal or reference URLs that
+      404; low when the html lang attribute is missing or contradicts the content.
+    evidence_template: "{detail}"
+    verification: "Compare the hreflang blocks on https://{site}/{path} and its counterpart"
+    fix_ref: references/fixes/indexability.md
+    false_positive_guards:
+      - "A monolingual single-region site needs no hreflang. Only run this check
+         when hreflang annotations or multiple locale paths already exist."
+      - "Reciprocity cannot be confirmed for pages outside our sample. Say so and
+         cap confidence at 'medium'."
+
+# Proactive recommendations this skill contributes even when nothing is broken.
+proactive:
+  - id: REACH-P01
+    title: "Publish an llms.txt describing what the site is and where its key facts live"
+    gate: "no llms.txt present"
+    rationale_template: >-
+      "An emerging convention that lets an assistant orient quickly. Low cost, no
+      downside, and it forces a useful exercise: naming the ten pages that carry
+      the facts you most want quoted."
+  - id: REACH-P02
+    title: "Declare the sitemap in robots.txt even though it resolves at the default path"
+    gate: "sitemap exists at /sitemap.xml but robots.txt has no Sitemap directive"
+    rationale_template: >-
+      "Crawlers that do not guess the default path find it immediately, and it
+      costs one line."
+  - id: REACH-P03
+    title: "Allow retrieval agents explicitly rather than relying on the wildcard group"
+    gate: "no explicit group for retrieval agents"
+    rationale_template: >-
+      "An explicit Allow group makes the intent legible and survives a future
+      wildcard tightening that would otherwise silently remove the brand from
+      live answers."

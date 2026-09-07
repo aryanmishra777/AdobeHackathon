@@ -1,0 +1,331 @@
+# READ check registry -- render-extractability-audit
+#
+# Mechanism: can a machine READ what is on the page? The crawler was let in
+# (REACH passed); the question now is whether the content it receives contains
+# the facts a human sees on screen.
+#
+# READ-001 is the highest-value check in the whole marketplace. A site whose
+# content is assembled in the browser looks perfect to its owner and is empty to
+# every crawler that does not execute JavaScript. It is also the root cause that
+# supersedes most downstream PARSE and QUOTE findings on the same page -- see
+# audit-orchestrator/references/subskills.json.
+#
+# Entry contract is identical to crawl-access-audit/references/checks.yaml.
+
+meta:
+  skill: render-extractability-audit
+  mechanism: read
+  category: discoverability
+  check_prefix: READ
+  version: "0.1.0"
+
+checks:
+
+  - id: READ-001
+    title_template: "Page content is missing from the HTML a crawler receives"
+    applies_when: always
+    inputs:
+      - pages/*/extracted.json#render_signals
+      - pages/*/extracted.json#text
+      - pages/*/rendered.html
+    detection: deterministic
+    severity_rule: >-
+      critical when the main content of most sampled pages is absent from raw
+      HTML (empty app-shell mount, main_word_count under ~50, and a large
+      hydration payload);
+      high when a major section or template is affected;
+      medium when only supplementary content is client-rendered.
+    evidence_template: >-
+      "{n} of {m} sampled pages return under {words} words of body text in the
+      raw HTML while carrying a {payload} byte hydration payload and an empty
+      {selector} mount point."
+    verification: "curl -s https://{site}/{path} | wc -w, then compare with the page in a browser"
+    fix_ref: references/fixes/js-rendering.md
+    false_positive_guards:
+      - "A rendered.html captured by a renderer is the ground truth. When one is
+         present, report only the measured raw-versus-rendered delta. When it is
+         absent, this is an INFERENCE: cap confidence at 'medium', say the gap
+         was inferred rather than measured, and note it in coverage.limitations."
+      - "A low word count is not evidence on its own. A landing page or a
+         gallery may legitimately be short. Require the combination: empty mount
+         point OR framework marker, AND low main_word_count, AND either a
+         hydration payload or a very low text-to-markup ratio."
+      - "Many frameworks server-render correctly. The presence of next.js or
+         react in framework_markers proves nothing by itself -- a Next.js page
+         with 1200 words in the raw HTML is fine. Never fire on markers alone."
+      - "Do not fire on pages whose status is not 200, or on pages the collector
+         truncated at max_bytes -- check request.json#truncated first."
+
+  - id: READ-002
+    title_template: "A JavaScript-dependent page offers no noscript fallback"
+    applies_when: always
+    inputs: [pages/*/extracted.json#noscript, pages/*/extracted.json#render_signals]
+    detection: deterministic
+    severity_rule: "medium; low when READ-001 already fires on the same pages."
+    evidence_template: "{n} client-rendered pages contain no noscript content."
+    verification: "curl -s https://{site}/{path} | grep -c '<noscript'"
+    fix_ref: references/fixes/js-rendering.md
+    false_positive_guards:
+      - "Only applies to pages that are actually JS-dependent. Never report a
+         missing noscript on a server-rendered page -- it would be pointless."
+      - "A noscript containing only 'Please enable JavaScript' is equivalent to
+         none. Check for substantive content, not for the tag."
+      - "Server-side rendering is the real fix; noscript is a mitigation. Do not
+         present it as the primary recommendation."
+
+  - id: READ-003
+    title_template: "Very little of the page is text a machine can read"
+    applies_when: always
+    inputs: [pages/*/extracted.json#text.text_to_markup_ratio]
+    detection: deterministic
+    severity_rule: "medium when the median ratio across sampled pages is very low; low otherwise."
+    evidence_template: "Median text-to-markup ratio across {m} pages is {ratio}."
+    verification: "Compare the byte size of the page source with its visible text"
+    fix_ref: references/fixes/semantic-html.md
+    false_positive_guards:
+      - "This is a weak signal on its own and a notorious source of noise. Never
+         report it as a standalone finding above 'medium', and never on a site
+         where READ-001 already explains the ratio."
+      - "Heavy inline SVG or a large inline CSS block depresses the ratio without
+         harming extraction. Check whether text content is genuinely thin before
+         reporting."
+
+  - id: READ-004
+    title_template: "Key facts exist only inside images"
+    applies_when: always
+    inputs: [pages/*/extracted.json#images, pages/*/extracted.json#text]
+    detection: model-judged
+    severity_rule: >-
+      high when facts a buyer would ask about -- prices, menus, specifications,
+      opening hours, contact details -- appear only in an image with no alt text
+      and no equivalent nearby text;
+      medium when the image duplicates text that also exists.
+    evidence_template: >-
+      "{page} presents {fact_type} in an image ({src}) with {alt_state}, and the
+      page text contains no equivalent statement."
+    verification: "Open {page} and try to select the {fact_type} as text"
+    fix_ref: references/fixes/non-text-content.md
+    false_positive_guards:
+      - "Requires model judgment about what the image contains; we cannot read
+         pixels. Base the finding on the surrounding context (a heading of
+         'Pricing' followed only by an image) and set confidence to 'medium'.
+         Never claim to know what an image depicts."
+      - "Decorative images with an explicit empty alt are correct practice.
+         alt=null (absent) and alt='' (decorative) are different -- the bundle
+         preserves the distinction, so use it."
+      - "Logos, hero photography and background images carry no facts. Only
+         report images in fact-bearing contexts."
+
+  - id: READ-005
+    title_template: "Important content is published only as PDF"
+    applies_when: always
+    inputs: [pages/*/extracted.json#links, coverage.json]
+    detection: deterministic
+    severity_rule: >-
+      medium when substantive content is reachable only as PDF;
+      high when core commercial facts (pricing, specifications, terms) are
+      PDF-only.
+    evidence_template: "{n} PDF links carry content with no HTML equivalent: {examples}."
+    verification: "Search the site for an HTML page covering the same material as {pdf}"
+    fix_ref: references/fixes/non-text-content.md
+    false_positive_guards:
+      - "PDFs are legitimate for forms, brochures, annual reports and datasheets
+         intended for printing. Report only when the PDF is the ONLY home of
+         content a visitor would expect on a page."
+      - "We do not parse PDF contents. Infer importance from link text and
+         context, and keep confidence at 'medium'."
+
+  - id: READ-006
+    title_template: "Video or audio content has no transcript"
+    applies_when: always
+    inputs: [pages/*/extracted.json#iframes, pages/*/extracted.json#text]
+    detection: model-judged
+    severity_rule: "medium when a page's primary content is a video with no transcript or summary; low otherwise."
+    evidence_template: "{page} embeds {provider} media and contains {words} words of body text."
+    verification: "Open {page} and look for a transcript or written summary"
+    fix_ref: references/fixes/non-text-content.md
+    false_positive_guards:
+      - "A short promotional video alongside full written content is fine. Only
+         report when the video appears to CARRY the content rather than
+         supplement it -- indicated by a very low word count on the page."
+      - "Do not report on pages whose purpose is a media library or channel index."
+
+  - id: READ-007
+    title_template: "Content is delivered inside an iframe or third-party widget"
+    applies_when: always
+    inputs: [pages/*/extracted.json#iframes, pages/*/extracted.json#text]
+    detection: deterministic
+    severity_rule: >-
+      medium when substantive content (reviews, listings, booking, documentation)
+      is iframed; low for embedded maps and videos.
+    evidence_template: "{page} loads {n} iframe(s) from {hosts}; iframe content is not part of this page for extraction purposes."
+    verification: "curl -s {page} and confirm the iframe body text is absent"
+    fix_ref: references/fixes/js-rendering.md
+    false_positive_guards:
+      - "Maps, video players, and payment widgets are legitimate iframes carrying
+         no citable facts. Never report those."
+      - "Third-party review widgets are extremely common and hard to replace.
+         Report at 'medium' and recommend mirroring key aggregate values (rating,
+         review count) into the parent page as text plus structured data, rather
+         than removing the widget."
+
+  - id: READ-008
+    title_template: "Informational images lack alternative text"
+    applies_when: always
+    inputs: [pages/*/extracted.json#images]
+    detection: deterministic
+    severity_rule: "medium when a large share of images site-wide have an absent alt attribute; low when few."
+    evidence_template: "{n} of {m} images across {p} sampled pages have no alt attribute."
+    verification: "curl -s {page} | grep -c '<img' and compare with the alt count"
+    fix_ref: references/fixes/semantic-html.md
+    false_positive_guards:
+      - "alt='' is CORRECT for decorative images and must never be counted as a
+         defect. Count only alt=null (attribute absent). The bundle preserves the
+         difference precisely so this guard is enforceable."
+      - "Icons, spacers and background images do not need alt text. Where most
+         missing-alt images are small or icon-named, lower severity to 'low'."
+
+  - id: READ-009
+    title_template: "Heading structure does not describe the page"
+    applies_when: always
+    inputs: [pages/*/extracted.json#headings]
+    detection: deterministic
+    severity_rule: >-
+      medium when pages have no h1, or multiple h1s, or skip levels in a way that
+      obscures structure; low for isolated cases.
+    evidence_template: "{n} of {m} pages {problem}: {examples}."
+    verification: "curl -s {page} | grep -oE '<h[1-6]'"
+    fix_ref: references/fixes/semantic-html.md
+    false_positive_guards:
+      - "Multiple h1 elements are valid HTML5 in sectioned content. Report only
+         when the h1s are unrelated to one another, and keep severity at 'low'."
+      - "A single skipped level is trivial. Require a pattern across pages."
+      - "Do not report on pages where READ-001 fires -- the headings are missing
+         because the content is, and the root cause is elsewhere."
+
+  - id: READ-010
+    title_template: "The page uses no semantic landmarks"
+    applies_when: always
+    inputs: [pages/*/raw.html]
+    detection: deterministic
+    severity_rule: "low; medium only when combined with poor heading structure."
+    evidence_template: "{n} pages contain no <main>, <article> or <nav> element."
+    verification: "curl -s {page} | grep -cE '<(main|article|nav|header|footer)'"
+    fix_ref: references/fixes/semantic-html.md
+    false_positive_guards:
+      - "Non-semantic markup degrades main-content extraction but rarely prevents
+         it. Never report above 'medium'."
+      - "ARIA landmark roles are equivalent to the elements. Check for
+         role='main' before reporting a missing <main>."
+
+  - id: READ-011
+    title_template: "Content behind tabs or accordions is absent from the HTML"
+    applies_when: always
+    inputs: [pages/*/raw.html, pages/*/extracted.json#text]
+    detection: model-judged
+    severity_rule: "medium when substantive content loads only on interaction; high when it is the primary content."
+    evidence_template: "{page} shows tab or accordion controls whose panel content is not present in the HTML."
+    verification: "curl -s {page} and search for the text shown after clicking each tab"
+    fix_ref: references/fixes/js-rendering.md
+    false_positive_guards:
+      - "Most accordions and tabs render all panels into the DOM and hide them
+         with CSS. That is FINE -- the content is present and extractable. Only
+         report when the panel text is genuinely absent from the HTML."
+      - "Requires judgment; set determinism to model-judged and confidence to
+         'medium' unless a renderer confirmed the delta."
+
+  - id: READ-012
+    title_template: "Paginated content has no crawlable URLs"
+    applies_when: [ecommerce, media-publisher, marketplace, docs]
+    inputs: [pages/*/extracted.json#links, pages/*/raw.html]
+    detection: deterministic
+    severity_rule: "medium when listings extend via infinite scroll or a load-more button with no linked page URLs."
+    evidence_template: "{page} loads additional items without exposing paginated URLs."
+    verification: "Disable JavaScript and check whether page 2 of the listing is reachable"
+    fix_ref: references/fixes/js-rendering.md
+    false_positive_guards:
+      - "Check for <link rel='next'> and for anchor-based pagination before
+         reporting. Many infinite-scroll implementations layer over real URLs,
+         which is the correct pattern and needs no fix."
+
+  - id: READ-013
+    title_template: "A consent wall or interstitial hides the content"
+    applies_when: always
+    inputs: [pages/*/raw.html, pages/*/extracted.json#text, ua_probe.json]
+    detection: deterministic
+    severity_rule: >-
+      critical when no content is served before consent;
+      high when content is present but visually blocked on entry.
+    evidence_template: "{page} returns {words} words of body text and a consent interstitial matching {signature}."
+    verification: "curl -s {page} | head -c 2000 and check whether article text is present"
+    fix_ref: references/fixes/consent-walls.md
+    false_positive_guards:
+      - "A cookie banner overlaying fully-served content is NOT this finding.
+         Report only when the content itself is absent from the response until
+         consent is given."
+      - "Legally mandated consent flows are not defects in themselves. Recommend
+         serving content beneath the banner rather than removing the banner."
+      - "This finding supersedes READ-001, QUOTE-001 and STAY-001 on the same
+         page -- it explains all three at once."
+
+  - id: READ-014
+    title_template: "Public content sits behind a login or paywall"
+    applies_when: always
+    inputs: [pages/*/request.json, pages/*/extracted.json]
+    detection: deterministic
+    severity_rule: "high when pages that appear public require authentication; medium for a declared paywall with no machine-readable declaration."
+    evidence_template: "{n} pages returned {status} or served a login form in place of content."
+    verification: "Open {page} in a private browser window"
+    fix_ref: references/fixes/consent-walls.md
+    false_positive_guards:
+      - "A paywall is a business model, not a defect. For deliberately paywalled
+         content, report ONLY the absence of isAccessibleForFree / hasPart
+         markup, which is what lets an assistant cite the page honestly."
+      - "Never recommend removing authentication from genuinely private areas."
+
+  - id: READ-015
+    title_template: "Text is rendered in a form machines cannot read"
+    applies_when: always
+    inputs: [pages/*/raw.html, pages/*/extracted.json#text]
+    detection: deterministic
+    severity_rule: "medium when substantive text is inside canvas, text-less SVG, or icon-font glyphs."
+    evidence_template: "{page} renders {element} containing no machine-readable text."
+    verification: "Try to select and copy the text on {page}"
+    fix_ref: references/fixes/non-text-content.md
+    false_positive_guards:
+      - "SVG containing <text> or <title> elements IS readable. Only report SVG
+         with no text nodes at all."
+      - "Charts and diagrams as images are normal. Report only when they carry
+         facts stated nowhere else, and recommend a text summary rather than
+         removing the graphic."
+
+  - id: READ-016
+    title_template: "Character encoding or language is undeclared or wrong"
+    applies_when: always
+    inputs: [pages/*/extracted.json#charset, pages/*/extracted.json#lang]
+    detection: deterministic
+    severity_rule: "low normally; medium when mojibake appears in extracted text."
+    evidence_template: "{n} pages declare no charset; {k} pages declare no lang attribute."
+    verification: "curl -sI {page} | grep -i content-type"
+    fix_ref: references/fixes/semantic-html.md
+    false_positive_guards:
+      - "A charset in the Content-Type response header is sufficient; the meta tag
+         is not additionally required. Check headers before reporting."
+      - "Do not report a missing lang attribute as a discoverability defect on a
+         monolingual English site -- keep it at 'low' and frame it as hygiene."
+
+proactive:
+  - id: READ-P01
+    title: "Server-render the pages that carry commercial facts, even if the rest stays client-rendered"
+    gate: "site is client-rendered but READ-001 did not reach the reporting threshold"
+    rationale_template: >-
+      "Rendering strategy can be chosen per route. Pricing, product and
+      about pages carry the facts worth quoting and benefit most; an
+      authenticated dashboard does not need to change at all."
+  - id: READ-P02
+    title: "Mirror third-party widget values into the page as text"
+    gate: "review, rating or listing widgets are present"
+    rationale_template: >-
+      "Aggregate values rendered by a widget are invisible to extraction. Writing
+      the rating and review count into the page as text plus structured data
+      keeps the widget and makes the numbers citable."

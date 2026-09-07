@@ -1,0 +1,2603 @@
+{
+  "mode": "replay",
+  "results": [
+    {
+      "url": "https://asana.com",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "moderate",
+      "site_type": "saas",
+      "pages": 5,
+      "discoverability": 98,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 0,
+        "high": 0,
+        "medium": 1,
+        "low": 0,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "READ-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.5,
+      "findings": [
+        {
+          "check_id": "REACH-008",
+          "severity": "medium",
+          "title": "Content pages are excluded from search indexes"
+        }
+      ]
+    },
+    {
+      "url": "https://blog.codinghorror.com",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "media-publisher",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": []
+    },
+    {
+      "url": "https://developer.mozilla.org",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 98,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 0,
+        "high": 0,
+        "medium": 1,
+        "low": 0,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-008",
+          "severity": "medium",
+          "title": "Content pages are excluded from search indexes"
+        }
+      ]
+    },
+    {
+      "url": "https://jvns.ca",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "media-publisher",
+      "pages": 5,
+      "discoverability": 98,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-003",
+          "severity": "low",
+          "title": "AI training crawlers are blocked (informational)"
+        }
+      ]
+    },
+    {
+      "url": "https://linear.app",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "saas",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": []
+    },
+    {
+      "url": "https://stripe.com",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "saas",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://vercel.com",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "saas",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": []
+    },
+    {
+      "url": "https://www.airtable.com",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "saas",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": []
+    },
+    {
+      "url": "https://www.allbirds.com",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "ecommerce",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": []
+    },
+    {
+      "url": "https://www.atlassian.com",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "saas",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://www.chewy.com",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "ecommerce",
+      "pages": 5,
+      "discoverability": 54,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 1,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-012",
+          "severity": "critical",
+          "title": "Internal links point to pages that error"
+        }
+      ]
+    },
+    {
+      "url": "https://www.figma.com",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "saas",
+      "pages": 5,
+      "discoverability": 98,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 2,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.5,
+      "findings": [
+        {
+          "check_id": "REACH-003",
+          "severity": "low",
+          "title": "AI training crawlers are blocked (informational)"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://www.gov.uk",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "nonprofit-gov",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": []
+    },
+    {
+      "url": "https://www.gymshark.com",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "ecommerce",
+      "pages": 5,
+      "discoverability": 98,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 0,
+        "high": 0,
+        "medium": 1,
+        "low": 1,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-008",
+          "severity": "medium",
+          "title": "Content pages are excluded from search indexes"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://www.hubspot.com",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "saas",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": []
+    },
+    {
+      "url": "https://www.ikea.com",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "ecommerce",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://www.nasa.gov",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "nonprofit-gov",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://www.nhs.uk",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "nonprofit-gov",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://www.rfc-editor.org",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://www.varnish-cache.org",
+      "seo": "good",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": []
+    },
+    {
+      "url": "https://apnews.com",
+      "seo": "good",
+      "geo": "poor",
+      "engagement": "high",
+      "site_type": "media-publisher",
+      "pages": 5,
+      "discoverability": 83,
+      "disc_grade": "B",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 0,
+        "high": 1,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-002",
+          "severity": "high",
+          "title": "AI assistants are blocked from reading the site"
+        },
+        {
+          "check_id": "REACH-003",
+          "severity": "low",
+          "title": "AI training crawlers are blocked (informational)"
+        }
+      ]
+    },
+    {
+      "url": "https://slack.com",
+      "seo": "good",
+      "geo": "poor",
+      "engagement": "high",
+      "site_type": "saas",
+      "pages": 5,
+      "discoverability": 95,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 0,
+        "high": 0,
+        "medium": 1,
+        "low": 1,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-005",
+          "severity": "medium",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://www.bbc.co.uk",
+      "seo": "good",
+      "geo": "poor",
+      "engagement": "high",
+      "site_type": "media-publisher",
+      "pages": 5,
+      "discoverability": 83,
+      "disc_grade": "B",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 0,
+        "high": 1,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-002",
+          "severity": "high",
+          "title": "AI assistants are blocked from reading the site"
+        },
+        {
+          "check_id": "REACH-003",
+          "severity": "low",
+          "title": "AI training crawlers are blocked (informational)"
+        }
+      ]
+    },
+    {
+      "url": "https://www.eff.org",
+      "seo": "good",
+      "geo": "poor",
+      "engagement": "moderate",
+      "site_type": "nonprofit-gov",
+      "pages": 0,
+      "discoverability": 54,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 1,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": [
+        {
+          "check_id": "REACH-005",
+          "severity": "critical",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ietf.org",
+      "seo": "good",
+      "geo": "poor",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 70,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 0,
+        "high": 2,
+        "medium": 0,
+        "low": 0,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-005",
+          "severity": "high",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        }
+      ]
+    },
+    {
+      "url": "https://www.lighttpd.net",
+      "seo": "good",
+      "geo": "poor",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 79,
+      "disc_grade": "B",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 3,
+        "critical": 0,
+        "high": 1,
+        "medium": 1,
+        "low": 1,
+        "by_category": {
+          "discoverability": 3,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 3
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-005",
+          "severity": "high",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "medium",
+          "title": "No robots.txt is published"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://www.notion.com",
+      "seo": "good",
+      "geo": "poor",
+      "engagement": "high",
+      "site_type": "saas",
+      "pages": 5,
+      "discoverability": 83,
+      "disc_grade": "B",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 0,
+        "high": 1,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.6,
+      "findings": [
+        {
+          "check_id": "REACH-005",
+          "severity": "high",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "REACH-003",
+          "severity": "low",
+          "title": "AI training crawlers are blocked (informational)"
+        }
+      ]
+    },
+    {
+      "url": "https://www.redcross.org",
+      "seo": "good",
+      "geo": "poor",
+      "engagement": "moderate",
+      "site_type": "nonprofit-gov",
+      "pages": 0,
+      "discoverability": 54,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 1,
+        "high": 0,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": [
+        {
+          "check_id": "REACH-005",
+          "severity": "critical",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "REACH-006",
+          "severity": "low",
+          "title": "No XML sitemap is published or declared"
+        }
+      ]
+    },
+    {
+      "url": "https://www.theguardian.com",
+      "seo": "good",
+      "geo": "poor",
+      "engagement": "high",
+      "site_type": "media-publisher",
+      "pages": 5,
+      "discoverability": 83,
+      "disc_grade": "B",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 0,
+        "high": 1,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-002",
+          "severity": "high",
+          "title": "AI assistants are blocked from reading the site"
+        },
+        {
+          "check_id": "REACH-003",
+          "severity": "low",
+          "title": "AI training crawlers are blocked (informational)"
+        }
+      ]
+    },
+    {
+      "url": "https://www.warbyparker.com",
+      "seo": "good",
+      "geo": "poor",
+      "engagement": "moderate",
+      "site_type": "ecommerce",
+      "pages": 0,
+      "discoverability": 54,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 1,
+        "high": 0,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": [
+        {
+          "check_id": "REACH-005",
+          "severity": "critical",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "REACH-003",
+          "severity": "low",
+          "title": "AI training crawlers are blocked (informational)"
+        }
+      ]
+    },
+    {
+      "url": "https://9p.io",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "moderate",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 44,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 6,
+        "critical": 0,
+        "high": 3,
+        "medium": 3,
+        "low": 0,
+        "by_category": {
+          "discoverability": 6,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 6
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "medium",
+          "title": "No robots.txt is published"
+        },
+        {
+          "check_id": "REACH-012",
+          "severity": "medium",
+          "title": "Internal links point to pages that error"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "medium",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://cr.yp.to",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "moderate",
+      "site_type": "portfolio-brochure",
+      "pages": 5,
+      "discoverability": 49,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 4,
+        "critical": 0,
+        "high": 3,
+        "medium": 1,
+        "low": 0,
+        "by_category": {
+          "discoverability": 4,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 4
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "medium",
+          "title": "No robots.txt is published"
+        }
+      ]
+    },
+    {
+      "url": "https://ctan.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 55,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 3,
+        "critical": 0,
+        "high": 3,
+        "medium": 0,
+        "low": 0,
+        "by_category": {
+          "discoverability": 3,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 3
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        }
+      ]
+    },
+    {
+      "url": "https://curl.se",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 70,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 0,
+        "high": 2,
+        "medium": 0,
+        "low": 0,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        }
+      ]
+    },
+    {
+      "url": "https://danluu.com",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "media-publisher",
+      "pages": 5,
+      "discoverability": 68,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 3,
+        "critical": 0,
+        "high": 2,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 3,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 3
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "low",
+          "title": "robots.txt contains lines that break parsing"
+        }
+      ]
+    },
+    {
+      "url": "https://sive.rs",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "media-publisher",
+      "pages": 5,
+      "discoverability": 100,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 0,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": []
+    },
+    {
+      "url": "https://www.gutenberg.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "media-publisher",
+      "pages": 5,
+      "discoverability": 69,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 3,
+        "critical": 0,
+        "high": 2,
+        "medium": 1,
+        "low": 0,
+        "by_category": {
+          "discoverability": 3,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 3
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "medium",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://www.lua.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "moderate",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 49,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 4,
+        "critical": 0,
+        "high": 3,
+        "medium": 1,
+        "low": 0,
+        "by_category": {
+          "discoverability": 4,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 4
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "medium",
+          "title": "No robots.txt is published"
+        }
+      ]
+    },
+    {
+      "url": "https://www.netbsd.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 54,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 4,
+        "critical": 0,
+        "high": 3,
+        "medium": 1,
+        "low": 0,
+        "by_category": {
+          "discoverability": 4,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 4
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "medium",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://www.openbsd.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 85,
+      "disc_grade": "B",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 0,
+        "high": 1,
+        "medium": 0,
+        "low": 0,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        }
+      ]
+    },
+    {
+      "url": "https://www.python.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 70,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 0,
+        "high": 2,
+        "medium": 0,
+        "low": 0,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        }
+      ]
+    },
+    {
+      "url": "https://www.stroustrup.com",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "moderate",
+      "site_type": "portfolio-brochure",
+      "pages": 5,
+      "discoverability": 58,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 4,
+        "critical": 0,
+        "high": 2,
+        "medium": 2,
+        "low": 0,
+        "by_category": {
+          "discoverability": 4,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 4
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "medium",
+          "title": "No robots.txt is published"
+        },
+        {
+          "check_id": "REACH-006",
+          "severity": "medium",
+          "title": "No XML sitemap is published or declared"
+        }
+      ]
+    },
+    {
+      "url": "https://www.w3.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 85,
+      "disc_grade": "B",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 0,
+        "high": 1,
+        "medium": 0,
+        "low": 0,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        }
+      ]
+    },
+    {
+      "url": "https://www.who.int",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "nonprofit-gov",
+      "pages": 5,
+      "discoverability": 83,
+      "disc_grade": "B",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 0,
+        "high": 1,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-003",
+          "severity": "low",
+          "title": "AI training crawlers are blocked (informational)"
+        }
+      ]
+    },
+    {
+      "url": "http://www.mutt.org",
+      "seo": "poor",
+      "geo": "poor",
+      "engagement": "moderate",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 47,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 5,
+        "critical": 0,
+        "high": 3,
+        "medium": 1,
+        "low": 1,
+        "by_category": {
+          "discoverability": 5,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 5
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-005",
+          "severity": "high",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "medium",
+          "title": "No robots.txt is published"
+        },
+        {
+          "check_id": "REACH-006",
+          "severity": "low",
+          "title": "No XML sitemap is published or declared"
+        }
+      ]
+    },
+    {
+      "url": "https://archive.org",
+      "seo": "poor",
+      "geo": "poor",
+      "engagement": "moderate",
+      "site_type": "nonprofit-gov",
+      "pages": 1,
+      "discoverability": 98,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "low",
+          "title": "No XML sitemap is published or declared"
+        }
+      ]
+    },
+    {
+      "url": "https://en.wikipedia.org",
+      "seo": "poor",
+      "geo": "poor",
+      "engagement": "high",
+      "site_type": "media-publisher",
+      "pages": 5,
+      "discoverability": 68,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 3,
+        "critical": 0,
+        "high": 2,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 3,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 3
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-005",
+          "severity": "high",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "low",
+          "title": "robots.txt contains lines that break parsing"
+        }
+      ]
+    },
+    {
+      "url": "https://motherfuckingwebsite.com",
+      "seo": "poor",
+      "geo": "poor",
+      "engagement": "high",
+      "site_type": "portfolio-brochure",
+      "pages": 1,
+      "discoverability": 72,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 4,
+        "critical": 0,
+        "high": 1,
+        "medium": 2,
+        "low": 1,
+        "by_category": {
+          "discoverability": 4,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 4
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": [
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "medium",
+          "title": "No robots.txt is published"
+        },
+        {
+          "check_id": "REACH-005",
+          "severity": "medium",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "REACH-006",
+          "severity": "low",
+          "title": "No XML sitemap is published or declared"
+        }
+      ]
+    },
+    {
+      "url": "https://nginx.org",
+      "seo": "poor",
+      "geo": "poor",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 70,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 2,
+        "critical": 0,
+        "high": 2,
+        "medium": 0,
+        "low": 0,
+        "by_category": {
+          "discoverability": 2,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        }
+      ]
+    },
+    {
+      "url": "https://norvig.com",
+      "seo": "poor",
+      "geo": "poor",
+      "engagement": "moderate",
+      "site_type": "portfolio-brochure",
+      "pages": 5,
+      "discoverability": 65,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 3,
+        "critical": 0,
+        "high": 2,
+        "medium": 1,
+        "low": 0,
+        "by_category": {
+          "discoverability": 3,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 3
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-005",
+          "severity": "medium",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        }
+      ]
+    },
+    {
+      "url": "https://sqlite.org",
+      "seo": "poor",
+      "geo": "poor",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 40,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 5,
+        "critical": 0,
+        "high": 4,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 5,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 5
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-005",
+          "severity": "high",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://suckless.org",
+      "seo": "poor",
+      "geo": "poor",
+      "engagement": "moderate",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 64,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 4,
+        "critical": 0,
+        "high": 2,
+        "medium": 1,
+        "low": 1,
+        "by_category": {
+          "discoverability": 4,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 4
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-006",
+          "severity": "medium",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    },
+    {
+      "url": "https://textfiles.com",
+      "seo": "poor",
+      "geo": "poor",
+      "engagement": "moderate",
+      "site_type": "media-publisher",
+      "pages": 5,
+      "discoverability": 49,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 4,
+        "critical": 0,
+        "high": 3,
+        "medium": 1,
+        "low": 0,
+        "by_category": {
+          "discoverability": 4,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 4
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "medium",
+          "title": "No robots.txt is published"
+        }
+      ]
+    },
+    {
+      "url": "https://tug.org",
+      "seo": "poor",
+      "geo": "poor",
+      "engagement": "moderate",
+      "site_type": "nonprofit-gov",
+      "pages": 5,
+      "discoverability": 46,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 6,
+        "critical": 0,
+        "high": 5,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 6,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 6
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-002",
+          "severity": "high",
+          "title": "AI assistants are blocked from reading the site"
+        },
+        {
+          "check_id": "REACH-005",
+          "severity": "high",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-003",
+          "severity": "low",
+          "title": "AI training crawlers are blocked (informational)"
+        }
+      ]
+    },
+    {
+      "url": "https://www.ams.org",
+      "seo": "poor",
+      "geo": "poor",
+      "engagement": "moderate",
+      "site_type": "nonprofit-gov",
+      "pages": 0,
+      "discoverability": 54,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 3,
+        "critical": 1,
+        "high": 0,
+        "medium": 0,
+        "low": 2,
+        "by_category": {
+          "discoverability": 3,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 3
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": [
+        {
+          "check_id": "REACH-005",
+          "severity": "critical",
+          "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "REACH-003",
+          "severity": "low",
+          "title": "AI training crawlers are blocked (informational)"
+        },
+        {
+          "check_id": "REACH-006",
+          "severity": "low",
+          "title": "No XML sitemap is published or declared"
+        }
+      ]
+    },
+    {
+      "url": "https://www.khanacademy.org",
+      "seo": "poor",
+      "geo": "poor",
+      "engagement": "moderate",
+      "site_type": "nonprofit-gov",
+      "pages": 1,
+      "discoverability": 61,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 5,
+        "critical": 0,
+        "high": 2,
+        "medium": 1,
+        "low": 2,
+        "by_category": {
+          "discoverability": 5,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 5
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.2,
+      "findings": [
+        {
+          "check_id": "REACH-007",
+          "severity": "high",
+          "title": "The XML sitemap does not parse"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-005",
+          "severity": "medium",
+          "title": "AI crawlers receive a much smaller page than browsers do"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "low",
+          "title": "robots.txt contains lines that break parsing"
+        },
+        {
+          "check_id": "REACH-006",
+          "severity": "low",
+          "title": "No XML sitemap is published or declared"
+        }
+      ]
+    },
+    {
+      "url": "https://www.tuhs.org",
+      "seo": "poor",
+      "geo": "poor",
+      "engagement": "moderate",
+      "site_type": "nonprofit-gov",
+      "pages": 5,
+      "discoverability": 53,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 5,
+        "critical": 0,
+        "high": 3,
+        "medium": 1,
+        "low": 1,
+        "by_category": {
+          "discoverability": 5,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 5
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [
+        "PARSE-001"
+      ],
+      "false_positives": [],
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "high",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "REACH-008",
+          "severity": "medium",
+          "title": "Content pages are excluded from search indexes"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        }
+      ]
+    }
+  ]
+}

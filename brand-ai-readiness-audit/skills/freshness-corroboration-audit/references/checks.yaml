@@ -1,0 +1,315 @@
+# TRUST check registry -- freshness-corroboration-audit
+#
+# Mechanism: will a machine BELIEVE and REPEAT the fact it extracted?
+#
+# Two mechanisms sit behind this stage, both from the Round-2 appendix:
+#
+#   Recency  -- consumers prefer content that is current and demonstrably so,
+#               and they discount signals that have been shown to be unreliable.
+#   Agreement -- a claim repeated consistently across independent sources is far
+#               more likely to be believed than one that lives in exactly one
+#               place. Its mirror is mistaken identity: when several things share
+#               a name, a system mixes them up unless something distinguishes
+#               them.
+#
+# This is the only analysis skill with an OPTIONAL off-site component. On-site
+# freshness checks (TRUST-001..005, 014, 015) always run. Corroboration and
+# identity checks (TRUST-006..013) need a web search or fetch tool; when none is
+# available, SKIP them and record each skipped check_id in
+# coverage.checks_skipped. Absence of a lookup is never evidence of absence.
+
+meta:
+  skill: freshness-corroboration-audit
+  mechanism: trust
+  category: discoverability
+  check_prefix: TRUST
+  version: "0.1.0"
+  offsite_checks: [TRUST-006, TRUST-007, TRUST-008, TRUST-009, TRUST-010,
+                   TRUST-011, TRUST-012, TRUST-013]
+
+checks:
+
+  - id: TRUST-001
+    title_template: "Time-sensitive content carries no visible date"
+    applies_when: always
+    inputs: [pages/*/extracted.json#dates, MANIFEST.json#pages.page_type]
+    detection: deterministic
+    severity_rule: "medium on article and pricing pages with no published or modified date; low elsewhere."
+    evidence_template: "{n} of {m} {page_type} pages show no published or modified date in text, markup or metadata."
+    verification: "Open {page} and look for a publication or update date"
+    fix_ref: references/fixes/freshness-signals.md
+    false_positive_guards:
+      - "Evergreen pages (about, contact, legal, product) do not need a visible
+         date and are often better without one. Gate strictly on page_type."
+      - "The bundle records dates from markup, meta, time elements and visible
+         text. Check ALL provenances before concluding a page is undated."
+
+  - id: TRUST-002
+    title_template: "Content has not been updated within its expected cadence"
+    applies_when: always
+    inputs: [pages/*/extracted.json#dates, MANIFEST.json#sitemaps]
+    detection: deterministic
+    severity_rule: >-
+      medium when the most recent dated content is older than the profile
+      threshold in audit-orchestrator/references/site-profiles.md;
+      low when only marginally past it.
+    evidence_template: "The most recent dated content found is {date}, {age} beyond the {site_type} threshold."
+    verification: "Check the newest post date on the blog or news index"
+    fix_ref: references/fixes/freshness-signals.md
+    false_positive_guards:
+      - "Judge cadence against what the site CLAIMS to be. A brochure site stable
+         for two years is not stale; a news site silent for three months is. Use
+         the per-profile thresholds and never a single global one."
+      - "NEVER report cadence staleness on portfolio-brochure sites at all."
+      - "Our sample is partial and may simply have missed the newest content.
+         Check the sitemap's newest lastmod before reporting, and cap confidence
+         at 'medium'."
+
+  - id: TRUST-003
+    title_template: "Sitemap lastmod dates are not truthful"
+    applies_when: always
+    inputs: [MANIFEST.json#sitemaps, pages/*/extracted.json#dates]
+    detection: deterministic
+    severity_rule: >-
+      medium -- a lastmod that changes on every build teaches consumers the
+      signal is meaningless, which is worse than omitting it.
+    evidence_template: "{n} sitemap URLs claim lastmod {date} while the page shows content dated {page_date}."
+    verification: "Compare the sitemap lastmod for {url} with the date shown on the page"
+    fix_ref: references/fixes/freshness-signals.md
+    false_positive_guards:
+      - "A legitimate template or navigation change updates lastmod without
+         changing visible content. Require a clear pattern -- most or all URLs
+         sharing one very recent lastmod -- before reporting."
+      - "Absence of a visible date on the page is not proof the lastmod is wrong.
+         Only compare where the page states a date of its own."
+
+  - id: TRUST-004
+    title_template: "Stale year stamps contradict current content"
+    applies_when: always
+    inputs: [pages/*/extracted.json#dates]
+    detection: deterministic
+    severity_rule: "low; medium when a year appears in page titles ('2023 guide') on pages presented as current."
+    evidence_template: "The footer copyright reads {year}; {n} page titles reference {years}."
+    verification: "Read the footer of {page}"
+    fix_ref: references/fixes/freshness-signals.md
+    false_positive_guards:
+      - "A stale copyright year is cosmetic on its own. Never report above 'low'
+         unless combined with other staleness evidence."
+      - "A year in a title is correct for genuinely dated content (an annual
+         report, a '2023 in review' piece). Report only where the page presents
+         itself as current guidance."
+
+  - id: TRUST-005
+    title_template: "Page content states facts that are no longer true"
+    applies_when: always
+    inputs: [pages/*/extracted.json#text, pages/*/extracted.json#dates]
+    detection: model-judged
+    severity_rule: "medium when a page references discontinued offerings, superseded versions or expired dates as current."
+    evidence_template: "{page} refers to {claim} as current: {excerpt}"
+    verification: "Check whether {claim} is still accurate"
+    fix_ref: references/fixes/freshness-signals.md
+    false_positive_guards:
+      - "We cannot know a company's current offering. Report only what is
+         internally inconsistent or self-evidently expired (an event date in the
+         past presented as upcoming, a 'coming in 2024' on a page dated later)."
+      - "Never assert that a product is discontinued. Phrase the finding as
+         'this page presents X as current; confirm that is still accurate'."
+
+  - id: TRUST-006
+    title_template: "Key claims appear nowhere else on the web"
+    applies_when: always
+    inputs: [pages/*/extracted.json#text, external/]
+    detection: model-judged
+    requires_tool: "web search"
+    severity_rule: >-
+      medium when the brand's central factual claims (founding year, location,
+      scale, credentials) are corroborated by no independent source;
+      high when the brand has essentially no off-site presence at all.
+    evidence_template: "{n} of {m} key claims are stated only on the site itself: {examples}."
+    verification: "Search the web for '{brand} {claim}' and see whether any independent source states it"
+    fix_ref: references/fixes/corroboration.md
+    false_positive_guards:
+      - "SKIP ENTIRELY when no search tool is available and record it in
+         coverage.checks_skipped. Never infer absence from an unavailable lookup."
+      - "A small or new organisation legitimately has a thin footprint. Frame this
+         as an opportunity to seed accurate facts in the places machines check,
+         not as a credibility problem."
+      - "Do not treat the company's own social profiles, press releases or
+         syndicated content as independent corroboration."
+      - "Never imply a claim is FALSE because it is uncorroborated. Uncorroborated
+         and untrue are different, and conflating them is defamatory."
+
+  - id: TRUST-007
+    title_template: "The brand name collides with better-known entities"
+    applies_when: always
+    inputs: [pages/*/extracted.json, external/]
+    detection: model-judged
+    requires_tool: "web search"
+    severity_rule: >-
+      high when a search for the brand name returns predominantly other entities
+      and the site offers nothing to disambiguate;
+      medium when collision exists but the site distinguishes itself well.
+    evidence_template: "Searching '{brand}' surfaces {competing_entities}; the site's own pages state {disambiguation_state}."
+    verification: "Search for '{brand}' and count how many results refer to this organisation"
+    fix_ref: references/fixes/entity-disambiguation.md
+    false_positive_guards:
+      - "SKIP when no search tool is available."
+      - "Name collision is not the site's fault and is often unavoidable. The
+         finding is about the ABSENCE OF DISAMBIGUATION on the site, never about
+         the name itself. Never recommend rebranding."
+      - "A distinctive coined name with no collisions should not be reported here
+         at all."
+
+  - id: TRUST-008
+    title_template: "No sentence identifies the organization unambiguously"
+    applies_when: always
+    inputs: [pages/*/extracted.json#text]
+    detection: model-judged
+    severity_rule: "medium; high when TRUST-007 also fires."
+    evidence_template: "No sampled page pairs the brand name with a category and location in one sentence."
+    verification: "Search the site for a sentence naming what the company is and where it is based"
+    fix_ref: references/fixes/entity-disambiguation.md
+    false_positive_guards:
+      - "Runs WITHOUT a search tool -- it is an on-site check. Do not skip it when
+         off-site checks are skipped."
+      - "Overlaps QUOTE-002. That check asks whether the site says what it does;
+         this one asks whether it says so in a way that distinguishes it from
+         similarly-named entities. Report one or the other, not both."
+
+  - id: TRUST-009
+    title_template: "The brand is absent from the sources machines check"
+    applies_when: always
+    inputs: [external/, pages/*/extracted.json#jsonld]
+    detection: model-judged
+    requires_tool: "web search"
+    severity_rule: "medium when the organisation has no presence on the identity anchors relevant to its category."
+    evidence_template: "No entry found on {anchors} for {brand}."
+    verification: "Search {anchor} for '{brand}'"
+    fix_ref: references/fixes/corroboration.md
+    false_positive_guards:
+      - "SKIP when no search tool is available."
+      - "Expected anchors DIFFER BY PROFILE. A local business needs map and
+         directory listings; a SaaS needs review platforms; a nonprofit needs
+         registries. Never apply one checklist to every site."
+      - "Wikipedia has notability requirements most organisations do not meet.
+         Never recommend creating a Wikipedia article. Wikidata is a reasonable
+         suggestion where the organisation is genuinely notable."
+
+  - id: TRUST-010
+    title_template: "Name, address or phone details are inconsistent"
+    applies_when: [local-business, ecommerce, nonprofit-gov]
+    inputs: [pages/*/extracted.json#text, pages/*/extracted.json#jsonld, external/]
+    detection: deterministic
+    severity_rule: "medium when contact details differ across the site; high when they also differ from off-site listings."
+    evidence_template: "{field} appears as {variants} across {n} pages."
+    verification: "Compare the address in the footer with the one on the contact page"
+    fix_ref: references/fixes/corroboration.md
+    false_positive_guards:
+      - "Formatting differences are not inconsistencies. Normalise abbreviations,
+         punctuation and phone formats before comparing."
+      - "Multiple genuine locations are not an inconsistency. Check whether the
+         variants are different branches before reporting."
+      - "The on-site half runs without a search tool; only the off-site
+         comparison needs one."
+
+  - id: TRUST-011
+    title_template: "Official profiles are not linked from the site"
+    applies_when: always
+    inputs: [pages/*/extracted.json#links, pages/*/extracted.json#jsonld]
+    detection: deterministic
+    severity_rule: "low; medium when combined with PARSE-005."
+    evidence_template: "The site links no official profiles and declares no sameAs entries."
+    verification: "Look for social or profile links in the footer of {page}"
+    fix_ref: references/fixes/entity-disambiguation.md
+    false_positive_guards:
+      - "Runs without a search tool -- it checks the site's own links."
+      - "Some organisations deliberately keep no social presence. Report the
+         absence of LINKING to profiles that exist, and treat 'no profiles at
+         all' as a proactive recommendation instead."
+
+  - id: TRUST-012
+    title_template: "Off-site descriptions contradict the site's own positioning"
+    applies_when: always
+    inputs: [external/, pages/*/extracted.json#text]
+    detection: model-judged
+    requires_tool: "web search"
+    severity_rule: "medium when independent sources describe the organisation differently from how it describes itself."
+    evidence_template: "The site describes itself as {self}; {source} describes it as {other}."
+    verification: "Search for '{brand}' and compare the descriptions returned"
+    fix_ref: references/fixes/corroboration.md
+    false_positive_guards:
+      - "SKIP when no search tool is available."
+      - "A company that has repositioned will legitimately differ from older
+         coverage. Frame the fix as updating the outdated sources, not as an error
+         on the site."
+      - "Never treat a competitor's or a critic's characterisation as the truth
+         the site should match."
+
+  - id: TRUST-013
+    title_template: "No independent coverage or reviews exist"
+    applies_when: always
+    inputs: [external/]
+    detection: model-judged
+    requires_tool: "web search"
+    severity_rule: "medium; low for a young or deliberately low-profile organisation."
+    evidence_template: "No independent coverage, reviews or citations found for {brand}."
+    verification: "Search for '{brand} review' and '{brand}' in news"
+    fix_ref: references/fixes/corroboration.md
+    false_positive_guards:
+      - "SKIP when no search tool is available."
+      - "This is largely outside the site owner's direct control. Recommendations
+         must be actions they can actually take (claim directory listings, publish
+         data worth citing, participate in industry surveys) and must never
+         include soliciting fake reviews or paid placements."
+
+  - id: TRUST-014
+    title_template: "Outbound links point to dead or moved sources"
+    applies_when: always
+    inputs: [pages/*/extracted.json#links]
+    detection: deterministic
+    severity_rule: "low; medium on pages that cite sources to support factual claims."
+    evidence_template: "{n} outbound links returned errors: {examples}."
+    verification: "curl -sI {url}"
+    fix_ref: references/fixes/corroboration.md
+    false_positive_guards:
+      - "The collector does not fetch external URLs by default. Report ONLY links
+         we actually tested; never infer breakage from URL shape."
+      - "Many sites block automated requests. A 403 from an external host is not
+         evidence the link is dead."
+
+  - id: TRUST-015
+    title_template: "Factual claims carry no attribution"
+    applies_when: always
+    inputs: [pages/*/extracted.json#text, pages/*/extracted.json#links]
+    detection: model-judged
+    severity_rule: "low; medium when statistics or research claims are central to the page's argument."
+    evidence_template: "{page} states {claim} with no source, author or methodology."
+    verification: "Read {page} and look for a source next to {claim}"
+    fix_ref: references/fixes/corroboration.md
+    false_positive_guards:
+      - "Marketing pages are not academic papers. Apply only to specific numeric
+         or research claims, never to ordinary product description."
+      - "A claim about the company's own operations needs no external source."
+
+proactive:
+  - id: TRUST-P01
+    title: "Add one disambiguating sentence pairing the brand with its category and location"
+    gate: always
+    rationale_template: >-
+      "One sentence of the form 'X is a Y based in Z' gives a machine resolving an
+      ambiguous name something explicit to bind to, and it is the cheapest
+      identity signal available."
+  - id: TRUST-P02
+    title: "Publish facts worth citing so other sources repeat them"
+    gate: "corroboration is thin"
+    rationale_template: >-
+      "Agreement across independent sources is what makes a claim repeatable.
+      Original data, benchmarks or survey results give other sites a reason to
+      state the brand's facts in their own words, which is the only durable way
+      to build corroboration."
+  - id: TRUST-P03
+    title: "Show an update date on pages that change"
+    gate: "dates are absent but content is current"
+    rationale_template: >-
+      "A visible, honest update date lets a consumer prefer the page over an older
+      competing source. It only helps while it stays truthful."
