@@ -35,7 +35,7 @@
       "path": "skills/render-extractability-audit",
       "concern": "read",
       "summary": "Can a machine read what is there? JS-dependent content, facts locked in images or PDFs, content behind interaction or consent walls, semantic structure.",
-      "status": "scaffold",
+      "status": "complete",
       "owner": "lakshay"
     },
     {

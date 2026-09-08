@@ -1,7 +1,7 @@
 # Work packet: `render-extractability-audit`
 
 **Owner:** Lakshay · **Order:** #1 of your queue · **Mechanism:** `read` (READ)
-**Status:** registry frozen, script not yet written
+**Status:** complete
 
 ---
 
@@ -113,12 +113,12 @@ python brand-ai-readiness-audit/skills/render-extractability-audit/scripts/check
 
 Also required before you call it done:
 
-- [ ] Every check in `checks.yaml` is either implemented or listed in
+- [x] Every check in `checks.yaml` is either implemented or listed in
       `NOT_YET_IMPLEMENTED` with a reason.
-- [ ] Fix templates written for every `fix_ref` your checks cite.
-- [ ] `python tools/validate.py --strict` passes for your skill.
-- [ ] No non-stdlib imports (validate.py enforces this).
-- [ ] No `datetime.now()`, no `time.time()`, no unseeded `random` — findings must
+- [x] Fix templates written for every `fix_ref` your checks cite.
+- [x] `python tools/validate.py --strict` passes for your skill.
+- [x] No non-stdlib imports (validate.py enforces this).
+- [x] No `datetime.now()`, no `time.time()`, no unseeded `random` — findings must
       be reproducible.
 
 ---

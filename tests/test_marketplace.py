@@ -27,6 +27,7 @@ BUNDLES = os.path.join(HERE, "bundles")
 SKILLS = os.path.join(REPO, "brand-ai-readiness-audit", "skills")
 
 CHECK_ACCESS = os.path.join(SKILLS, "crawl-access-audit", "scripts", "check_access.py")
+CHECK_RENDER = os.path.join(SKILLS, "render-extractability-audit", "scripts", "check_render.py")
 VALIDATE_BUNDLE = os.path.join(SKILLS, "site-evidence-collector", "scripts",
                                "validate_bundle.py")
 MERGE = os.path.join(SKILLS, "audit-orchestrator", "scripts", "merge_findings.py")
@@ -50,6 +51,12 @@ def run(*args) -> subprocess.CompletedProcess:
 
 def reach_findings(name: str) -> list[dict]:
     proc = run(CHECK_ACCESS, bundle(name), "--stdout")
+    assert proc.returncode == 0, proc.stderr
+    return json.loads(proc.stdout)["findings"]
+
+
+def read_findings(name: str) -> list[dict]:
+    proc = run(CHECK_RENDER, bundle(name), "--stdout")
     assert proc.returncode == 0, proc.stderr
     return json.loads(proc.stdout)["findings"]
 
@@ -296,3 +303,77 @@ def test_pipeline_produces_a_schema_valid_report():
 def test_marketplace_validates():
     proc = run(os.path.join(REPO, "tools", "validate.py"), "--quiet")
     assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+# --------------------------------------------------------------------------
+# READ checks
+# --------------------------------------------------------------------------
+
+def test_read_clean_site_produces_no_serious_findings():
+    """False-positive tripwire for READ checks: clean site must produce ZERO
+    critical or high findings."""
+    serious = [f for f in read_findings("clean")
+               if f["severity"] in ("critical", "high")]
+    assert not serious, (
+        "READ checks fired on the clean fixture: "
+        + "; ".join(f"{f['check_id']} ({f['severity']}) {f['title']}" for f in serious))
+
+
+def test_read_js_shell_produces_read_001():
+    """js-shell fixture must produce READ-001 with critical severity and medium
+    confidence when renderer is not available."""
+    findings = read_findings("js-shell")
+    read_001 = [f for f in findings if f["check_id"] == "READ-001"]
+    assert len(read_001) == 1, f"Expected 1 READ-001 finding, got {len(read_001)}"
+    f = read_001[0]
+    assert f["severity"] == "critical"
+    assert f["confidence"] == "medium"
+    assert f["determinism"] == "deterministic"
+    assert "inferred" in f["evidence"].lower()
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_read_analysis_is_deterministic(name):
+    """The same bundle twice must produce byte-identical READ findings."""
+    a = run(CHECK_RENDER, bundle(name), "--stdout")
+    b = run(CHECK_RENDER, bundle(name), "--stdout")
+    assert a.returncode == 0 and b.returncode == 0
+    assert a.stdout == b.stdout, f"{name}: two runs over one bundle disagreed"
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_read_every_finding_cites_resolvable_evidence(name):
+    """Every READ candidate must cite artifact_refs that exist on disk."""
+    root = bundle(name)
+    for f in read_findings(name):
+        refs = f["evidence_detail"]["artifact_refs"]
+        assert refs, f"{f['check_id']} cites no artifact"
+        for ref in refs:
+            path = os.path.join(root, ref.replace("/", os.sep))
+            assert os.path.exists(path), f"{f['check_id']} cites missing {ref}"
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_read_findings_satisfy_the_schema_fields(name):
+    required = ["id", "check_id", "title", "severity", "confidence", "determinism",
+                "category", "mechanism", "evidence", "evidence_detail",
+                "affected_scope", "verification", "suggested_action"]
+    for f in read_findings(name):
+        for key in required:
+            assert key in f, f"{f.get('check_id')} missing {key!r}"
+        assert f["evidence"].strip().lower() != f["title"].strip().lower(), (
+            f"{f['check_id']}: evidence restates the title")
+        action = f["suggested_action"]
+        for key in ("summary", "priority", "steps", "effort", "impact_rationale"):
+            assert key in action, f"{f['check_id']}.suggested_action missing {key!r}"
+        assert action["steps"], f"{f['check_id']} has no fix steps"
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_read_model_judged_findings_are_never_critical(name):
+    """Model-judged READ findings may never be critical."""
+    for f in read_findings(name):
+        if f["determinism"] == "model-judged":
+            assert f["severity"] != "critical", (
+                f"{f['check_id']} is model-judged and critical")
+
