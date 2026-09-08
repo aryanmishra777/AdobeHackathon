@@ -28,6 +28,7 @@ SKILLS = os.path.join(REPO, "brand-ai-readiness-audit", "skills")
 
 CHECK_ACCESS = os.path.join(SKILLS, "crawl-access-audit", "scripts", "check_access.py")
 CHECK_RENDER = os.path.join(SKILLS, "render-extractability-audit", "scripts", "check_render.py")
+CHECK_PARSE = os.path.join(SKILLS, "structured-data-audit", "scripts", "check_structured_data.py")
 VALIDATE_BUNDLE = os.path.join(SKILLS, "site-evidence-collector", "scripts",
                                "validate_bundle.py")
 MERGE = os.path.join(SKILLS, "audit-orchestrator", "scripts", "merge_findings.py")
@@ -57,6 +58,12 @@ def reach_findings(name: str) -> list[dict]:
 
 def read_findings(name: str) -> list[dict]:
     proc = run(CHECK_RENDER, bundle(name), "--stdout")
+    assert proc.returncode == 0, proc.stderr
+    return json.loads(proc.stdout)["findings"]
+
+
+def parse_findings(name: str) -> list[dict]:
+    proc = run(CHECK_PARSE, bundle(name), "--stdout")
     assert proc.returncode == 0, proc.stderr
     return json.loads(proc.stdout)["findings"]
 
@@ -376,4 +383,84 @@ def test_read_model_judged_findings_are_never_critical(name):
         if f["determinism"] == "model-judged":
             assert f["severity"] != "critical", (
                 f"{f['check_id']} is model-judged and critical")
+
+
+# --------------------------------------------------------------------------
+# PARSE checks
+# --------------------------------------------------------------------------
+
+def test_parse_clean_site_produces_no_serious_findings():
+    """False-positive tripwire for PARSE checks: clean site must produce ZERO
+    critical or high findings."""
+    serious = [f for f in parse_findings("clean")
+               if f["severity"] in ("critical", "high")]
+    assert not serious, (
+        "PARSE checks fired on the clean fixture: "
+        + "; ".join(f"{f['check_id']} ({f['severity']}) {f['title']}" for f in serious))
+
+
+def test_parse_contradictory_markup_produces_parse_007():
+    """contradictory-markup fixture must produce PARSE-007 at high severity."""
+    findings = parse_findings("contradictory-markup")
+    p7 = [f for f in findings if f["check_id"] == "PARSE-007"]
+    assert len(p7) == 1, f"Expected 1 PARSE-007 finding, got {len(p7)}"
+    assert p7[0]["severity"] == "high"
+    assert "price" in p7[0]["evidence"].lower()
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_parse_analysis_is_deterministic(name):
+    """The same bundle twice must produce byte-identical PARSE findings."""
+    a = run(CHECK_PARSE, bundle(name), "--stdout")
+    b = run(CHECK_PARSE, bundle(name), "--stdout")
+    assert a.returncode == 0 and b.returncode == 0
+    assert a.stdout == b.stdout, f"{name}: two runs over one bundle disagreed"
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_parse_every_finding_cites_resolvable_evidence(name):
+    """Every PARSE candidate must cite artifact_refs that exist on disk."""
+    root = bundle(name)
+    for f in parse_findings(name):
+        refs = f["evidence_detail"]["artifact_refs"]
+        assert refs, f"{f['check_id']} cites no artifact"
+        for ref in refs:
+            path = os.path.join(root, ref.replace("/", os.sep))
+            assert os.path.exists(path), f"{f['check_id']} cites missing {ref}"
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_parse_findings_satisfy_the_schema_fields(name):
+    required = ["id", "check_id", "title", "severity", "confidence", "determinism",
+                "category", "mechanism", "evidence", "evidence_detail",
+                "affected_scope", "verification", "suggested_action"]
+    for f in parse_findings(name):
+        for key in required:
+            assert key in f, f"{f.get('check_id')} missing {key!r}"
+        assert f["evidence"].strip().lower() != f["title"].strip().lower(), (
+            f"{f['check_id']}: evidence restates the title")
+        action = f["suggested_action"]
+        for key in ("summary", "priority", "steps", "effort", "impact_rationale"):
+            assert key in action, f"{f['check_id']}.suggested_action missing {key!r}"
+        assert action["steps"], f"{f['check_id']} has no fix steps"
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_parse_model_judged_findings_are_never_critical(name):
+    """Model-judged PARSE findings may never be critical."""
+    for f in parse_findings(name):
+        if f["determinism"] == "model-judged":
+            assert f["severity"] != "critical", (
+                f"{f['check_id']} is model-judged and critical")
+
+
+@pytest.mark.parametrize("name", ALL_FIXTURES)
+def test_parse_fix_snippets_are_tailored_not_templated(name):
+    """A snippet containing a placeholder gets pasted into production verbatim."""
+    for f in parse_findings(name):
+        code = f["suggested_action"].get("code") or ""
+        for placeholder in ("YOUR_", "<your ", "REPLACE_ME", "XXX", "TODO"):
+            assert placeholder.lower() not in code.lower(), (
+                f"{f['check_id']} ships an untailored snippet containing {placeholder!r}")
+
 

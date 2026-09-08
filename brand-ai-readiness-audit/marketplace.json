@@ -43,7 +43,7 @@
       "path": "skills/structured-data-audit",
       "concern": "parse",
       "summary": "Can a machine parse specific facts out? schema.org coverage and validity, required properties by type, entity graph, and markup that contradicts the visible page.",
-      "status": "scaffold",
+      "status": "complete",
       "owner": "lakshay"
     },
     {
