@@ -35,7 +35,7 @@
       "path": "skills/render-extractability-audit",
       "concern": "read",
       "summary": "Can a machine read what is there? JS-dependent content, facts locked in images or PDFs, content behind interaction or consent walls, semantic structure.",
-      "status": "scaffold",
+      "status": "complete",
       "owner": "lakshay"
     },
     {
@@ -43,7 +43,7 @@
       "path": "skills/structured-data-audit",
       "concern": "parse",
       "summary": "Can a machine parse specific facts out? schema.org coverage and validity, required properties by type, entity graph, and markup that contradicts the visible page.",
-      "status": "scaffold",
+      "status": "complete",
       "owner": "lakshay"
     },
     {
