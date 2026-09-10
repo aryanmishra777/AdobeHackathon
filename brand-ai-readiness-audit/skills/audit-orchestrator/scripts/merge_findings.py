@@ -137,6 +137,15 @@ def compute_severity(finding: dict, log: list[str]) -> str:
             log.append(f"{cid}: de-escalated {sev} -> {new} (single non-primary page)")
         sev = new
 
+    # False-positive gate 3: a model-judged finding may never be critical
+    # without deterministic corroboration. Enforce it here rather than leaving
+    # validate_report to reject the finished report -- merging keeps the worst
+    # severity of a group and site-wide scope can escalate, so a model-judged
+    # finding can reach critical without any single check asking for it.
+    if finding.get("determinism") == "model-judged" and sev == "critical":
+        sev = "high"
+        log.append(f"{cid}: capped critical -> high (model-judged, gate 3)")
+
     # Step 3 -- confidence never escalates, only pulls down.
     if finding.get("confidence") == "low":
         new = shift(sev, 1)
@@ -191,32 +200,46 @@ def scope_key(finding: dict) -> tuple:
 
 
 def dedupe(findings: list[dict], log: list[str]) -> list[dict]:
-    """Two candidates collide when they share a check_id and their affected page
-    sets overlap. Merge into one, unioning the pages and refs."""
-    by_check: dict[str, list[dict]] = {}
+    """One defect, reported once.
+
+    Candidates collide when they share a check_id AND a title. Page overlap is
+    deliberately not required: a check that fires on eleven different pages has
+    found one site-wide defect eleven times, not eleven defects, and a report
+    that lists "The top of the page does not say what this is" eleven times is
+    one nobody will read to the end of.
+
+    Title is part of the key because a single check may legitimately describe
+    different problems -- REACH-014 reports an https failure and mixed content
+    under one id -- and those must not be folded together.
+    """
+    by_key: dict[tuple, list[dict]] = {}
+    order: list[tuple] = []
     for f in findings:
-        by_check.setdefault(f.get("check_id", "?"), []).append(f)
+        key = (f.get("check_id", "?"), f.get("title", ""))
+        if key not in by_key:
+            order.append(key)
+        by_key.setdefault(key, []).append(f)
 
     merged: list[dict] = []
-    for check_id, group in by_check.items():
-        if len(group) == 1:
-            merged.append(group[0])
-            continue
-        buckets: list[dict] = []
-        for f in group:
-            pages = set((f.get("evidence_detail") or {}).get("pages_affected") or [])
-            placed = False
-            for b in buckets:
-                if not pages or not b["pages"] or (pages & b["pages"]):
-                    _absorb(b["finding"], f)
-                    b["pages"] |= pages
-                    placed = True
-                    break
-            if not placed:
-                buckets.append({"finding": f, "pages": set(pages)})
-        if len(buckets) < len(group):
-            log.append(f"{check_id}: merged {len(group)} candidates into {len(buckets)}")
-        merged.extend(b["finding"] for b in buckets)
+    for key in order:
+        group = by_key[key]
+        head = group[0]
+        if len(group) > 1:
+            for other in group[1:]:
+                _absorb(head, other)
+            pages = (head.get("evidence_detail") or {}).get("pages_affected") or []
+            checked = (head.get("affected_scope") or {}).get("pages_checked") or 0
+            if len(pages) > 1:
+                shown = ", ".join(str(u) for u in pages[:3])
+                head["evidence"] = (
+                    (head.get("evidence") or "").rstrip().rstrip(".")
+                    + f". Observed on {len(pages)}"
+                    + (f" of {checked}" if checked else "")
+                    + f" sampled pages: {shown}"
+                    + ("..." if len(pages) > 3 else "") + ".")
+            log.append(f"{key[0]}: merged {len(group)} candidates into 1 "
+                       f"({len(pages)} pages affected)")
+        merged.append(head)
     return merged
 
 

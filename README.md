@@ -24,6 +24,7 @@ this repo is the harness that proves it works.
 | `tools/` | `validate.py`, `package.py`, `install_local.py`. |
 | `docs/` | `EVIDENCE.md` (what the literature supports, and what it doesn't), `ROLES.md`, `CONTRIBUTING.md`, `todo/` (5 work packets). |
 | `TODO.md` | Who builds what, in what order. Index into `docs/todo/`. |
+| `docs/examples/` | A real report the marketplace produced, kept as a worked example. |
 | `PLAN.md` | The full architecture and build plan. The shared spec. |
 
 ## The eight skills
@@ -78,6 +79,8 @@ python tests/make_bundles.py                # crawl them into evidence bundles
 python -m pytest tests/ -q                  # expect: 127 passed
 python tools/validate.py                    # expect: PASS (13 TODOs outstanding)
 python tools/package.py                     # builds dist/ and checks the 50 MB ceiling
+python tools/check_coverage.py              # find checks that never fire anywhere
+python tools/run_audit.py https://example.com   # whole pipeline -> report.json + report.md
 ```
 
 Then read [`TODO.md`](TODO.md) for your queue, and the packet it points you at in

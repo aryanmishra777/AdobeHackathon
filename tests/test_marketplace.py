@@ -619,3 +619,105 @@ def test_reports_survive_non_latin1_evidence_end_to_end():
         merged = json.loads(proc.stdout.decode("utf-8"))
     text = json.dumps(merged, ensure_ascii=False)
     assert "\u25bc" in text and "caf\u00e9" in text, "characters lost in the merge"
+
+
+# --------------------------------------------------------------------------
+# One defect, reported once
+# --------------------------------------------------------------------------
+
+def test_a_check_firing_on_many_pages_becomes_one_finding():
+    """Eleven pages failing one check is one defect, not eleven findings.
+
+    An audit of bbc.co.uk produced 39 findings of which 27 came from one skill:
+    STAY-001 eleven times and STAY-014 eight times, one per page. The dedupe
+    only merged candidates whose page sets OVERLAPPED, and per-page findings
+    never overlap. Nobody reads to the end of a report that says the same thing
+    eleven times.
+    """
+    candidates = []
+    for i in range(6):
+        candidates.append({
+            "id": "F-000", "check_id": "STAY-001",
+            "title": "The top of the page does not say what this is",
+            "severity": "medium", "confidence": "high",
+            "determinism": "deterministic", "category": "engagement",
+            "mechanism": "stay", "evidence": f"Page {i} opens without orientation.",
+            "evidence_detail": {"pages_affected": [f"https://example.com/p{i}"],
+                                "counts": {}, "artifact_refs": ["MANIFEST.json"]},
+            "affected_scope": {"pages_checked": 6, "pages_affected": 1, "scope": "page"},
+            "verification": "Open the page", "suggested_action": {},
+        })
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, "c.json")
+        with open(src, "w", encoding="utf-8") as fh:
+            json.dump(candidates, fh)
+        proc = run(MERGE, src, "--pages-sampled", "6", "--stdout")
+        assert proc.returncode == 0, proc.stderr
+        merged = json.loads(proc.stdout)["findings"]
+
+    same = [f for f in merged if f["check_id"] == "STAY-001"]
+    assert len(same) == 1, f"6 per-page candidates became {len(same)} findings"
+    pages = (same[0].get("evidence_detail") or {}).get("pages_affected") or []
+    assert len(pages) == 6, "the merged finding must keep every affected page"
+    assert "6" in same[0]["evidence"], (
+        "evidence still describes one page; it must restate the real spread")
+
+
+def test_distinct_titles_under_one_check_id_stay_separate():
+    """REACH-014 reports an https failure and mixed content under one id.
+
+    Collapsing purely by check_id would fold two different problems into one
+    finding wearing whichever title happened to come first.
+    """
+    def cand(title, page):
+        return {"id": "F-000", "check_id": "REACH-014", "title": title,
+                "severity": "medium", "confidence": "high",
+                "determinism": "deterministic", "category": "discoverability",
+                "mechanism": "reach", "evidence": title,
+                "evidence_detail": {"pages_affected": [page], "counts": {},
+                                    "artifact_refs": ["run.json"]},
+                "affected_scope": {"pages_checked": 2, "pages_affected": 1,
+                                   "scope": "page"},
+                "verification": "curl", "suggested_action": {}}
+
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, "c.json")
+        with open(src, "w", encoding="utf-8") as fh:
+            json.dump([cand("The site did not answer over https", "https://e.com/a"),
+                       cand("Secure pages load subresources over plain http",
+                            "https://e.com/b")], fh)
+        proc = run(MERGE, src, "--pages-sampled", "2", "--stdout")
+        assert proc.returncode == 0, proc.stderr
+        merged = json.loads(proc.stdout)["findings"]
+    titles = {f["title"] for f in merged if f["check_id"] == "REACH-014"}
+    assert len(titles) == 2, f"two distinct problems collapsed into {titles}"
+
+
+def test_model_judged_findings_cannot_reach_critical_through_the_merge():
+    """Gate 3 must hold after merging and escalation, not only per check.
+
+    A merge keeps the worst severity of its group and site-wide scope escalates
+    a level, so a model-judged finding can arrive at critical without any single
+    check having asked for it. That produced a report validate_report rejected.
+    """
+    cand = {"id": "F-000", "check_id": "PARSE-007",
+            "title": "Structured data contradicts the visible page",
+            "severity": "high", "confidence": "high",
+            "determinism": "model-judged", "category": "discoverability",
+            "mechanism": "parse", "evidence": "Price in markup differs from page.",
+            "evidence_detail": {"pages_affected": [f"https://e.com/p{i}" for i in range(5)],
+                                "counts": {}, "artifact_refs": ["MANIFEST.json"]},
+            "affected_scope": {"pages_checked": 5, "pages_affected": 5,
+                               "scope": "site-wide"},
+            "verification": "Compare", "suggested_action": {}}
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, "c.json")
+        with open(src, "w", encoding="utf-8") as fh:
+            json.dump([cand], fh)
+        proc = run(MERGE, src, "--pages-sampled", "5", "--stdout")
+        assert proc.returncode == 0, proc.stderr
+        merged = json.loads(proc.stdout)["findings"]
+    for f in merged:
+        if f.get("determinism") == "model-judged":
+            assert f["severity"] != "critical", (
+                "model-judged finding reached critical through the merge")

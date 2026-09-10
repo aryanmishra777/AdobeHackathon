@@ -1578,7 +1578,7 @@ def proactive(b: Bundle) -> list[dict]:
 
     if has_client_signals:
         out.append({
-            "id": "READ-P01",
+            "id": "P-000",  # READ-P01; orchestrator assigns the real id
             "title": "Server-render the pages that carry commercial facts",
             "category": CATEGORY,
             "mechanism": MECHANISM,
@@ -1611,7 +1611,7 @@ def proactive(b: Bundle) -> list[dict]:
 
     if has_widgets:
         out.append({
-            "id": "READ-P02",
+            "id": "P-000",  # READ-P02; orchestrator assigns the real id
             "title": "Mirror third-party widget values into the page as text",
             "category": CATEGORY,
             "mechanism": MECHANISM,
