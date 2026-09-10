@@ -20,8 +20,8 @@ this repo is the harness that proves it works.
 |---|---|
 | **`brand-ai-readiness-audit/`** | **THE SUBMISSION.** `marketplace.json` + 8 skills. This is the only directory that gets zipped. |
 | `bench/` | 76 real-site candidates → 57 measured corpus entries across the SEO×GEO quadrants, plus the live/replay runner. |
-| `tests/` | 7 local fixture sites, the bundles built from them, and 127 pytest assertions. |
-| `tools/` | `validate.py`, `package.py`, `install_local.py`. |
+| `tests/` | 7 local fixture sites, the bundles built from them, and 312 pytest assertions. |
+| `tools/` | `validate.py`, `package.py`, `check_coverage.py`, `run_audit.py`, `install_local.py`. |
 | `docs/` | `EVIDENCE.md` (what the literature supports, and what it doesn't), `ROLES.md`, `CONTRIBUTING.md`, `todo/` (5 work packets). |
 | `TODO.md` | Who builds what, in what order. Index into `docs/todo/`. |
 | `docs/examples/` | A real report the marketplace produced, kept as a worked example. |
@@ -58,15 +58,18 @@ no model weights. A check that always runs beats a stronger check that can't.
 | `crawl-access-audit` | Aryan | complete — the reference implementation |
 | `render-extractability-audit` | Lakshay | complete — 16/16 checks |
 | `structured-data-audit` | Lakshay | complete — 14/14 checks |
-| `answerability-audit` | Mayank | scaffold |
-| `freshness-corroboration-audit` | Mayank | scaffold |
-| `engagement-audit` | Mayank | scaffold |
+| `answerability-audit` | Mayank | complete — 12/12 checks |
+| `freshness-corroboration-audit` | Mayank | complete — 15/15 checks |
+| `engagement-audit` | Mayank | complete — 16/16 checks |
 
-91 checks are specified across the six registries; 43 are implemented. "Scaffold"
-means the design is finished and written down — every check has its ID, severity
-rule, required evidence, human verification step, and its false-positive guards.
-What is left is translating a finished specification into Python. See
-[`docs/ROLES.md`](docs/ROLES.md).
+**All 91 checks are implemented**, plus 18 proactive recommendations. Every
+check has its ID, severity rule, required evidence, human verification step and
+its false-positive guards written down in a registry before it was coded.
+
+`tools/check_coverage.py` guards against the failure that is easy to miss: a
+check that runs but never fires. Two once shipped as dead code with every other
+gate green. A silent check must now either be fixed or declare `rarity` with a
+reason. See [`docs/ROLES.md`](docs/ROLES.md).
 
 ## Getting started
 
@@ -76,8 +79,8 @@ pip install -r tools/requirements-dev.txt   # dev tooling only, never shipped
 python tests/make_fixtures.py               # build the local test websites
 python tests/make_bundles.py                # crawl them into evidence bundles
 
-python -m pytest tests/ -q                  # expect: 127 passed
-python tools/validate.py                    # expect: PASS (13 TODOs outstanding)
+python -m pytest tests/ -q                  # expect: 312 passed
+python tools/validate.py                    # expect: PASS (0 TODOs)
 python tools/package.py                     # builds dist/ and checks the 50 MB ceiling
 python tools/check_coverage.py              # find checks that never fire anywhere
 python tools/run_audit.py https://example.com   # whole pipeline -> report.json + report.md
@@ -94,14 +97,14 @@ Code / Copilot / Antigravity.
 SEO from technical hygiene. The result:
 
 ```
-                        n    disc
-SEO good / GEO good    20     75     control — healthy on both axes
-SEO good / GEO poor    10     60     the money quadrant
-SEO poor / GEO good    14     61     great content, weak technical SEO
-SEO poor / GEO poor    13     55     both, and we name the mechanism
+                        n   disc   eng
+SEO good / GEO good    20     72     90    control — healthy on both axes
+SEO good / GEO poor    10     58     90    the money quadrant
+SEO poor / GEO good    14     57     76    great content, weak technical SEO
+SEO poor / GEO poor    13     53     74    both, and we name the mechanism
 ```
 
-Good-SEO/poor-GEO scores 15 points below good-SEO/good-GEO. Those ten sites are
+Good-SEO/poor-GEO scores 14 points below good-SEO/good-GEO. Those ten sites are
 ones a conventional SEO linter passes clean: perfect sitemaps and canonicals,
 while the edge returns 429 to `ClaudeBot` or robots.txt disallows the retrieval
 crawlers outright.
@@ -148,3 +151,6 @@ would be exactly the confident false positive the rubric punishes.
 **Aryan** — contracts, collector, orchestrator, the reference implementation,
 tooling and the bench. **Lakshay** — READ and PARSE. **Mayank** — QUOTE, TRUST
 and STAY.
+
+See [`docs/examples/report-bbc-co-uk.md`](docs/examples/report-bbc-co-uk.md) for
+what the marketplace actually produces.
