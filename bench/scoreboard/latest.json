@@ -8,38 +8,65 @@
       "engagement": "moderate",
       "site_type": "saas",
       "pages": 5,
-      "discoverability": 98,
-      "disc_grade": "A",
+      "discoverability": 51,
+      "disc_grade": "D",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 1,
-        "critical": 0,
+        "total_findings": 6,
+        "critical": 1,
         "high": 0,
-        "medium": 1,
-        "low": 0,
+        "medium": 4,
+        "low": 1,
         "by_category": {
-          "discoverability": 1,
+          "discoverability": 6,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 1
+          "reach": 1,
+          "read": 3,
+          "parse": 2
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "READ-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.5,
+      "seconds": 0.4,
       "findings": [
+        {
+          "check_id": "READ-001",
+          "severity": "critical",
+          "title": "Page content is missing from the HTML a crawler receives"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
         {
           "check_id": "REACH-008",
           "severity": "medium",
           "title": "Content pages are excluded from search indexes"
+        },
+        {
+          "check_id": "READ-002",
+          "severity": "medium",
+          "title": "A JavaScript-dependent page offers no noscript fallback"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
         }
       ]
     },
@@ -50,25 +77,51 @@
       "engagement": "high",
       "site_type": "media-publisher",
       "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
+      "discoverability": 87,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 0,
+        "total_findings": 3,
         "critical": 0,
         "high": 0,
-        "medium": 0,
-        "low": 0
+        "medium": 2,
+        "low": 1,
+        "by_category": {
+          "discoverability": 3,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "read": 2,
+          "parse": 1
+        }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.2,
-      "findings": []
+      "seconds": 0.3,
+      "findings": [
+        {
+          "check_id": "PARSE-005",
+          "severity": "medium",
+          "title": "The organization entity has no sameAs links"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "low",
+          "title": "Informational images lack alternative text"
+        }
+      ]
     },
     {
       "url": "https://developer.mozilla.org",
@@ -77,38 +130,59 @@
       "engagement": "high",
       "site_type": "docs",
       "pages": 5,
-      "discoverability": 98,
-      "disc_grade": "A",
+      "discoverability": 80,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 1,
+        "total_findings": 5,
         "critical": 0,
         "high": 0,
-        "medium": 1,
-        "low": 0,
+        "medium": 4,
+        "low": 1,
         "by_category": {
-          "discoverability": 1,
+          "discoverability": 5,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 1
+          "reach": 1,
+          "parse": 4
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
         {
           "check_id": "REACH-008",
           "severity": "medium",
           "title": "Content pages are excluded from search indexes"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "low",
+          "title": "The site publishes no structured data at all"
         }
       ]
     },
@@ -119,34 +193,56 @@
       "engagement": "high",
       "site_type": "media-publisher",
       "pages": 5,
-      "discoverability": 98,
-      "disc_grade": "A",
+      "discoverability": 75,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 1,
+        "total_findings": 5,
         "critical": 0,
         "high": 0,
-        "medium": 0,
+        "medium": 4,
         "low": 1,
         "by_category": {
-          "discoverability": 1,
+          "discoverability": 5,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 1
+          "reach": 1,
+          "read": 1,
+          "parse": 3
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
         {
           "check_id": "REACH-003",
           "severity": "low",
@@ -161,27 +257,56 @@
       "engagement": "high",
       "site_type": "saas",
       "pages": 5,
-      "discoverability": 100,
+      "discoverability": 92,
       "disc_grade": "A",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 0,
+        "total_findings": 4,
         "critical": 0,
         "high": 0,
-        "medium": 0,
-        "low": 0
+        "medium": 1,
+        "low": 3,
+        "by_category": {
+          "discoverability": 4,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "read": 1,
+          "parse": 3
+        }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.4,
-      "findings": []
+      "seconds": 0.5,
+      "findings": [
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "low",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "low",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
+        }
+      ]
     },
     {
       "url": "https://stripe.com",
@@ -190,32 +315,66 @@
       "engagement": "high",
       "site_type": "saas",
       "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
+      "discoverability": 75,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 1,
+        "total_findings": 7,
         "critical": 0,
         "high": 0,
-        "medium": 0,
-        "low": 1,
+        "medium": 5,
+        "low": 2,
         "by_category": {
-          "discoverability": 1,
+          "discoverability": 7,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 1
+          "reach": 1,
+          "read": 2,
+          "parse": 4
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.4,
+      "seconds": 0.5,
       "findings": [
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "medium",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "READ-007",
+          "severity": "medium",
+          "title": "Content is delivered inside an iframe or third-party widget"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "low",
+          "title": "Social metadata is missing or contradicts the page"
+        },
         {
           "check_id": "REACH-015",
           "severity": "low",
@@ -230,25 +389,55 @@
       "engagement": "high",
       "site_type": "saas",
       "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
+      "discoverability": 82,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 0,
+        "total_findings": 4,
         "critical": 0,
         "high": 0,
-        "medium": 0,
-        "low": 0
+        "medium": 3,
+        "low": 1,
+        "by_category": {
+          "discoverability": 4,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "parse": 4
+        }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.2,
-      "findings": []
+      "seconds": 0.5,
+      "findings": [
+        {
+          "check_id": "PARSE-005",
+          "severity": "medium",
+          "title": "The organization entity has no sameAs links"
+        },
+        {
+          "check_id": "PARSE-006",
+          "severity": "medium",
+          "title": "Entities are not linked into a stable graph"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "low",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        }
+      ]
     },
     {
       "url": "https://www.airtable.com",
@@ -257,27 +446,66 @@
       "engagement": "high",
       "site_type": "saas",
       "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
+      "discoverability": 54,
+      "disc_grade": "D",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 0,
-        "critical": 0,
+        "total_findings": 6,
+        "critical": 1,
         "high": 0,
-        "medium": 0,
-        "low": 0
+        "medium": 3,
+        "low": 2,
+        "by_category": {
+          "discoverability": 6,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "read": 4,
+          "parse": 2
+        }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
-      "findings": []
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "READ-013",
+          "severity": "critical",
+          "title": "A consent wall or interstitial hides the content"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "medium",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "READ-007",
+          "severity": "low",
+          "title": "Content is delivered inside an iframe or third-party widget"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
+        }
+      ]
     },
     {
       "url": "https://www.allbirds.com",
@@ -286,25 +514,86 @@
       "engagement": "high",
       "site_type": "ecommerce",
       "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
+      "discoverability": 40,
+      "disc_grade": "D",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 0,
-        "critical": 0,
+        "total_findings": 10,
+        "critical": 1,
         "high": 0,
-        "medium": 0,
-        "low": 0
+        "medium": 4,
+        "low": 5,
+        "by_category": {
+          "discoverability": 10,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "read": 2,
+          "parse": 8
+        }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.2,
-      "findings": []
+      "seconds": 0.6,
+      "findings": [
+        {
+          "check_id": "PARSE-004",
+          "severity": "critical",
+          "title": "Structured data omits properties consumers need"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "medium",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "medium",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "PARSE-003",
+          "severity": "low",
+          "title": "Structured data uses the wrong type for the page"
+        },
+        {
+          "check_id": "PARSE-005",
+          "severity": "low",
+          "title": "The organization entity has no sameAs links"
+        },
+        {
+          "check_id": "PARSE-008",
+          "severity": "low",
+          "title": "Marked-up content does not appear on the page"
+        },
+        {
+          "check_id": "PARSE-008",
+          "severity": "low",
+          "title": "Marked-up content does not appear on the page"
+        },
+        {
+          "check_id": "PARSE-008",
+          "severity": "low",
+          "title": "Marked-up content does not appear on the page"
+        }
+      ]
     },
     {
       "url": "https://www.atlassian.com",
@@ -313,32 +602,76 @@
       "engagement": "high",
       "site_type": "saas",
       "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
+      "discoverability": 75,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 1,
+        "total_findings": 9,
         "critical": 0,
         "high": 0,
-        "medium": 0,
+        "medium": 8,
         "low": 1,
         "by_category": {
-          "discoverability": 1,
+          "discoverability": 9,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 1
+          "reach": 1,
+          "read": 3,
+          "parse": 5
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.4,
+      "seconds": 0.5,
       "findings": [
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "medium",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "medium",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-011",
+          "severity": "medium",
+          "title": "Content behind tabs or accordions is absent from the HTML"
+        },
         {
           "check_id": "REACH-015",
           "severity": "low",
@@ -352,37 +685,61 @@
       "geo": "good",
       "engagement": "high",
       "site_type": "ecommerce",
-      "pages": 5,
-      "discoverability": 54,
-      "disc_grade": "D",
+      "pages": 3,
+      "discoverability": 82,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 1,
-        "critical": 1,
-        "high": 0,
-        "medium": 0,
-        "low": 0,
+        "total_findings": 5,
+        "critical": 0,
+        "high": 1,
+        "medium": 2,
+        "low": 2,
         "by_category": {
-          "discoverability": 1,
+          "discoverability": 5,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 1
+          "reach": 2,
+          "read": 1,
+          "parse": 2
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.6,
       "findings": [
         {
           "check_id": "REACH-012",
-          "severity": "critical",
+          "severity": "high",
           "title": "Internal links point to pages that error"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "medium",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "low",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
         }
       ]
     },
@@ -393,32 +750,50 @@
       "engagement": "high",
       "site_type": "saas",
       "pages": 5,
-      "discoverability": 98,
+      "discoverability": 91,
       "disc_grade": "A",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 2,
+        "total_findings": 5,
         "critical": 0,
-        "high": 0,
-        "medium": 0,
-        "low": 2,
+        "high": 1,
+        "medium": 1,
+        "low": 3,
         "by_category": {
-          "discoverability": 2,
+          "discoverability": 5,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 2
+          "reach": 2,
+          "parse": 3
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.5,
+      "seconds": 0.6,
       "findings": [
+        {
+          "check_id": "PARSE-003",
+          "severity": "high",
+          "title": "Structured data uses the wrong type for the page"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "low",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        },
         {
           "check_id": "REACH-003",
           "severity": "low",
@@ -438,25 +813,60 @@
       "engagement": "high",
       "site_type": "nonprofit-gov",
       "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
+      "discoverability": 75,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 0,
+        "total_findings": 5,
         "critical": 0,
         "high": 0,
-        "medium": 0,
-        "low": 0
+        "medium": 5,
+        "low": 0,
+        "by_category": {
+          "discoverability": 5,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "parse": 5
+        }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.2,
-      "findings": []
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "PARSE-005",
+          "severity": "medium",
+          "title": "The organization entity has no sameAs links"
+        },
+        {
+          "check_id": "PARSE-006",
+          "severity": "medium",
+          "title": "Entities are not linked into a stable graph"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        }
+      ]
     },
     {
       "url": "https://www.gymshark.com",
@@ -465,36 +875,65 @@
       "engagement": "high",
       "site_type": "ecommerce",
       "pages": 5,
-      "discoverability": 98,
-      "disc_grade": "A",
+      "discoverability": 75,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 2,
+        "total_findings": 7,
         "critical": 0,
         "high": 0,
-        "medium": 1,
+        "medium": 6,
         "low": 1,
         "by_category": {
-          "discoverability": 2,
+          "discoverability": 7,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 2
+          "reach": 2,
+          "read": 3,
+          "parse": 2
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.4,
+      "seconds": 0.6,
       "findings": [
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
         {
           "check_id": "REACH-008",
           "severity": "medium",
           "title": "Content pages are excluded from search indexes"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "medium",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-011",
+          "severity": "medium",
+          "title": "Content behind tabs or accordions is absent from the HTML"
         },
         {
           "check_id": "REACH-015",
@@ -510,25 +949,76 @@
       "engagement": "high",
       "site_type": "saas",
       "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
+      "discoverability": 76,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 0,
+        "total_findings": 8,
         "critical": 0,
-        "high": 0,
-        "medium": 0,
-        "low": 0
+        "high": 1,
+        "medium": 7,
+        "low": 0,
+        "by_category": {
+          "discoverability": 8,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "read": 1,
+          "parse": 7
+        }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.2,
-      "findings": []
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "PARSE-004",
+          "severity": "high",
+          "title": "Structured data omits properties consumers need"
+        },
+        {
+          "check_id": "PARSE-005",
+          "severity": "medium",
+          "title": "The organization entity has no sameAs links"
+        },
+        {
+          "check_id": "PARSE-008",
+          "severity": "medium",
+          "title": "Marked-up content does not appear on the page"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "medium",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "READ-011",
+          "severity": "medium",
+          "title": "Content behind tabs or accordions is absent from the HTML"
+        }
+      ]
     },
     {
       "url": "https://www.ikea.com",
@@ -537,32 +1027,66 @@
       "engagement": "high",
       "site_type": "ecommerce",
       "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
+      "discoverability": 75,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 1,
+        "total_findings": 7,
         "critical": 0,
         "high": 0,
-        "medium": 0,
+        "medium": 6,
         "low": 1,
         "by_category": {
-          "discoverability": 1,
+          "discoverability": 7,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 1
+          "reach": 1,
+          "read": 3,
+          "parse": 3
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.7,
       "findings": [
+        {
+          "check_id": "PARSE-005",
+          "severity": "medium",
+          "title": "The organization entity has no sameAs links"
+        },
+        {
+          "check_id": "PARSE-006",
+          "severity": "medium",
+          "title": "Entities are not linked into a stable graph"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "medium",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-011",
+          "severity": "medium",
+          "title": "Content behind tabs or accordions is absent from the HTML"
+        },
         {
           "check_id": "REACH-015",
           "severity": "low",
@@ -577,36 +1101,60 @@
       "engagement": "high",
       "site_type": "nonprofit-gov",
       "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
+      "discoverability": 80,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 1,
+        "total_findings": 5,
         "critical": 0,
         "high": 0,
-        "medium": 0,
-        "low": 1,
+        "medium": 3,
+        "low": 2,
         "by_category": {
-          "discoverability": 1,
+          "discoverability": 5,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 1
+          "reach": 1,
+          "read": 1,
+          "parse": 3
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
+        {
+          "check_id": "PARSE-005",
+          "severity": "medium",
+          "title": "The organization entity has no sameAs links"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "PARSE-014",
+          "severity": "medium",
+          "title": "Editorial content declares no author or publisher"
+        },
         {
           "check_id": "REACH-015",
           "severity": "low",
           "title": "The server responds slowly enough to limit crawling"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
         }
       ]
     },
@@ -617,32 +1165,60 @@
       "engagement": "high",
       "site_type": "nonprofit-gov",
       "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
+      "discoverability": 75,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 1,
+        "total_findings": 6,
         "critical": 0,
         "high": 0,
-        "medium": 0,
+        "medium": 5,
         "low": 1,
         "by_category": {
-          "discoverability": 1,
+          "discoverability": 6,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 1
+          "reach": 1,
+          "parse": 5
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
       "seconds": 0.3,
       "findings": [
+        {
+          "check_id": "PARSE-005",
+          "severity": "medium",
+          "title": "The organization entity has no sameAs links"
+        },
+        {
+          "check_id": "PARSE-006",
+          "severity": "medium",
+          "title": "Entities are not linked into a stable graph"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
         {
           "check_id": "REACH-015",
           "severity": "low",
@@ -657,38 +1233,65 @@
       "engagement": "high",
       "site_type": "docs",
       "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
+      "discoverability": 81,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 1,
+        "total_findings": 6,
         "critical": 0,
         "high": 0,
-        "medium": 0,
-        "low": 1,
+        "medium": 3,
+        "low": 3,
         "by_category": {
-          "discoverability": 1,
+          "discoverability": 6,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 1
+          "reach": 1,
+          "read": 1,
+          "parse": 4
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "low",
+          "title": "The site publishes no structured data at all"
+        },
         {
           "check_id": "REACH-015",
           "severity": "low",
           "title": "The server responds slowly enough to limit crawling"
+        },
+        {
+          "check_id": "READ-001",
+          "severity": "low",
+          "title": "Page content is missing from the HTML a crawler receives"
         }
       ]
     },
@@ -699,25 +1302,56 @@
       "engagement": "high",
       "site_type": "docs",
       "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
+      "discoverability": 86,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 0,
+        "total_findings": 4,
         "critical": 0,
         "high": 0,
-        "medium": 0,
-        "low": 0
+        "medium": 2,
+        "low": 2,
+        "by_category": {
+          "discoverability": 4,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "read": 2,
+          "parse": 2
+        }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.2,
-      "findings": []
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "PARSE-005",
+          "severity": "medium",
+          "title": "The organization entity has no sameAs links"
+        },
+        {
+          "check_id": "PARSE-006",
+          "severity": "medium",
+          "title": "Entities are not linked into a stable graph"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "low",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "low",
+          "title": "The page uses no semantic landmarks"
+        }
+      ]
     },
     {
       "url": "https://apnews.com",
@@ -726,31 +1360,35 @@
       "engagement": "high",
       "site_type": "media-publisher",
       "pages": 5,
-      "discoverability": 83,
-      "disc_grade": "B",
+      "discoverability": 60,
+      "disc_grade": "C",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 2,
+        "total_findings": 9,
         "critical": 0,
         "high": 1,
-        "medium": 0,
-        "low": 1,
+        "medium": 5,
+        "low": 3,
         "by_category": {
-          "discoverability": 2,
+          "discoverability": 9,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 2
+          "reach": 2,
+          "read": 3,
+          "parse": 4
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.6,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -758,9 +1396,44 @@
           "title": "AI assistants are blocked from reading the site"
         },
         {
+          "check_id": "PARSE-005",
+          "severity": "medium",
+          "title": "The organization entity has no sameAs links"
+        },
+        {
+          "check_id": "PARSE-006",
+          "severity": "medium",
+          "title": "Entities are not linked into a stable graph"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "READ-007",
+          "severity": "medium",
+          "title": "Content is delivered inside an iframe or third-party widget"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "medium",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "low",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        },
+        {
           "check_id": "REACH-003",
           "severity": "low",
           "title": "AI training crawlers are blocked (informational)"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
         }
       ]
     },
@@ -771,38 +1444,64 @@
       "engagement": "high",
       "site_type": "saas",
       "pages": 5,
-      "discoverability": 95,
-      "disc_grade": "A",
+      "discoverability": 75,
+      "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 2,
+        "total_findings": 7,
         "critical": 0,
         "high": 0,
-        "medium": 1,
-        "low": 1,
+        "medium": 5,
+        "low": 2,
         "by_category": {
-          "discoverability": 2,
+          "discoverability": 7,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 2
+          "reach": 2,
+          "parse": 5
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
         {
           "check_id": "REACH-005",
           "severity": "medium",
           "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "low",
+          "title": "Q&A or step-by-step content is not marked up as such"
         },
         {
           "check_id": "REACH-015",
@@ -818,31 +1517,35 @@
       "engagement": "high",
       "site_type": "media-publisher",
       "pages": 5,
-      "discoverability": 83,
+      "discoverability": 76,
       "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 2,
+        "total_findings": 4,
         "critical": 0,
         "high": 1,
-        "medium": 0,
-        "low": 1,
+        "medium": 1,
+        "low": 2,
         "by_category": {
-          "discoverability": 2,
+          "discoverability": 4,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 2
+          "reach": 2,
+          "read": 1,
+          "parse": 1
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -850,9 +1553,19 @@
           "title": "AI assistants are blocked from reading the site"
         },
         {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
           "check_id": "REACH-003",
           "severity": "low",
           "title": "AI training crawlers are blocked (informational)"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
         }
       ]
     },
@@ -882,12 +1595,14 @@
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.2,
+      "seconds": 0.3,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -903,33 +1618,35 @@
       "engagement": "high",
       "site_type": "docs",
       "pages": 5,
-      "discoverability": 70,
+      "discoverability": 60,
       "disc_grade": "C",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 2,
+        "total_findings": 9,
         "critical": 0,
-        "high": 2,
-        "medium": 0,
-        "low": 0,
+        "high": 1,
+        "medium": 7,
+        "low": 1,
         "by_category": {
-          "discoverability": 2,
+          "discoverability": 9,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 2
+          "reach": 2,
+          "read": 2,
+          "parse": 5
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -937,9 +1654,44 @@
           "title": "The server blocks AI crawlers even though robots.txt allows them"
         },
         {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
           "check_id": "REACH-010",
-          "severity": "high",
+          "severity": "medium",
           "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "medium",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "low",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
         }
       ]
     },
@@ -950,33 +1702,35 @@
       "engagement": "high",
       "site_type": "docs",
       "pages": 5,
-      "discoverability": 79,
-      "disc_grade": "B",
+      "discoverability": 60,
+      "disc_grade": "C",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 3,
+        "total_findings": 7,
         "critical": 0,
         "high": 1,
-        "medium": 1,
+        "medium": 5,
         "low": 1,
         "by_category": {
-          "discoverability": 3,
+          "discoverability": 7,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 3
+          "reach": 3,
+          "read": 1,
+          "parse": 3
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -984,9 +1738,29 @@
           "title": "The server blocks AI crawlers even though robots.txt allows them"
         },
         {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
           "check_id": "REACH-001",
           "severity": "medium",
           "title": "No robots.txt is published"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
         },
         {
           "check_id": "REACH-015",
@@ -1002,26 +1776,29 @@
       "engagement": "high",
       "site_type": "saas",
       "pages": 5,
-      "discoverability": 83,
+      "discoverability": 78,
       "disc_grade": "B",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 2,
+        "total_findings": 5,
         "critical": 0,
         "high": 1,
-        "medium": 0,
+        "medium": 3,
         "low": 1,
         "by_category": {
-          "discoverability": 2,
+          "discoverability": 5,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 2
+          "reach": 2,
+          "parse": 3
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
@@ -1032,6 +1809,21 @@
           "check_id": "REACH-005",
           "severity": "high",
           "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "medium",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
         },
         {
           "check_id": "REACH-003",
@@ -1066,12 +1858,14 @@
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.2,
+      "seconds": 0.4,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -1092,41 +1886,75 @@
       "engagement": "high",
       "site_type": "media-publisher",
       "pages": 5,
-      "discoverability": 83,
-      "disc_grade": "B",
+      "discoverability": 33,
+      "disc_grade": "F",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 2,
-        "critical": 0,
+        "total_findings": 8,
+        "critical": 1,
         "high": 1,
-        "medium": 0,
-        "low": 1,
+        "medium": 3,
+        "low": 3,
         "by_category": {
-          "discoverability": 2,
+          "discoverability": 8,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 2
+          "reach": 2,
+          "read": 2,
+          "parse": 4
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.5,
       "findings": [
+        {
+          "check_id": "PARSE-003",
+          "severity": "critical",
+          "title": "Structured data uses the wrong type for the page"
+        },
         {
           "check_id": "REACH-002",
           "severity": "high",
           "title": "AI assistants are blocked from reading the site"
         },
         {
+          "check_id": "PARSE-012",
+          "severity": "medium",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "medium",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "PARSE-003",
+          "severity": "low",
+          "title": "Structured data uses the wrong type for the page"
+        },
+        {
           "check_id": "REACH-003",
           "severity": "low",
           "title": "AI training crawlers are blocked (informational)"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
         }
       ]
     },
@@ -1156,12 +1984,14 @@
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.2,
+      "seconds": 0.4,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -1182,678 +2012,30 @@
       "engagement": "moderate",
       "site_type": "docs",
       "pages": 5,
-      "discoverability": 44,
+      "discoverability": 45,
       "disc_grade": "D",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 6,
-        "critical": 0,
-        "high": 3,
-        "medium": 3,
-        "low": 0,
-        "by_category": {
-          "discoverability": 6,
-          "engagement": 0
-        },
-        "by_mechanism": {
-          "reach": 6
-        }
-      },
-      "skills_run": [
-        "crawl-access-audit"
-      ],
-      "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
-      "false_positives": [],
-      "seconds": 0.3,
-      "findings": [
-        {
-          "check_id": "REACH-006",
-          "severity": "high",
-          "title": "No XML sitemap is published or declared"
-        },
-        {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
-        {
-          "check_id": "REACH-011",
-          "severity": "high",
-          "title": "The site answers on several origins without redirecting"
-        },
-        {
-          "check_id": "REACH-001",
-          "severity": "medium",
-          "title": "No robots.txt is published"
-        },
-        {
-          "check_id": "REACH-012",
-          "severity": "medium",
-          "title": "Internal links point to pages that error"
-        },
-        {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
-        }
-      ]
-    },
-    {
-      "url": "https://cr.yp.to",
-      "seo": "poor",
-      "geo": "good",
-      "engagement": "moderate",
-      "site_type": "portfolio-brochure",
-      "pages": 5,
-      "discoverability": 49,
-      "disc_grade": "D",
-      "engagement_score": 100,
-      "eng_grade": "A",
-      "summary": {
-        "total_findings": 4,
-        "critical": 0,
-        "high": 3,
-        "medium": 1,
-        "low": 0,
-        "by_category": {
-          "discoverability": 4,
-          "engagement": 0
-        },
-        "by_mechanism": {
-          "reach": 4
-        }
-      },
-      "skills_run": [
-        "crawl-access-audit"
-      ],
-      "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
-      "false_positives": [],
-      "seconds": 0.3,
-      "findings": [
-        {
-          "check_id": "REACH-006",
-          "severity": "high",
-          "title": "No XML sitemap is published or declared"
-        },
-        {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
-        {
-          "check_id": "REACH-011",
-          "severity": "high",
-          "title": "The site answers on several origins without redirecting"
-        },
-        {
-          "check_id": "REACH-001",
-          "severity": "medium",
-          "title": "No robots.txt is published"
-        }
-      ]
-    },
-    {
-      "url": "https://ctan.org",
-      "seo": "poor",
-      "geo": "good",
-      "engagement": "high",
-      "site_type": "docs",
-      "pages": 5,
-      "discoverability": 55,
-      "disc_grade": "C",
-      "engagement_score": 100,
-      "eng_grade": "A",
-      "summary": {
-        "total_findings": 3,
-        "critical": 0,
-        "high": 3,
-        "medium": 0,
-        "low": 0,
-        "by_category": {
-          "discoverability": 3,
-          "engagement": 0
-        },
-        "by_mechanism": {
-          "reach": 3
-        }
-      },
-      "skills_run": [
-        "crawl-access-audit"
-      ],
-      "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
-      "false_positives": [],
-      "seconds": 0.3,
-      "findings": [
-        {
-          "check_id": "REACH-006",
-          "severity": "high",
-          "title": "No XML sitemap is published or declared"
-        },
-        {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
-        {
-          "check_id": "REACH-011",
-          "severity": "high",
-          "title": "The site answers on several origins without redirecting"
-        }
-      ]
-    },
-    {
-      "url": "https://curl.se",
-      "seo": "poor",
-      "geo": "good",
-      "engagement": "high",
-      "site_type": "docs",
-      "pages": 5,
-      "discoverability": 70,
-      "disc_grade": "C",
-      "engagement_score": 100,
-      "eng_grade": "A",
-      "summary": {
-        "total_findings": 2,
+        "total_findings": 12,
         "critical": 0,
         "high": 2,
-        "medium": 0,
+        "medium": 10,
         "low": 0,
         "by_category": {
-          "discoverability": 2,
+          "discoverability": 12,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 2
+          "reach": 6,
+          "read": 3,
+          "parse": 3
         }
       },
       "skills_run": [
-        "crawl-access-audit"
-      ],
-      "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
-      "false_positives": [],
-      "seconds": 0.3,
-      "findings": [
-        {
-          "check_id": "REACH-006",
-          "severity": "high",
-          "title": "No XML sitemap is published or declared"
-        },
-        {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        }
-      ]
-    },
-    {
-      "url": "https://danluu.com",
-      "seo": "poor",
-      "geo": "good",
-      "engagement": "high",
-      "site_type": "media-publisher",
-      "pages": 5,
-      "discoverability": 68,
-      "disc_grade": "C",
-      "engagement_score": 100,
-      "eng_grade": "A",
-      "summary": {
-        "total_findings": 3,
-        "critical": 0,
-        "high": 2,
-        "medium": 0,
-        "low": 1,
-        "by_category": {
-          "discoverability": 3,
-          "engagement": 0
-        },
-        "by_mechanism": {
-          "reach": 3
-        }
-      },
-      "skills_run": [
-        "crawl-access-audit"
-      ],
-      "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
-      "false_positives": [],
-      "seconds": 0.3,
-      "findings": [
-        {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
-        {
-          "check_id": "REACH-011",
-          "severity": "high",
-          "title": "The site answers on several origins without redirecting"
-        },
-        {
-          "check_id": "REACH-001",
-          "severity": "low",
-          "title": "robots.txt contains lines that break parsing"
-        }
-      ]
-    },
-    {
-      "url": "https://sive.rs",
-      "seo": "poor",
-      "geo": "good",
-      "engagement": "high",
-      "site_type": "media-publisher",
-      "pages": 5,
-      "discoverability": 100,
-      "disc_grade": "A",
-      "engagement_score": 100,
-      "eng_grade": "A",
-      "summary": {
-        "total_findings": 0,
-        "critical": 0,
-        "high": 0,
-        "medium": 0,
-        "low": 0
-      },
-      "skills_run": [
-        "crawl-access-audit"
-      ],
-      "misses": [],
-      "not_yet_implemented": [],
-      "false_positives": [],
-      "seconds": 0.2,
-      "findings": []
-    },
-    {
-      "url": "https://www.gutenberg.org",
-      "seo": "poor",
-      "geo": "good",
-      "engagement": "high",
-      "site_type": "media-publisher",
-      "pages": 5,
-      "discoverability": 69,
-      "disc_grade": "C",
-      "engagement_score": 100,
-      "eng_grade": "A",
-      "summary": {
-        "total_findings": 3,
-        "critical": 0,
-        "high": 2,
-        "medium": 1,
-        "low": 0,
-        "by_category": {
-          "discoverability": 3,
-          "engagement": 0
-        },
-        "by_mechanism": {
-          "reach": 3
-        }
-      },
-      "skills_run": [
-        "crawl-access-audit"
-      ],
-      "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
-      "false_positives": [],
-      "seconds": 0.3,
-      "findings": [
-        {
-          "check_id": "REACH-006",
-          "severity": "high",
-          "title": "No XML sitemap is published or declared"
-        },
-        {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
-        {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
-        }
-      ]
-    },
-    {
-      "url": "https://www.lua.org",
-      "seo": "poor",
-      "geo": "good",
-      "engagement": "moderate",
-      "site_type": "docs",
-      "pages": 5,
-      "discoverability": 49,
-      "disc_grade": "D",
-      "engagement_score": 100,
-      "eng_grade": "A",
-      "summary": {
-        "total_findings": 4,
-        "critical": 0,
-        "high": 3,
-        "medium": 1,
-        "low": 0,
-        "by_category": {
-          "discoverability": 4,
-          "engagement": 0
-        },
-        "by_mechanism": {
-          "reach": 4
-        }
-      },
-      "skills_run": [
-        "crawl-access-audit"
-      ],
-      "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
-      "false_positives": [],
-      "seconds": 0.3,
-      "findings": [
-        {
-          "check_id": "REACH-006",
-          "severity": "high",
-          "title": "No XML sitemap is published or declared"
-        },
-        {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
-        {
-          "check_id": "REACH-011",
-          "severity": "high",
-          "title": "The site answers on several origins without redirecting"
-        },
-        {
-          "check_id": "REACH-001",
-          "severity": "medium",
-          "title": "No robots.txt is published"
-        }
-      ]
-    },
-    {
-      "url": "https://www.netbsd.org",
-      "seo": "poor",
-      "geo": "good",
-      "engagement": "high",
-      "site_type": "docs",
-      "pages": 5,
-      "discoverability": 54,
-      "disc_grade": "D",
-      "engagement_score": 100,
-      "eng_grade": "A",
-      "summary": {
-        "total_findings": 4,
-        "critical": 0,
-        "high": 3,
-        "medium": 1,
-        "low": 0,
-        "by_category": {
-          "discoverability": 4,
-          "engagement": 0
-        },
-        "by_mechanism": {
-          "reach": 4
-        }
-      },
-      "skills_run": [
-        "crawl-access-audit"
-      ],
-      "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
-      "false_positives": [],
-      "seconds": 0.3,
-      "findings": [
-        {
-          "check_id": "REACH-006",
-          "severity": "high",
-          "title": "No XML sitemap is published or declared"
-        },
-        {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
-        {
-          "check_id": "REACH-011",
-          "severity": "high",
-          "title": "The site answers on several origins without redirecting"
-        },
-        {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
-        }
-      ]
-    },
-    {
-      "url": "https://www.openbsd.org",
-      "seo": "poor",
-      "geo": "good",
-      "engagement": "high",
-      "site_type": "docs",
-      "pages": 5,
-      "discoverability": 85,
-      "disc_grade": "B",
-      "engagement_score": 100,
-      "eng_grade": "A",
-      "summary": {
-        "total_findings": 1,
-        "critical": 0,
-        "high": 1,
-        "medium": 0,
-        "low": 0,
-        "by_category": {
-          "discoverability": 1,
-          "engagement": 0
-        },
-        "by_mechanism": {
-          "reach": 1
-        }
-      },
-      "skills_run": [
-        "crawl-access-audit"
-      ],
-      "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
-      "false_positives": [],
-      "seconds": 0.3,
-      "findings": [
-        {
-          "check_id": "REACH-006",
-          "severity": "high",
-          "title": "No XML sitemap is published or declared"
-        }
-      ]
-    },
-    {
-      "url": "https://www.python.org",
-      "seo": "poor",
-      "geo": "good",
-      "engagement": "high",
-      "site_type": "docs",
-      "pages": 5,
-      "discoverability": 70,
-      "disc_grade": "C",
-      "engagement_score": 100,
-      "eng_grade": "A",
-      "summary": {
-        "total_findings": 2,
-        "critical": 0,
-        "high": 2,
-        "medium": 0,
-        "low": 0,
-        "by_category": {
-          "discoverability": 2,
-          "engagement": 0
-        },
-        "by_mechanism": {
-          "reach": 2
-        }
-      },
-      "skills_run": [
-        "crawl-access-audit"
-      ],
-      "misses": [],
-      "not_yet_implemented": [],
-      "false_positives": [],
-      "seconds": 0.3,
-      "findings": [
-        {
-          "check_id": "REACH-006",
-          "severity": "high",
-          "title": "No XML sitemap is published or declared"
-        },
-        {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        }
-      ]
-    },
-    {
-      "url": "https://www.stroustrup.com",
-      "seo": "poor",
-      "geo": "good",
-      "engagement": "moderate",
-      "site_type": "portfolio-brochure",
-      "pages": 5,
-      "discoverability": 58,
-      "disc_grade": "C",
-      "engagement_score": 100,
-      "eng_grade": "A",
-      "summary": {
-        "total_findings": 4,
-        "critical": 0,
-        "high": 2,
-        "medium": 2,
-        "low": 0,
-        "by_category": {
-          "discoverability": 4,
-          "engagement": 0
-        },
-        "by_mechanism": {
-          "reach": 4
-        }
-      },
-      "skills_run": [
-        "crawl-access-audit"
-      ],
-      "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
-      "false_positives": [],
-      "seconds": 0.3,
-      "findings": [
-        {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
-        {
-          "check_id": "REACH-011",
-          "severity": "high",
-          "title": "The site answers on several origins without redirecting"
-        },
-        {
-          "check_id": "REACH-001",
-          "severity": "medium",
-          "title": "No robots.txt is published"
-        },
-        {
-          "check_id": "REACH-006",
-          "severity": "medium",
-          "title": "No XML sitemap is published or declared"
-        }
-      ]
-    },
-    {
-      "url": "https://www.w3.org",
-      "seo": "poor",
-      "geo": "good",
-      "engagement": "high",
-      "site_type": "docs",
-      "pages": 5,
-      "discoverability": 85,
-      "disc_grade": "B",
-      "engagement_score": 100,
-      "eng_grade": "A",
-      "summary": {
-        "total_findings": 1,
-        "critical": 0,
-        "high": 1,
-        "medium": 0,
-        "low": 0,
-        "by_category": {
-          "discoverability": 1,
-          "engagement": 0
-        },
-        "by_mechanism": {
-          "reach": 1
-        }
-      },
-      "skills_run": [
-        "crawl-access-audit"
-      ],
-      "misses": [],
-      "not_yet_implemented": [],
-      "false_positives": [],
-      "seconds": 0.3,
-      "findings": [
-        {
-          "check_id": "REACH-006",
-          "severity": "high",
-          "title": "No XML sitemap is published or declared"
-        }
-      ]
-    },
-    {
-      "url": "https://www.who.int",
-      "seo": "poor",
-      "geo": "good",
-      "engagement": "high",
-      "site_type": "nonprofit-gov",
-      "pages": 5,
-      "discoverability": 83,
-      "disc_grade": "B",
-      "engagement_score": 100,
-      "eng_grade": "A",
-      "summary": {
-        "total_findings": 2,
-        "critical": 0,
-        "high": 1,
-        "medium": 0,
-        "low": 1,
-        "by_category": {
-          "discoverability": 2,
-          "engagement": 0
-        },
-        "by_mechanism": {
-          "reach": 2
-        }
-      },
-      "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
@@ -1864,6 +2046,1034 @@
           "check_id": "REACH-006",
           "severity": "high",
           "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "medium",
+          "title": "No robots.txt is published"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-012",
+          "severity": "medium",
+          "title": "Internal links point to pages that error"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "medium",
+          "title": "The server responds slowly enough to limit crawling"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "medium",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "medium",
+          "title": "Character encoding or language is undeclared"
+        }
+      ]
+    },
+    {
+      "url": "https://cr.yp.to",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "moderate",
+      "site_type": "portfolio-brochure",
+      "pages": 5,
+      "discoverability": 45,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 11,
+        "critical": 0,
+        "high": 2,
+        "medium": 8,
+        "low": 1,
+        "by_category": {
+          "discoverability": 11,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 4,
+          "read": 3,
+          "parse": 4
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "medium",
+          "title": "No robots.txt is published"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "medium",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "medium",
+          "title": "Character encoding or language is undeclared"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
+        }
+      ]
+    },
+    {
+      "url": "https://ctan.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 48,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 8,
+        "critical": 0,
+        "high": 2,
+        "medium": 3,
+        "low": 3,
+        "by_category": {
+          "discoverability": 8,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 3,
+          "read": 3,
+          "parse": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "low",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "low",
+          "title": "The page uses no semantic landmarks"
+        }
+      ]
+    },
+    {
+      "url": "https://curl.se",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 60,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 10,
+        "critical": 0,
+        "high": 1,
+        "medium": 6,
+        "low": 3,
+        "by_category": {
+          "discoverability": 10,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2,
+          "read": 3,
+          "parse": 5
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "medium",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "medium",
+          "title": "Character encoding or language is undeclared"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "low",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "low",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
+        }
+      ]
+    },
+    {
+      "url": "https://danluu.com",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "media-publisher",
+      "pages": 5,
+      "discoverability": 60,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 10,
+        "critical": 0,
+        "high": 1,
+        "medium": 5,
+        "low": 4,
+        "by_category": {
+          "discoverability": 10,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 3,
+          "read": 3,
+          "parse": 4
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "low",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "low",
+          "title": "robots.txt contains lines that break parsing"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "low",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "low",
+          "title": "Character encoding or language is undeclared"
+        }
+      ]
+    },
+    {
+      "url": "https://sive.rs",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "media-publisher",
+      "pages": 5,
+      "discoverability": 99,
+      "disc_grade": "A",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 1,
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 1,
+        "by_category": {
+          "discoverability": 1,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "read": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
+        }
+      ]
+    },
+    {
+      "url": "https://www.gutenberg.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "media-publisher",
+      "pages": 5,
+      "discoverability": 60,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 7,
+        "critical": 0,
+        "high": 1,
+        "medium": 5,
+        "low": 1,
+        "by_category": {
+          "discoverability": 7,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 3,
+          "parse": 4
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "medium",
+          "title": "The server responds slowly enough to limit crawling"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "low",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        }
+      ]
+    },
+    {
+      "url": "https://www.lua.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "moderate",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 45,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 10,
+        "critical": 0,
+        "high": 2,
+        "medium": 7,
+        "low": 1,
+        "by_category": {
+          "discoverability": 10,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 4,
+          "read": 3,
+          "parse": 3
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "medium",
+          "title": "No robots.txt is published"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "medium",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "medium",
+          "title": "Character encoding or language is undeclared"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "low",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        }
+      ]
+    },
+    {
+      "url": "https://www.netbsd.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 45,
+      "disc_grade": "D",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 9,
+        "critical": 0,
+        "high": 2,
+        "medium": 5,
+        "low": 2,
+        "by_category": {
+          "discoverability": 9,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 4,
+          "read": 2,
+          "parse": 3
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "medium",
+          "title": "The server responds slowly enough to limit crawling"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "low",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "low",
+          "title": "Character encoding or language is undeclared"
+        }
+      ]
+    },
+    {
+      "url": "https://www.openbsd.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 61,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 6,
+        "critical": 0,
+        "high": 1,
+        "medium": 4,
+        "low": 1,
+        "by_category": {
+          "discoverability": 6,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1,
+          "read": 2,
+          "parse": 3
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.6,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "medium",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "low",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        }
+      ]
+    },
+    {
+      "url": "https://www.python.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 76,
+      "disc_grade": "B",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 4,
+        "critical": 0,
+        "high": 1,
+        "medium": 2,
+        "low": 1,
+        "by_category": {
+          "discoverability": 4,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2,
+          "read": 1,
+          "parse": 1
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
+        }
+      ]
+    },
+    {
+      "url": "https://www.stroustrup.com",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "moderate",
+      "site_type": "portfolio-brochure",
+      "pages": 5,
+      "discoverability": 60,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 9,
+        "critical": 0,
+        "high": 1,
+        "medium": 8,
+        "low": 0,
+        "by_category": {
+          "discoverability": 9,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 4,
+          "read": 3,
+          "parse": 2
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-011",
+          "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "REACH-001",
+          "severity": "medium",
+          "title": "No robots.txt is published"
+        },
+        {
+          "check_id": "REACH-006",
+          "severity": "medium",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "medium",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "medium",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "medium",
+          "title": "Corrupted character encoding (mojibake) in page text"
+        }
+      ]
+    },
+    {
+      "url": "https://www.w3.org",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "docs",
+      "pages": 5,
+      "discoverability": 71,
+      "disc_grade": "C",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 5,
+        "critical": 0,
+        "high": 1,
+        "medium": 3,
+        "low": 1,
+        "by_category": {
+          "discoverability": 5,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 1,
+          "read": 1,
+          "parse": 3
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "medium",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "PARSE-012",
+          "severity": "low",
+          "title": "Q&A or step-by-step content is not marked up as such"
+        }
+      ]
+    },
+    {
+      "url": "https://www.who.int",
+      "seo": "poor",
+      "geo": "good",
+      "engagement": "high",
+      "site_type": "nonprofit-gov",
+      "pages": 5,
+      "discoverability": 78,
+      "disc_grade": "B",
+      "engagement_score": 100,
+      "eng_grade": "A",
+      "summary": {
+        "total_findings": 5,
+        "critical": 0,
+        "high": 1,
+        "medium": 3,
+        "low": 1,
+        "by_category": {
+          "discoverability": 5,
+          "engagement": 0
+        },
+        "by_mechanism": {
+          "reach": 2,
+          "parse": 3
+        }
+      },
+      "skills_run": [
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
+      ],
+      "misses": [],
+      "not_yet_implemented": [],
+      "false_positives": [],
+      "seconds": 0.4,
+      "findings": [
+        {
+          "check_id": "REACH-006",
+          "severity": "high",
+          "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "PARSE-005",
+          "severity": "medium",
+          "title": "The organization entity has no sameAs links"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
         },
         {
           "check_id": "REACH-003",
@@ -1879,33 +3089,35 @@
       "engagement": "moderate",
       "site_type": "docs",
       "pages": 5,
-      "discoverability": 47,
+      "discoverability": 45,
       "disc_grade": "D",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 5,
+        "total_findings": 12,
         "critical": 0,
-        "high": 3,
-        "medium": 1,
-        "low": 1,
+        "high": 2,
+        "medium": 7,
+        "low": 3,
         "by_category": {
-          "discoverability": 5,
+          "discoverability": 12,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 5
+          "reach": 5,
+          "read": 4,
+          "parse": 3
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -1913,14 +3125,19 @@
           "title": "The server blocks AI crawlers even though robots.txt allows them"
         },
         {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
-        {
           "check_id": "REACH-011",
           "severity": "high",
           "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
         },
         {
           "check_id": "REACH-001",
@@ -1928,9 +3145,39 @@
           "title": "No robots.txt is published"
         },
         {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "medium",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "medium",
+          "title": "Character encoding or language is undeclared"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "low",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
           "check_id": "REACH-006",
           "severity": "low",
           "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "low",
+          "title": "Informational images lack alternative text"
         }
       ]
     },
@@ -1941,38 +3188,55 @@
       "engagement": "moderate",
       "site_type": "nonprofit-gov",
       "pages": 1,
-      "discoverability": 98,
+      "discoverability": 95,
       "disc_grade": "A",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 1,
+        "total_findings": 4,
         "critical": 0,
         "high": 0,
         "medium": 0,
-        "low": 1,
+        "low": 4,
         "by_category": {
-          "discoverability": 1,
+          "discoverability": 4,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 1
+          "reach": 1,
+          "read": 2,
+          "parse": 1
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.2,
+      "seconds": 0.4,
       "findings": [
+        {
+          "check_id": "PARSE-001",
+          "severity": "low",
+          "title": "The site publishes no structured data at all"
+        },
         {
           "check_id": "REACH-006",
           "severity": "low",
           "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "low",
+          "title": "The page uses no semantic landmarks"
         }
       ]
     },
@@ -1983,31 +3247,35 @@
       "engagement": "high",
       "site_type": "media-publisher",
       "pages": 5,
-      "discoverability": 68,
-      "disc_grade": "C",
+      "discoverability": 46,
+      "disc_grade": "D",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 3,
+        "total_findings": 9,
         "critical": 0,
         "high": 2,
-        "medium": 0,
-        "low": 1,
+        "medium": 5,
+        "low": 2,
         "by_category": {
-          "discoverability": 3,
+          "discoverability": 9,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 3
+          "reach": 3,
+          "read": 1,
+          "parse": 5
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.5,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -2020,9 +3288,39 @@
           "title": "No XML sitemap is published or declared"
         },
         {
+          "check_id": "PARSE-005",
+          "severity": "medium",
+          "title": "The organization entity has no sameAs links"
+        },
+        {
+          "check_id": "PARSE-006",
+          "severity": "medium",
+          "title": "Entities are not linked into a stable graph"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
           "check_id": "REACH-001",
           "severity": "low",
           "title": "robots.txt contains lines that break parsing"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "low",
+          "title": "Informational images lack alternative text"
         }
       ]
     },
@@ -2033,33 +3331,35 @@
       "engagement": "high",
       "site_type": "portfolio-brochure",
       "pages": 1,
-      "discoverability": 72,
+      "discoverability": 69,
       "disc_grade": "C",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 4,
+        "total_findings": 7,
         "critical": 0,
         "high": 1,
         "medium": 2,
-        "low": 1,
+        "low": 4,
         "by_category": {
-          "discoverability": 4,
+          "discoverability": 7,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 4
+          "reach": 4,
+          "read": 2,
+          "parse": 1
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.2,
+      "seconds": 0.3,
       "findings": [
         {
           "check_id": "REACH-011",
@@ -2077,9 +3377,24 @@
           "title": "The server blocks AI crawlers even though robots.txt allows them"
         },
         {
+          "check_id": "PARSE-001",
+          "severity": "low",
+          "title": "The site publishes no structured data at all"
+        },
+        {
           "check_id": "REACH-006",
           "severity": "low",
           "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "low",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "low",
+          "title": "Character encoding or language is undeclared"
         }
       ]
     },
@@ -2090,43 +3405,65 @@
       "engagement": "high",
       "site_type": "docs",
       "pages": 5,
-      "discoverability": 70,
+      "discoverability": 60,
       "disc_grade": "C",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 2,
+        "total_findings": 6,
         "critical": 0,
-        "high": 2,
-        "medium": 0,
+        "high": 1,
+        "medium": 5,
         "low": 0,
         "by_category": {
-          "discoverability": 2,
+          "discoverability": 6,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 2
+          "reach": 2,
+          "read": 2,
+          "parse": 2
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
-        {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
         {
           "check_id": "REACH-011",
           "severity": "high",
           "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "medium",
+          "title": "Character encoding or language is undeclared"
         }
       ]
     },
@@ -2137,33 +3474,35 @@
       "engagement": "moderate",
       "site_type": "portfolio-brochure",
       "pages": 5,
-      "discoverability": 65,
+      "discoverability": 60,
       "disc_grade": "C",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 3,
+        "total_findings": 10,
         "critical": 0,
-        "high": 2,
-        "medium": 1,
+        "high": 1,
+        "medium": 9,
         "low": 0,
         "by_category": {
-          "discoverability": 3,
+          "discoverability": 10,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 3
+          "reach": 3,
+          "read": 3,
+          "parse": 4
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -2171,14 +3510,49 @@
           "title": "No XML sitemap is published or declared"
         },
         {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
         },
         {
           "check_id": "REACH-005",
           "severity": "medium",
           "title": "The server blocks AI crawlers even though robots.txt allows them"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "medium",
+          "title": "Informational images lack alternative text"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "medium",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "medium",
+          "title": "Character encoding or language is undeclared"
         }
       ]
     },
@@ -2189,33 +3563,35 @@
       "engagement": "high",
       "site_type": "docs",
       "pages": 5,
-      "discoverability": 40,
-      "disc_grade": "D",
+      "discoverability": 30,
+      "disc_grade": "F",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 5,
+        "total_findings": 12,
         "critical": 0,
-        "high": 4,
-        "medium": 0,
-        "low": 1,
+        "high": 3,
+        "medium": 6,
+        "low": 3,
         "by_category": {
-          "discoverability": 5,
+          "discoverability": 12,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 5
+          "reach": 5,
+          "read": 3,
+          "parse": 4
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -2228,19 +3604,54 @@
           "title": "No XML sitemap is published or declared"
         },
         {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
-        {
           "check_id": "REACH-011",
           "severity": "high",
           "title": "The site answers on several origins without redirecting"
         },
         {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "medium",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "medium",
+          "title": "Character encoding or language is undeclared"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "low",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
           "check_id": "REACH-015",
           "severity": "low",
           "title": "The server responds slowly enough to limit crawling"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
         }
       ]
     },
@@ -2251,43 +3662,55 @@
       "engagement": "moderate",
       "site_type": "docs",
       "pages": 5,
-      "discoverability": 64,
+      "discoverability": 60,
       "disc_grade": "C",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 4,
+        "total_findings": 10,
         "critical": 0,
-        "high": 2,
-        "medium": 1,
-        "low": 1,
+        "high": 1,
+        "medium": 7,
+        "low": 2,
         "by_category": {
-          "discoverability": 4,
+          "discoverability": 10,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 4
+          "reach": 4,
+          "read": 3,
+          "parse": 3
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
-        {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
         {
           "check_id": "REACH-011",
           "severity": "high",
           "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
         },
         {
           "check_id": "REACH-006",
@@ -2295,9 +3718,29 @@
           "title": "No XML sitemap is published or declared"
         },
         {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "medium",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "medium",
+          "title": "Character encoding or language is undeclared"
+        },
+        {
           "check_id": "REACH-015",
           "severity": "low",
           "title": "The server responds slowly enough to limit crawling"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
         }
       ]
     },
@@ -2308,31 +3751,33 @@
       "engagement": "moderate",
       "site_type": "media-publisher",
       "pages": 5,
-      "discoverability": 49,
+      "discoverability": 45,
       "disc_grade": "D",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 4,
+        "total_findings": 12,
         "critical": 0,
-        "high": 3,
-        "medium": 1,
-        "low": 0,
+        "high": 2,
+        "medium": 8,
+        "low": 2,
         "by_category": {
-          "discoverability": 4,
+          "discoverability": 12,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 4
+          "reach": 4,
+          "read": 4,
+          "parse": 4
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
       "seconds": 0.3,
       "findings": [
@@ -2342,19 +3787,59 @@
           "title": "No XML sitemap is published or declared"
         },
         {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
-        {
           "check_id": "REACH-011",
           "severity": "high",
           "title": "The site answers on several origins without redirecting"
         },
         {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "medium",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
           "check_id": "REACH-001",
           "severity": "medium",
           "title": "No robots.txt is published"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "medium",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "medium",
+          "title": "Character encoding or language is undeclared"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "low",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "low",
+          "title": "Informational images lack alternative text"
         }
       ]
     },
@@ -2365,33 +3850,35 @@
       "engagement": "moderate",
       "site_type": "nonprofit-gov",
       "pages": 5,
-      "discoverability": 46,
+      "discoverability": 45,
       "disc_grade": "D",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 6,
+        "total_findings": 12,
         "critical": 0,
-        "high": 5,
-        "medium": 0,
+        "high": 2,
+        "medium": 9,
         "low": 1,
         "by_category": {
-          "discoverability": 6,
+          "discoverability": 12,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 6
+          "reach": 6,
+          "read": 3,
+          "parse": 3
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -2399,24 +3886,54 @@
           "title": "AI assistants are blocked from reading the site"
         },
         {
-          "check_id": "REACH-005",
+          "check_id": "REACH-011",
           "severity": "high",
+          "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "medium",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
+        },
+        {
+          "check_id": "REACH-005",
+          "severity": "medium",
           "title": "The server blocks AI crawlers even though robots.txt allows them"
         },
         {
           "check_id": "REACH-006",
-          "severity": "high",
+          "severity": "medium",
           "title": "No XML sitemap is published or declared"
         },
         {
           "check_id": "REACH-010",
-          "severity": "high",
+          "severity": "medium",
           "title": "No canonical tags anywhere on the site"
         },
         {
-          "check_id": "REACH-011",
-          "severity": "high",
-          "title": "The site answers on several origins without redirecting"
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "medium",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "medium",
+          "title": "Character encoding or language is undeclared"
         },
         {
           "check_id": "REACH-003",
@@ -2451,12 +3968,14 @@
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.2,
+      "seconds": 0.5,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -2482,33 +4001,35 @@
       "engagement": "moderate",
       "site_type": "nonprofit-gov",
       "pages": 1,
-      "discoverability": 61,
+      "discoverability": 58,
       "disc_grade": "C",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 5,
+        "total_findings": 8,
         "critical": 0,
         "high": 2,
         "medium": 1,
-        "low": 2,
+        "low": 5,
         "by_category": {
-          "discoverability": 5,
+          "discoverability": 8,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 5
+          "reach": 5,
+          "read": 2,
+          "parse": 1
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.2,
+      "seconds": 0.4,
       "findings": [
         {
           "check_id": "REACH-007",
@@ -2526,6 +4047,11 @@
           "title": "AI crawlers receive a much smaller page than browsers do"
         },
         {
+          "check_id": "PARSE-001",
+          "severity": "low",
+          "title": "The site publishes no structured data at all"
+        },
+        {
           "check_id": "REACH-001",
           "severity": "low",
           "title": "robots.txt contains lines that break parsing"
@@ -2534,6 +4060,16 @@
           "check_id": "REACH-006",
           "severity": "low",
           "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "low",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "low",
+          "title": "The page uses no semantic landmarks"
         }
       ]
     },
@@ -2544,33 +4080,35 @@
       "engagement": "moderate",
       "site_type": "nonprofit-gov",
       "pages": 5,
-      "discoverability": 53,
+      "discoverability": 45,
       "disc_grade": "D",
       "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 5,
+        "total_findings": 13,
         "critical": 0,
-        "high": 3,
-        "medium": 1,
-        "low": 1,
+        "high": 2,
+        "medium": 7,
+        "low": 4,
         "by_category": {
-          "discoverability": 5,
+          "discoverability": 13,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 5
+          "reach": 5,
+          "read": 4,
+          "parse": 4
         }
       },
       "skills_run": [
-        "crawl-access-audit"
+        "crawl-access-audit",
+        "render-extractability-audit",
+        "structured-data-audit"
       ],
       "misses": [],
-      "not_yet_implemented": [
-        "PARSE-001"
-      ],
+      "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.3,
+      "seconds": 0.4,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -2578,14 +4116,19 @@
           "title": "No XML sitemap is published or declared"
         },
         {
-          "check_id": "REACH-010",
-          "severity": "high",
-          "title": "No canonical tags anywhere on the site"
-        },
-        {
           "check_id": "REACH-011",
           "severity": "high",
           "title": "The site answers on several origins without redirecting"
+        },
+        {
+          "check_id": "PARSE-011",
+          "severity": "medium",
+          "title": "Social metadata is missing or contradicts the page"
+        },
+        {
+          "check_id": "PARSE-013",
+          "severity": "medium",
+          "title": "No breadcrumb markup or navigation"
         },
         {
           "check_id": "REACH-008",
@@ -2593,9 +4136,44 @@
           "title": "Content pages are excluded from search indexes"
         },
         {
+          "check_id": "REACH-010",
+          "severity": "medium",
+          "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "READ-009",
+          "severity": "medium",
+          "title": "Heading structure does not describe the page"
+        },
+        {
+          "check_id": "READ-010",
+          "severity": "medium",
+          "title": "The page uses no semantic landmarks"
+        },
+        {
+          "check_id": "READ-016",
+          "severity": "medium",
+          "title": "Character encoding or language is undeclared"
+        },
+        {
+          "check_id": "PARSE-001",
+          "severity": "low",
+          "title": "The site publishes no structured data at all"
+        },
+        {
+          "check_id": "PARSE-010",
+          "severity": "low",
+          "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
           "check_id": "REACH-015",
           "severity": "low",
           "title": "The server responds slowly enough to limit crawling"
+        },
+        {
+          "check_id": "READ-008",
+          "severity": "low",
+          "title": "Informational images lack alternative text"
         }
       ]
     }

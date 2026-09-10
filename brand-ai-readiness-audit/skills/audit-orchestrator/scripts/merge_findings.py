@@ -39,6 +39,11 @@ SCOPE_MULTIPLIER = {"site-wide": 1.0, "section": 0.6, "page": 0.3}
 CONFIDENCE_MULTIPLIER = {"high": 1.0, "medium": 0.8, "low": 0.5}
 SUPERSEDED_MULTIPLIER = 0.25
 
+# Severities that represent a broken mechanism rather than untidiness.
+BLOCKING_SEVERITIES = ("critical", "high")
+# The most that low + medium findings can subtract from one axis, together.
+HYGIENE_DEDUCTION_CAP = 25.0
+
 MECHANISM_ORDER = ["reach", "read", "parse", "quote", "trust", "stay"]
 
 SITE_WIDE_MIN_PAGES = 3
@@ -110,10 +115,22 @@ def compute_severity(finding: dict, log: list[str]) -> str:
     # high" is the site-wide answer, so escalating it again double-counts and
     # inflates ordinary defects into hard blocks.
     if scope == "site-wide" and not is_site_level(finding):
-        new = shift(sev, -1)
-        if new != sev:
-            log.append(f"{cid}: escalated {sev} -> {new} (site-wide scope)")
-        sev = new
+        # `medium` is DEFINED as "measurable degradation across sampled pages",
+        # so breadth is already priced into it -- promoting it again for being
+        # site-wide double-counts the same property, and turns the rubric's own
+        # example of a medium ("no breadcrumbs") into the severity it reserves
+        # for "no structured data anywhere on a commerce site". Breadth still
+        # sharpens the bands where it adds something: hygiene seen everywhere is
+        # a real degradation, and a whole class of facts missing everywhere is a
+        # hard block.
+        if sev == "medium":
+            log.append(f"{cid}: site-wide, held at medium "
+                       f"(breadth is already in the medium definition)")
+        else:
+            new = shift(sev, -1)
+            if new != sev:
+                log.append(f"{cid}: escalated {sev} -> {new} (site-wide scope)")
+            sev = new
     elif scope == "page" and not is_site_level(finding) and not _is_primary_page(finding):
         new = shift(sev, 1)
         if new != sev:
@@ -283,6 +300,20 @@ def apply_supersession(findings: list[dict], rules: list[dict], log: list[str]) 
                     if rule["root_cause"] not in marks:
                         marks.append(rule["root_cause"])
                         log.append(f"{victim_id}: superseded by {rule['root_cause']}")
+                        # A symptom of a named root cause must not outrank the
+                        # independent findings around it. Fixing the root cause
+                        # may resolve this one outright, so it reads as noise at
+                        # the top of a report. severity_locked still wins: a
+                        # check whose registry guard forbids movement does not
+                        # move here either.
+                        if not v.get("severity_locked"):
+                            before = v.get("severity", "low")
+                            after = shift(before, 1)
+                            if after != before:
+                                v["severity"] = after
+                                log.append(
+                                    f"{victim_id}: de-escalated {before} -> {after} "
+                                    f"(symptom of {rule['root_cause']})")
 
 
 def sort_and_number(findings: list[dict]) -> list[dict]:
@@ -301,7 +332,18 @@ def sort_and_number(findings: list[dict]) -> list[dict]:
 
 
 def score_axes(findings: list[dict]) -> dict:
+    """Grade how badly the mechanism chain is broken, not how many nits we counted.
+
+    Blocking findings (critical, high) deduct without limit: they are the ones
+    that stop a machine reading or citing the site at all. Hygiene findings (low,
+    medium) are summed and then capped, because a long tail of true-but-minor
+    observations -- no breadcrumb markup, a missing og:image -- should never add
+    up to the same verdict as a robots.txt that turns the retrieval crawlers
+    away. Without the cap, simply implementing more checks lowers every score on
+    the web and the grades stop discriminating between sites.
+    """
     scores = {"discoverability": 100.0, "engagement": 100.0}
+    hygiene = {"discoverability": 0.0, "engagement": 0.0}
     has_critical = {"discoverability": False, "engagement": False}
     for f in findings:
         cat = f.get("category")
@@ -313,9 +355,15 @@ def score_axes(findings: list[dict]) -> dict:
         deduction *= CONFIDENCE_MULTIPLIER.get(f.get("confidence", "high"), 1.0)
         if f.get("superseded_by"):
             deduction *= SUPERSEDED_MULTIPLIER
-        scores[cat] -= deduction
+        if sev in BLOCKING_SEVERITIES:
+            scores[cat] -= deduction
+        else:
+            hygiene[cat] += deduction
         if sev == "critical":
             has_critical[cat] = True
+
+    for cat in scores:
+        scores[cat] -= min(hygiene[cat], HYGIENE_DEDUCTION_CAP)
 
     out = {}
     for axis, raw in scores.items():

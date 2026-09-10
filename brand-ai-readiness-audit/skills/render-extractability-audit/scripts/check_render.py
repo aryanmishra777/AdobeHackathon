@@ -191,26 +191,102 @@ def act(summary, priority, steps, effort, rationale, code=None, owner=None):
 # Checks
 # --------------------------------------------------------------------------
 
-def _is_client_rendered(page: dict, ext: dict) -> bool:
-    """Helper implementing the strict multi-signal requirement for READ-001 & READ-002."""
+# Framework markers that mean the page is assembled in the browser. The
+# collector reports server-rendered platforms in the same list -- "wp-content"
+# appears in an asset URL on every WordPress page, and Shopify's Liquid
+# templates render on the server -- so reading those as evidence of client
+# rendering fires READ-001 on most of the CMS-hosted web.
+CLIENT_RENDERED_FRAMEWORKS = frozenset({
+    "next.js", "nuxt", "react", "angular", "vue", "remix", "sveltekit", "gatsby",
+})
+
+# A page carrying only nav and footer chrome lands near 60 words, so a hard
+# "< 50" cliff misses genuinely empty shells by a handful of words. Thin is
+# unambiguous below THIN_WORDS; between there and THIN_WORDS_STRONG it only
+# counts when the corroborating signal is overwhelming.
+THIN_WORDS = 50
+THIN_WORDS_STRONG = 120
+STRONG_PAYLOAD_BYTES = 50_000
+STRONG_RATIO = 0.01
+WEAK_PAYLOAD_BYTES = 500
+WEAK_RATIO = 0.05
+
+
+def _render_signals(page: dict, ext: dict) -> dict | None:
+    """The client-rendering signals that actually fired, or None.
+
+    Binding guard: never fire on one signal. A mount point or a client-side
+    framework marker must coincide with thin body text AND a corroborating
+    payload or text-to-markup signal. Callers build evidence strings from the
+    returned dict so that no claim is made about a signal that did not fire.
+    """
     render_sig = ext.get("render_signals") or {}
     text_obj = ext.get("text") or {}
 
-    app_shells = render_sig.get("app_shell_selectors") or []
-    frameworks = render_sig.get("framework_markers") or []
-    has_mount_or_framework = bool(app_shells or frameworks)
+    shells = list(render_sig.get("app_shell_selectors") or [])
+    frameworks = [f for f in (render_sig.get("framework_markers") or [])
+                  if f in CLIENT_RENDERED_FRAMEWORKS]
+    if not (shells or frameworks):
+        return None
 
-    words = text_obj.get("main_word_count", 0)
-    low_word_count = words < 50
-
-    payload_bytes = render_sig.get("hydration_payload_bytes") or 0
+    words = text_obj.get("main_word_count") or 0
+    payload = render_sig.get("hydration_payload_bytes") or 0
     ratio = text_obj.get("text_to_markup_ratio")
     if ratio is None:
         ratio = 1.0
 
-    has_payload_or_low_ratio = (payload_bytes > 500) or (ratio < 0.05)
+    strong = payload > STRONG_PAYLOAD_BYTES or ratio < STRONG_RATIO
+    if words >= (THIN_WORDS_STRONG if strong else THIN_WORDS):
+        return None
+    if not (payload > WEAK_PAYLOAD_BYTES or ratio < WEAK_RATIO):
+        return None
 
-    return has_mount_or_framework and low_word_count and has_payload_or_low_ratio
+    return {
+        "shells": sorted(shells),
+        "frameworks": sorted(frameworks),
+        "words": words,
+        "payload": payload,
+        "ratio": ratio,
+    }
+
+
+def _is_client_rendered(page: dict, ext: dict) -> bool:
+    """Boolean form of :func:`_render_signals`, for checks that need only the verdict."""
+    return _render_signals(page, ext) is not None
+
+
+def _describe_signals(sigs: list[dict]) -> str:
+    """Phrase only the signals that actually fired, in the order they matter.
+
+    Never assert a hydration payload of zero bytes or a mount point that was
+    never detected: a finding whose own evidence sentence is self-refuting is
+    worse than no finding at all.
+    """
+    parts = []
+    payloads = [s["payload"] for s in sigs if s["payload"]]
+    if payloads:
+        parts.append(f"a hydration payload of up to {max(payloads):,} bytes")
+
+    shells = sorted({sel for s in sigs for sel in s["shells"]})
+    if shells:
+        sel = shells[0]
+        if not sel.startswith(("#", ".", "[")):
+            sel = "#" + sel
+        parts.append(f"an empty {sel} mount point")
+
+    frameworks = sorted({f for s in sigs for f in s["frameworks"]})
+    if frameworks and not shells:
+        parts.append(f"a {'/'.join(frameworks)} client-rendering marker")
+
+    ratios = [s["ratio"] for s in sigs]
+    if ratios and min(ratios) < WEAK_RATIO:
+        parts.append(f"a text-to-markup ratio of {min(ratios):.4f}")
+
+    if not parts:
+        return ""
+    if len(parts) == 1:
+        return parts[0]
+    return ", ".join(parts[:-1]) + " and " + parts[-1]
 
 
 def check_read_001(b: Bundle) -> list[dict]:
@@ -239,8 +315,8 @@ def check_read_001(b: Bundle) -> list[dict]:
     renderer_available = bool(b.run.get("renderer", {}).get("available"))
 
     affected = []
+    fired = []
     max_payload = 0
-    common_selectors = set()
 
     for page in valid_pages:
         pid = page["page_id"]
@@ -252,18 +328,15 @@ def check_read_001(b: Bundle) -> list[dict]:
             raw_text = (ext.get("text") or {}).get("main") or ""
             rendered_words = len(rendered_text.split())
             raw_words = len(raw_text.split())
-            if rendered_words >= 100 and raw_words < 50:
+            if rendered_words >= 100 and raw_words < THIN_WORDS:
                 affected.append(page)
         else:
-            # Inference based on strict combined signals
-            if _is_client_rendered(page, ext):
+            # Inference from the strict combined signals
+            sigs = _render_signals(page, ext)
+            if sigs:
                 affected.append(page)
-                sig = ext.get("render_signals") or {}
-                payload = sig.get("hydration_payload_bytes") or 0
-                if payload > max_payload:
-                    max_payload = payload
-                for s in sig.get("app_shell_selectors") or []:
-                    common_selectors.add(s)
+                fired.append(sigs)
+                max_payload = max(max_payload, sigs["payload"])
 
     if not affected:
         return []
@@ -283,23 +356,23 @@ def check_read_001(b: Bundle) -> list[dict]:
     else:
         severity = "medium"
 
-    selector_str = f"#{list(sorted(common_selectors))[0]}" if common_selectors else "#root"
-    if not selector_str.startswith("#") and not selector_str.startswith("["):
-        selector_str = f"#{selector_str}"
+    thinnest = max((s["words"] for s in fired), default=THIN_WORDS)
 
     if renderer_available:
         confidence = "high"
         evidence = (
-            f"{n} of {m} sampled pages return under 50 words of body text in raw HTML "
-            f"while runtime rendering measured complete content in rendered.html."
+            f"{n} of {m} sampled pages return under {THIN_WORDS} words of body text in "
+            f"raw HTML while runtime rendering measured complete content in rendered.html."
         )
     else:
         confidence = "medium"
+        detail = _describe_signals(fired)
         evidence = (
-            f"{n} of {m} sampled pages return under 50 words of body text in the "
-            f"raw HTML while carrying a {max_payload} byte hydration payload and an "
-            f"empty {selector_str} mount point. (Inferred from raw-HTML signals; "
-            f"no browser renderer was available to measure runtime DOM)."
+            f"{n} of {m} sampled pages return at most {thinnest} words of body text in "
+            f"the raw HTML"
+            + (f", while carrying {detail}" if detail else "")
+            + ". (Inferred from raw-HTML signals; no browser renderer was "
+              "available to measure the runtime DOM.)"
         )
         b.coverage.setdefault("limitations", []).append(
             "No renderer available; JS-dependency inferred from raw HTML rather than measured."
@@ -1494,7 +1567,12 @@ def proactive(b: Bundle) -> list[dict]:
     for p in b.ok_pages:
         ext = b.extracted(p["page_id"])
         sig = ext.get("render_signals") or {}
-        if sig.get("framework_markers") or sig.get("app_shell_selectors"):
+        # Only client-rendering frameworks count. Recommending "pre-render your
+        # commercial pages" to a WordPress site that already server-renders them
+        # is advice that reads as though we never looked.
+        if sig.get("app_shell_selectors") or any(
+                f in CLIENT_RENDERED_FRAMEWORKS
+                for f in (sig.get("framework_markers") or [])):
             has_client_signals = True
             break
 

@@ -33,6 +33,14 @@ HEAD = """<!doctype html>
 <title>{title}</title>
 <meta name="description" content="{desc}">
 <link rel="canonical" href="http://localhost:{port}{path}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Northwind Coffee Roasters">
+<meta property="og:title" content="{title}">
+<meta property="og:description" content="{desc}">
+<meta property="og:url" content="http://localhost:{port}{path}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{title}">
+<meta name="twitter:description" content="{desc}">
 {extra}
 </head>
 <body>

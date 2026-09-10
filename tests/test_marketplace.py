@@ -339,6 +339,99 @@ def test_read_js_shell_produces_read_001():
     assert "inferred" in f["evidence"].lower()
 
 
+def test_read_001_never_cites_a_signal_that_did_not_fire():
+    """Evidence must be built from the signals that actually tripped.
+
+    An early version could report "carrying a 0 byte hydration payload and an
+    empty #root mount point" -- a payload of zero offered as proof of a payload,
+    and a fallback selector presented as a detected one. A finding whose own
+    evidence sentence is self-refuting is worse than no finding at all.
+    """
+    for name in ALL_FIXTURES:
+        for f in read_findings(name):
+            if f["check_id"] != "READ-001":
+                continue
+            ev = f["evidence"]
+            assert "0 byte" not in ev, f"{name}: cites a zero-byte payload as evidence"
+            detected = set()
+            for pid in [r.split("/")[1] for r in
+                        (f.get("evidence_detail") or {}).get("artifact_refs", [])
+                        if r.startswith("pages/")]:
+                path = os.path.join(bundle(name), "pages", pid, "extracted.json")
+                if not os.path.exists(path):
+                    continue
+                with open(path, encoding="utf-8") as fh:
+                    sig = (json.load(fh).get("render_signals") or {})
+                detected |= {x.lstrip("#.") for x in (sig.get("app_shell_selectors") or [])}
+            for token in ("#root", "#app", "#__next"):
+                if token in ev:
+                    assert token.lstrip("#") in detected, (
+                        f"{name}: evidence names {token} but no page reported that mount")
+
+
+def test_read_001_ignores_server_rendered_platform_markers():
+    """WordPress and Shopify render on the server.
+
+    The collector reports them in the same `framework_markers` list as Next.js
+    and React, because "this is WordPress" is a fact other checks may want. But
+    "wp-content" appears in an asset URL on every WordPress page, so treating it
+    as evidence of client rendering fires READ-001 across most of the CMS-hosted
+    web. This is the chewy.com false positive, pinned.
+    """
+    from types import SimpleNamespace
+    sys.path.insert(0, os.path.dirname(CHECK_RENDER))
+    import importlib
+    mod = importlib.import_module(os.path.basename(CHECK_RENDER)[:-3])
+
+    shell_only_platform = {
+        "text": {"main_word_count": 12, "text_to_markup_ratio": 0.004},
+        "render_signals": {"framework_markers": ["wordpress", "shopify"],
+                           "app_shell_selectors": [], "hydration_payload_bytes": 0},
+    }
+    assert mod._render_signals({}, shell_only_platform) is None, (
+        "a server-rendered platform marker alone must never satisfy READ-001")
+
+    real_spa = dict(shell_only_platform)
+    real_spa["render_signals"] = {"framework_markers": ["next.js"],
+                                  "app_shell_selectors": ["__next"],
+                                  "hydration_payload_bytes": 108_567}
+    assert mod._render_signals({}, real_spa) is not None, (
+        "a genuine client-rendered shell must still be detected")
+
+
+def test_read_001_word_threshold_is_not_a_cliff():
+    """A page of nav-and-footer chrome lands near 60 words.
+
+    asana.com served 57-59 words per page with a 108 KB hydration payload, an
+    empty #__next mount and a text-to-markup ratio of 0.002 -- three signals
+    screaming client-rendered, vetoed by a hard `< 50` constant. Thin is thin
+    slightly above 50 when the corroborating signal is overwhelming.
+    """
+    import importlib
+    sys.path.insert(0, os.path.dirname(CHECK_RENDER))
+    mod = importlib.import_module(os.path.basename(CHECK_RENDER)[:-3])
+
+    asana_shaped = {
+        "text": {"main_word_count": 59, "text_to_markup_ratio": 0.0018},
+        "render_signals": {"framework_markers": ["next.js"],
+                           "app_shell_selectors": ["__next"],
+                           "hydration_payload_bytes": 91_362},
+    }
+    assert mod._render_signals({}, asana_shaped) is not None, (
+        "59 words with a 91 KB payload and ratio 0.0018 is an empty shell")
+
+    # ... but a server-rendered page with real text is never a shell, however
+    # much framework machinery it ships. This is the guard that matters most.
+    ssr_shaped = {
+        "text": {"main_word_count": 1200, "text_to_markup_ratio": 0.08},
+        "render_signals": {"framework_markers": ["next.js"],
+                           "app_shell_selectors": ["__next"],
+                           "hydration_payload_bytes": 250_000},
+    }
+    assert mod._render_signals({}, ssr_shaped) is None, (
+        "1200 words of server-rendered text must never be called an empty shell")
+
+
 @pytest.mark.parametrize("name", ALL_FIXTURES)
 def test_read_analysis_is_deterministic(name):
     """The same bundle twice must produce byte-identical READ findings."""
