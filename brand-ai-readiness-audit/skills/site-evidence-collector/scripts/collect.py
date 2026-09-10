@@ -709,12 +709,16 @@ def _norm_date(value: str):
 # --------------------------------------------------------------------------
 
 # Retrieval pipelines segment documents before an LLM ever sees them, and the
-# window is not arbitrary. Yu et al. (2026), "Structural Feature Engineering for
-# Generative Engine Optimization" (arXiv:2603.29979), measured citation behaviour
-# across six generative engines and found passages beyond 300 words suffer ~31%
-# attention degradation in their middle segments, while passages under 150 words
-# fragment the information flow and lose ~23% citation probability. We simulate
-# the middle of that measured window rather than a guessed one.
+# window is not arbitrary. Yu et al., "Structural Feature Engineering for
+# Generative Engine Optimization" (arXiv:2603.29979), adopt a paragraph window of
+# L_p in [150, 300] words as a design principle: beyond 300 words the middle of a
+# passage suffers ~31% attention degradation, and below 150 the information flow
+# fragments and citation probability falls ~23%. Both figures they attribute to
+# Liu et al., "Lost in the Middle" (arXiv:2307.03172) rather than measuring
+# directly; what they do measure is the structural intervention as a whole, at
+# +17.3% citation rate (n=200 articles x 6 engines, p<0.001, Cohen's d=0.64).
+# So this window is a well-sourced design principle, not a directly measured
+# optimum -- which still beats the 320/512 we had chosen by feel.
 CHUNK_TARGET_WORDS = 225
 CHUNK_MAX_WORDS = 300
 

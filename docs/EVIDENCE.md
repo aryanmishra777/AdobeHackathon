@@ -6,9 +6,24 @@ finding can answer the question *"why is that the number?"* with something
 better than "it seemed right".
 
 Sources are the GEO literature collected in the team's NotebookLM knowledge base
-(25 documents, September 2026). Figures below were extracted from that corpus.
-**Numbers marked (unverified) have not yet been checked against the source PDF
-directly** — do not put them in a submitted report until someone has.
+and the PDFs under `7th Sem/SEO/GEO/`.
+
+**Every figure on this page has now been checked against the source PDF text**
+(10 September 2026). Where a paper is quoting someone else rather than reporting
+its own measurement, that is stated — the distinction decides how strongly we may
+phrase a finding.
+
+Primary sources, by arXiv/SSRN id:
+
+| id | Paper |
+|---|---|
+| `2311.09735` | Aggarwal et al., *GEO: Generative Engine Optimization* |
+| `2603.29979` | Yu et al., *Structural Feature Engineering for GEO* (GEO-SFE) |
+| `2603.20213` | Yuan et al., *AgenticGEO* |
+| `2607.14035` | Martinez, *Optimizing Visibility in Generative Engines: A Critical Survey* |
+| `2509.08919` | Chen et al., *GEO: How to Dominate AI Search* |
+| `ssrn-6815500` | Kargaev, *SEEN Framework* |
+| `2307.03172` | Liu et al., *Lost in the Middle* (cited by GEO-SFE, not in our corpus) |
 
 ---
 
@@ -19,18 +34,25 @@ directly** — do not put them in a submitted report until someone has.
 | Verbatim quotations | **+41% PAWC** (19.3 → 27.2); +22% on live Perplexity | Controlled, GEO-bench 10k queries | *none yet* |
 | Cite external sources | **+30-40% PAWC**; **+115% for rank-5 pages** | Controlled, same benchmark | *none yet* |
 | Statistics, prices, dates in text | **+30-40% PAWC**; +37% subjective on Perplexity | Controlled | *none yet* |
-| Tables and lists (`F_d` 0.25-0.35) | **+17.3% citation rate**, p<0.001, d=0.64; +43% extraction accuracy | Controlled, 200 docs × 6 engines (unverified) | *none yet* |
-| Answer in first 30% of DOM | **44.2% of ChatGPT citations** originate there | Observational, industry (unverified) | *none yet* |
-| Emphasis density (`E_d` 0.05-0.10) | Sentence-initial bold carries **2.0× attention weight** | Controlled ablation (unverified) | *none yet* |
+| Tables and lists (`F_d` 0.25-0.35) | **+17.3% citation rate**, p<0.001, d=0.64; +43% extraction accuracy | Controlled, 200 docs × 6 engines  | *none yet* |
+| Answer in first 30% of DOM | **44.2% of ChatGPT citations** originate there | Observational industry study; the SEEN paper that reports it calls it "industry research and correlational" and warns the safe reading is *not* that moving text up guarantees citations | *none yet* |
+| Emphasis density (`E_d` 0.05-0.10) | Sentence-initial bold carries **2.0× attention weight** | Controlled ablation  | *none yet* |
 | Readability / fluency | **+15-30% PAWC** | Controlled | *none yet* |
-| Heading hierarchy (depth 3-5) | Feature weight 0.25-0.45; removing it costs **9% of top-20 retrieval** | Controlled (unverified) | `READ-009` |
+| Heading hierarchy (depth 3-5) | Feature weight 0.25-0.45; removing it costs **9% of top-20 retrieval** | Controlled  | `READ-009` |
 | Keyword stuffing | **−8.3% PAWC**, −10% on Perplexity | Controlled, rejected | deliberately none |
 
-**Retrieval chunk window: 150-300 words.** Beyond 300, middle segments lose ~31%
-of attention; below 150, information flow fragments and citation probability
-drops ~23%. `site-evidence-collector` targets **225 words, hard cap 300**
-(`CHUNK_TARGET_WORDS`), which is the middle of the measured window. It was
-320/512 before this was checked — past the degradation cliff.
+**Retrieval chunk window: 150-300 words.** GEO-SFE adopts `L_p ∈ [150, 300]` as a
+design principle, attributing the ~31% mid-passage attention degradation above
+300 words and the ~23% citation-probability loss below 150 to *Lost in the
+Middle* (`2307.03172`) rather than measuring them itself. What GEO-SFE does
+measure is the structural intervention as a whole: **+17.3% citation rate,
+n=200 articles × 6 engines, p<0.001, Cohen's d=0.64** — verified verbatim in the
+paper, including the per-architecture breakdown (+19.2% search-then-synthesize,
++19.7% integrated, +14.0% iterative).
+
+`site-evidence-collector` targets **225 words, hard cap 300**
+(`CHUNK_TARGET_WORDS`). Previously 320/512, chosen by feel — past the cliff. A
+well-sourced design principle is not a measured optimum, but it beats a guess.
 
 ## Claims we may not make
 
@@ -49,16 +71,18 @@ injected into the context window. It is not 40% more traffic, clicks, or
 discovery.
 
 **Body-only rewrites can lose citations outright.** SAGEO Arena (171,003
-documents, 2,700 queries, unverified): GEO rewrites of body text produced
+documents, 2,700 queries): GEO rewrites of body text produced
 **−9% top-20 retrieval, −16% reranking presence, −6% net citations**, because
-body semantics drifted away from headings and embeddings. *Every content fix we
+body semantics drifted away from headings and embeddings (reported in
+`2607.14035`, which stresses that structure must be evaluated stage by stage
+rather than "treated as a universal talisman"). *Every content fix we
 emit must say: keep headings and title aligned with the change.* A fix that
 improves downstream citability while destroying upstream retrieval is a net loss
 we caused.
 
-**One-size-fits-all recipes mostly fail.** C-SEO Bench tested 54 method×domain
-combinations across ~1,900 queries: **3 were significantly positive, and none in
-question-answering tasks** (unverified). Optimal edits are instance-dependent.
+**One-size-fits-all recipes mostly fail.** C-SEO Bench: across two tasks, six
+domains, ~1,900 queries and 16,360 documents, **only 3 of 54 method-domain
+combinations are significant** (verified in `2607.14035`). Optimal edits are instance-dependent.
 Findings should be phrased conditionally — what is absent and what that prevents
 — not as "do X for +Y%".
 
@@ -73,7 +97,8 @@ Independent evidence that GEO and SEO are different problems — which is what t
 whole marketplace asserts:
 
 - URL-level **Jaccard overlap of 0.11-0.18** between Google SERP and AI engines
-- **53% of AI-Overview cited domains do not appear in the organic top 10**
+- **53% of AI-Overview cited domains do not appear in the organic top 10**, and
+  27% are absent from the top 100 (Kirsten et al., via `2607.14035`)
 - **27.1% of URLs engines retrieve are inaccessible** — independent justification
   for putting REACH first in the chain
 - Run-to-run citation stability is only **0.34-0.42 Jaccard over 45 days**, so
@@ -88,7 +113,7 @@ Grounds `engagement-audit`, and `STAY-002` in particular.
   (Pew, 900 adults, 68,879 real searches)
 - **−15% daily traffic** to English Wikipedia articles exposed to AI Overviews
   (causal, staggered rollout)
-- Position-one organic CTR **28% → 19%**; zero-click above 58% (unverified)
+- Position-one organic CTR **28% → 19%**; zero-click above 58%
 - Visitors arriving from an assistant are **mid-funnel** — pre-persuaded, seeking
   to verify a specific recommendation, not to begin research
 - The landing page must work as a **justification asset**: pros/cons, comparison
