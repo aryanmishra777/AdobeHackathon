@@ -358,6 +358,61 @@ def check_subskill_table(skills, r):
             r.error("subskills.json", f"{stage.get('id')}: path does not resolve: {p}")
 
 
+# Phrasing that reads as "point me at a website and I will audit it". Only the
+# entrypoint may say this; if a sub-skill does, a plain "audit example.com"
+# risks activating it directly and the composition breaks.
+ENTRYPOINT_PHRASES = (
+    "audit a website", "audit any website", "audits a website", "audit a site",
+    "point it at", "give it a url", "given a url", "audit the site",
+    "for any website", "any url",
+)
+# Phrasing that marks a skill as a component of a larger run.
+COMPONENT_MARKERS = (
+    "invoked by", "called by", "part of", "component of", "as part of",
+    "the evidence bundle", "audit-orchestrator",
+)
+
+
+def check_activation_hygiene(skills, r):
+    """Only the entrypoint's description may read as 'audit a website'.
+
+    The Agent Skills spec activates a skill from its description, and there is no
+    skill-calls-skill primitive. So if a sub-skill's description also reads like
+    a whole-site audit, a user typing "audit example.com" can activate that
+    sub-skill instead of the orchestrator, and the composition silently collapses
+    into one stage.
+
+    This checks the half of activation hygiene a script can see. The other half
+    -- what a real agent actually does with these descriptions -- still needs the
+    end-to-end run described in the README.
+    """
+    for entry in skills:
+        folder = os.path.join(MARKET, (entry.get("path") or "").replace("/", os.sep))
+        skill_md = os.path.join(folder, "SKILL.md")
+        if not os.path.exists(skill_md):
+            continue
+        fm, _body = read_frontmatter(skill_md, r)
+        if not fm:
+            continue
+        desc = (fm.get("description") or "").lower()
+        name = entry.get("id", "?")
+        if entry.get("entrypoint"):
+            if not any(k in desc for k in ("audit", "website", "site")):
+                r.error(name, "the entrypoint's description does not read as a "
+                              "website audit; a user asking for one may activate "
+                              "nothing")
+            continue
+        hits = [k for k in ENTRYPOINT_PHRASES if k in desc]
+        if hits:
+            r.error(name, "sub-skill description reads like a whole-site audit "
+                          f"({', '.join(repr(h) for h in hits)}); it can steal "
+                          "activation from audit-orchestrator. Phrase it as a "
+                          "component.")
+        elif not any(k in desc for k in COMPONENT_MARKERS):
+            r.warn(name, "sub-skill description does not identify itself as a "
+                         "component; consider naming audit-orchestrator or the "
+                         "evidence bundle so it never activates on its own")
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -377,6 +432,7 @@ def main(argv=None) -> int:
         check_registry(folder, entry, r, seen_ids)
 
     check_subskill_table(skills, r)
+    check_activation_hygiene(skills, r)
     check_stdlib_only(r)
     check_determinism(r)
 

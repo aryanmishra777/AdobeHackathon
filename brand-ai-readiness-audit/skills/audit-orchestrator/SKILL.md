@@ -42,7 +42,11 @@ emits a single report.
 - **Never touch authenticated areas**, even when credentials are offered.
 - **Stay inside the budget.** Default ceiling is 25 pages and 120 seconds of
   fetching, with a mandatory politeness delay and never more than 8 concurrent
-  requests.
+  requests. Every request is capped by the time actually remaining, so the true
+  wall-clock ceiling is the budget plus roughly one in-flight request -- measured
+  at 129s against a 120s budget on a site that refused every fetch. That is the
+  worst case, and it leaves better than a 2x margin against the five-minute
+  limit. A healthy site completes in 12-36s.
 - **Report honestly.** If coverage was cut short, say so in `coverage` rather
   than issuing a clean bill of health from a partial crawl.
 - **State the boundary of the audit.** Several factors that decide whether an
@@ -52,6 +56,36 @@ emits a single report.
   `references/audit-boundary.md` and put the relevant entries in
   `coverage.limitations` on every report. A grade that silently ignores them
   claims more than was measured.
+- **Carry the engine reachability matrix into the report.**
+  `crawl-access-audit` emits `engine_reachability`: a per-assistant verdict --
+  reachable, partial, degraded or blocked -- measured from the per-agent robots
+  resolution and the user-agent probe. Copy it into the report unchanged. It is
+  the most legible thing the audit produces ("you are invisible to Perplexity"),
+  and the only part of engine-specific behaviour a site crawl can settle. Do not
+  let a blocked *training* crawler read as a defect there; the row's `note` says
+  why.
+- **Run the off-site checks when, and only when, you have a search tool.**
+  `freshness-corroboration-audit` skips TRUST-006, 007, 009, 012 and 013 because
+  a script cannot see the rest of the web, and records them in
+  `checks_skipped`. If your host gives you web search or fetch, complete them
+  yourself, then move each from `coverage.checks_skipped` into `findings`:
+
+  | Check | Query to run | Report only when |
+  |---|---|---|
+  | TRUST-006 | the brand's two or three most specific factual claims, quoted | no independent source repeats a claim the site presents as established |
+  | TRUST-007 | the brand name alone | the first page of results is dominated by a different, better-known entity |
+  | TRUST-009 | brand name plus the obvious directories for its category | the brand is absent from the registries a machine would consult |
+  | TRUST-012 | brand name plus "review" or "vs" | third-party descriptions contradict the site's own positioning |
+  | TRUST-013 | brand name in quotes, excluding its own domain | nothing independent exists at all |
+
+  Four rules. Cap at three searches per check and stop early once the answer is
+  clear. Never treat an empty result as proof of absence -- a search that found
+  nothing is `confidence: low` at most, and for a young or niche brand it is not
+  a finding at all. Set `determinism: "model-judged"`, so the ceiling applies.
+  And record what you searched in `verification`, so a human can repeat it.
+
+  If you have no search tool, leave them skipped and say so in the report. An
+  unrun check is honest; a guessed one is not.
 - **Never grade an axis nothing measured.** If no analyzer ran for a mechanism,
   its axis is `"not assessed"`, not a score. Pass `--mechanisms` to
   `scripts/merge_findings.py` listing the mechanisms whose analyzer actually ran,

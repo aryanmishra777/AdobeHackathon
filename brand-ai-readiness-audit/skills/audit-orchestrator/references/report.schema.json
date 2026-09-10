@@ -5,9 +5,17 @@
   "description": "The single artifact the entrypoint emits. A superset of the contest's required floor: site, audited_at, counts-by-severity summary, and findings each carrying id/title/severity/evidence/suggested_action.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["site", "audited_at", "summary", "findings"],
+  "required": [
+    "site",
+    "audited_at",
+    "summary",
+    "findings"
+  ],
   "properties": {
-    "schema_version": { "type": "string", "const": "1.0" },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
     "site": {
       "type": "string",
       "description": "Canonical origin as resolved in step 1, e.g. 'example.com'."
@@ -20,24 +28,54 @@
     "summary": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["total_findings", "critical", "high", "medium", "low"],
+      "required": [
+        "total_findings",
+        "critical",
+        "high",
+        "medium",
+        "low"
+      ],
       "properties": {
-        "total_findings": { "type": "integer", "minimum": 0 },
-        "critical": { "type": "integer", "minimum": 0 },
-        "high": { "type": "integer", "minimum": 0 },
-        "medium": { "type": "integer", "minimum": 0 },
-        "low": { "type": "integer", "minimum": 0 },
+        "total_findings": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "critical": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "high": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "medium": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "low": {
+          "type": "integer",
+          "minimum": 0
+        },
         "by_category": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "discoverability": { "type": "integer", "minimum": 0 },
-            "engagement": { "type": "integer", "minimum": 0 }
+            "discoverability": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "engagement": {
+              "type": "integer",
+              "minimum": 0
+            }
           }
         },
         "by_mechanism": {
           "type": "object",
-          "additionalProperties": { "type": "integer", "minimum": 0 }
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
         }
       }
     },
@@ -45,10 +83,18 @@
       "type": "object",
       "description": "Coarse placement on the two axes the contest defines. Derived from findings; never the primary output.",
       "additionalProperties": false,
-      "required": ["discoverability", "engagement", "verdict"],
+      "required": [
+        "discoverability",
+        "engagement",
+        "verdict"
+      ],
       "properties": {
-        "discoverability": { "$ref": "#/$defs/axis" },
-        "engagement": { "$ref": "#/$defs/axis" },
+        "discoverability": {
+          "$ref": "#/$defs/axis"
+        },
+        "engagement": {
+          "$ref": "#/$defs/axis"
+        },
         "verdict": {
           "type": "string",
           "minLength": 20,
@@ -60,53 +106,105 @@
     "site_profile": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["site_type", "confidence"],
+      "required": [
+        "site_type",
+        "confidence"
+      ],
       "properties": {
         "site_type": {
-          "enum": ["ecommerce", "saas", "local-business", "media-publisher", "docs", "portfolio-brochure", "marketplace", "nonprofit-gov", "unknown"]
+          "enum": [
+            "ecommerce",
+            "saas",
+            "local-business",
+            "media-publisher",
+            "docs",
+            "portfolio-brochure",
+            "marketplace",
+            "nonprofit-gov",
+            "unknown"
+          ]
         },
-        "confidence": { "enum": ["high", "medium", "low"] },
-        "evidence": { "type": "string" },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "evidence": {
+          "type": "string"
+        },
         "primary_entity": {
           "type": "string",
           "description": "The brand or organization the site represents, as named on the site."
         },
-        "detected_cms": { "type": "string" }
+        "detected_cms": {
+          "type": "string"
+        }
       }
     },
     "coverage": {
       "type": "object",
       "description": "What the audit actually saw. Keeps a partial crawl from reading as a clean bill of health.",
       "additionalProperties": false,
-      "required": ["pages_sampled", "complete"],
+      "required": [
+        "pages_sampled",
+        "complete"
+      ],
       "properties": {
-        "pages_sampled": { "type": "integer", "minimum": 0 },
-        "pages_discovered": { "type": "integer", "minimum": 0 },
+        "pages_sampled": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pages_discovered": {
+          "type": "integer",
+          "minimum": 0
+        },
         "complete": {
           "type": "boolean",
           "description": "False when a budget, timeout or block cut the crawl short. When false, limitations must be non-empty."
         },
         "budget": {
           "type": "object",
-          "additionalProperties": { "type": ["number", "string"] }
+          "additionalProperties": {
+            "type": [
+              "number",
+              "string"
+            ]
+          }
         },
         "skipped": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["url", "reason"],
+            "required": [
+              "url",
+              "reason"
+            ],
             "properties": {
-              "url": { "type": "string" },
+              "url": {
+                "type": "string"
+              },
               "reason": {
-                "enum": ["robots-disallow", "budget-exceeded", "timeout", "http-error", "non-html", "duplicate", "out-of-scope"]
+                "enum": [
+                  "robots-disallow",
+                  "budget-exceeded",
+                  "timeout",
+                  "http-error",
+                  "non-html",
+                  "duplicate",
+                  "out-of-scope"
+                ]
               }
             }
           }
         },
         "limitations": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "Plain-language caveats, e.g. 'No renderer available; JS-dependency inferred from raw HTML rather than measured.'"
         },
         "checks_skipped": {
@@ -114,10 +212,17 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["check_id", "reason"],
+            "required": [
+              "check_id",
+              "reason"
+            ],
             "properties": {
-              "check_id": { "type": "string" },
-              "reason": { "type": "string" }
+              "check_id": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
             }
           },
           "description": "Checks gated out by site profile or missing tooling. Distinguishes 'passed' from 'never ran'."
@@ -126,7 +231,9 @@
     },
     "findings": {
       "type": "array",
-      "items": { "$ref": "finding.schema.json" }
+      "items": {
+        "$ref": "finding.schema.json"
+      }
     },
     "proactive_recommendations": {
       "type": "array",
@@ -134,18 +241,46 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "title", "rationale", "suggested_action"],
+        "required": [
+          "id",
+          "title",
+          "rationale",
+          "suggested_action"
+        ],
         "properties": {
-          "id": { "type": "string", "pattern": "^P-[0-9]{3,}$" },
-          "title": { "type": "string", "minLength": 10, "maxLength": 120 },
-          "category": { "enum": ["discoverability", "engagement"] },
-          "mechanism": { "enum": ["reach", "read", "parse", "quote", "trust", "stay"] },
+          "id": {
+            "type": "string",
+            "pattern": "^P-[0-9]{3,}$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 120
+          },
+          "category": {
+            "enum": [
+              "discoverability",
+              "engagement"
+            ]
+          },
+          "mechanism": {
+            "enum": [
+              "reach",
+              "read",
+              "parse",
+              "quote",
+              "trust",
+              "stay"
+            ]
+          },
           "rationale": {
             "type": "string",
             "minLength": 20,
             "description": "Why this helps, grounded in something observed in the evidence bundle. Generic advice is not a recommendation."
           },
-          "suggested_action": { "$ref": "finding.schema.json#/properties/suggested_action" }
+          "suggested_action": {
+            "$ref": "finding.schema.json#/properties/suggested_action"
+          }
         }
       }
     },
@@ -155,20 +290,44 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["rank", "action", "finding_ids", "why_first"],
+        "required": [
+          "rank",
+          "action",
+          "finding_ids",
+          "why_first"
+        ],
         "properties": {
-          "rank": { "type": "integer", "minimum": 1 },
-          "action": { "type": "string", "minLength": 10 },
+          "rank": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "action": {
+            "type": "string",
+            "minLength": 10
+          },
           "finding_ids": {
             "type": "array",
             "minItems": 1,
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            }
           },
-          "why_first": { "type": "string", "minLength": 20 },
-          "effort": { "enum": ["S", "M", "L"] },
+          "why_first": {
+            "type": "string",
+            "minLength": 20
+          },
+          "effort": {
+            "enum": [
+              "S",
+              "M",
+              "L"
+            ]
+          },
           "unblocks": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "description": "finding_ids that cannot be meaningfully assessed or fixed until this one is done."
           }
         }
@@ -178,10 +337,71 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "marketplace_version": { "type": "string" },
-        "bundle_path": { "type": "string" },
-        "skills_run": { "type": "array", "items": { "type": "string" } },
-        "duration_seconds": { "type": "number", "minimum": 0 }
+        "marketplace_version": {
+          "type": "string"
+        },
+        "bundle_path": {
+          "type": "string"
+        },
+        "skills_run": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "duration_seconds": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "engine_reachability": {
+      "type": "array",
+      "description": "Per-assistant verdict on whether this site can be fetched at all, derived from the per-agent robots resolution and the user-agent probe. This is the one part of engine-specific behaviour a site crawl can settle; which sources an engine prefers, how it reranks, and whether it searches at all are outside the audit -- see references/audit-boundary.md.",
+      "items": {
+        "type": "object",
+        "required": [
+          "engine",
+          "state",
+          "detail"
+        ],
+        "properties": {
+          "engine": {
+            "type": "string",
+            "description": "Assistant name, e.g. ChatGPT, Claude, Perplexity."
+          },
+          "state": {
+            "enum": [
+              "reachable",
+              "partial",
+              "degraded",
+              "blocked"
+            ]
+          },
+          "detail": {
+            "type": "string",
+            "description": "What was measured, in one sentence."
+          },
+          "retrieval_agents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "training_agents_blocked": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Training crawlers blocked for this engine. Informational: a licensing choice, never a defect."
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
       }
     }
   },
@@ -189,11 +409,31 @@
     "axis": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["score", "grade", "headline"],
+      "required": [
+        "score",
+        "grade",
+        "headline"
+      ],
       "properties": {
-        "score": { "type": "integer", "minimum": 0, "maximum": 100 },
-        "grade": { "enum": ["A", "B", "C", "D", "F"] },
-        "headline": { "type": "string", "minLength": 10, "maxLength": 200 }
+        "score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "grade": {
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "F"
+          ]
+        },
+        "headline": {
+          "type": "string",
+          "minLength": 10,
+          "maxLength": 200
+        }
       }
     }
   }

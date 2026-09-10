@@ -811,15 +811,501 @@ def check_reach_015(b: Bundle) -> list[dict]:
                    owner="infrastructure"))]
 
 
+def _is_development_origin(host: str) -> bool:
+    """True for hosts that are plainly not a public site.
+
+    Claims about TLS, canonical hosts or redirects are claims about how the
+    public internet reaches a site. A loopback address, a private range or an
+    explicit high port is a developer's machine, where none of those claims
+    mean anything.
+    """
+    name = (host or "").lower()
+    bare, _, port = name.partition(":")
+    if bare in ("localhost", "127.0.0.1", "::1", "0.0.0.0") or bare.endswith(".local"):
+        return True
+    if bare.startswith(("192.168.", "10.", "172.16.", "172.17.", "172.18.",
+                        "172.19.", "172.2", "172.30.", "172.31.")):
+        return True
+    if port and port not in ("80", "443"):
+        return True
+    return False
+
+
+MIN_PAGES_FOR_ORPHAN_CLAIM = 10
+DEEP_CLICK_DEPTH = 3
+FILTER_PARAM_HINTS = ("filter", "sort", "order", "facet", "refine", "price",
+                      "colour", "color", "size", "brand", "view", "layout")
+PAGINATION_PARAMS = ("page", "p", "offset", "start", "from", "cursor")
+
+
+def _sitemap_urls(b: Bundle) -> list:
+    """Every URL the site's own sitemaps advertise, deduplicated, order kept."""
+    seen, out = set(), []
+    for sm in b.sitemaps:
+        for entry in (sm.get("urls") or []):
+            loc = entry.get("loc") if isinstance(entry, dict) else entry
+            if loc and loc not in seen:
+                seen.add(loc)
+                out.append(loc)
+    return out
+
+
+def _normalise(url: str) -> str:
+    p = urlparse(url)
+    path = (p.path or "/").rstrip("/") or "/"
+    return f"{p.netloc}{path}".lower()
+
+
+def check_reach_013(b: Bundle) -> list[dict]:
+    """Pages the sitemap advertises that nothing links to.
+
+    Binding guards:
+      - The sample is partial, so a page may be linked from one we never
+        fetched. Requires >= 10 sampled pages, caps confidence at medium, and
+        says so in the evidence.
+      - Campaign and noindex pages are deliberately unlinked; not orphans.
+    """
+    sampled = b.ok_pages
+    if len(sampled) < MIN_PAGES_FOR_ORPHAN_CLAIM:
+        return []
+
+    linked = set()
+    for page in sampled:
+        linked.add(_normalise(page.get("final_url") or page["url"]))
+        for link in (b.extracted(page["page_id"]).get("links") or []):
+            if link.get("internal") and link.get("href"):
+                linked.add(_normalise(link["href"]))
+
+    orphans = []
+    for loc in _sitemap_urls(b):
+        key = _normalise(loc)
+        if key in linked:
+            continue
+        # Guard: a campaign landing page is unlinked on purpose.
+        if any(h in key for h in UTILITY_PATH_HINTS):
+            continue
+        orphans.append(loc)
+
+    if not orphans:
+        return []
+
+    n = len(orphans)
+    examples = ", ".join(orphans[:3])
+    return [finding(
+        "REACH-013", "Pages are orphaned or buried too deep to be crawled",
+        "medium",
+        f"{n} URL(s) listed in the sitemap are reached by no internal link on "
+        f"any of the {len(sampled)} pages sampled: {examples}"
+        f"{'...' if n > 3 else ''}. Because the crawl sampled only part of the "
+        f"site, these may be linked from a page we did not fetch -- treat this "
+        f"as a list to check rather than a confirmed set of orphans.",
+        ["MANIFEST.json", "sitemaps/"],
+        counts={"orphan_candidates": n, "sitemap_urls": len(_sitemap_urls(b)),
+                "pages_sampled": len(sampled)},
+        confidence="medium",
+        verification=f"Search the site's navigation and body copy for a link to {orphans[0]}",
+        scope="site-wide", checked=len(sampled),
+        action=act("Link the advertised pages from somewhere a crawler walks",
+                   "medium",
+                   ["Confirm each URL above is genuinely meant to be public",
+                    "Add a link from a hub, category or navigation page within "
+                    "three clicks of the home page",
+                    "Drop from the sitemap anything that is deliberately "
+                    "unlinked, so the sitemap stops advertising it"],
+                   "S",
+                   "A sitemap entry tells a crawler a URL exists; an internal "
+                   "link tells it the page matters and gives it context. Pages "
+                   "with neither a link nor an inbound path are fetched last "
+                   "and weighted least.",
+                   owner="content"))]
+
+
+def check_reach_014(b: Bundle) -> list[dict]:
+    """TLS failure, or https pages pulling subresources over http.
+
+    Binding guard: a certificate this Python build distrusts may be perfectly
+    valid elsewhere, so a TLS failure is only reported when https fails while
+    http succeeds, at medium confidence.
+    """
+    out = []
+    variants = b.run.get("origin_variants") or {}
+    # Guard: a development origin has no business serving TLS. localhost, a
+    # private address or an explicit non-standard port is someone's test server,
+    # and "no https" there is the expected configuration rather than a defect.
+    if _is_development_origin(b.site):
+        return []
+    https_ok = any(v.get("status") for host, v in variants.items()
+                   if host.startswith("https://") and v.get("status"))
+    http_ok = any(v.get("status") for host, v in variants.items()
+                  if host.startswith("http://") and v.get("status"))
+
+    if variants and not https_ok and http_ok:
+        out.append(finding(
+            "REACH-014", "The site is not reachable over https", "critical",
+            "Every https variant of this origin failed to respond while http "
+            "succeeded. Retrieval agents that require TLS cannot fetch the site "
+            "at all. (Verified against one TLS stack only, so confirm from "
+            "another network before acting.)",
+            ["run.json"],
+            counts={"https_variants_tried": sum(1 for h in variants
+                                                if h.startswith("https://"))},
+            confidence="medium",
+            verification=f"curl -svI https://{b.site}/ 2>&1 | grep -i 'SSL\\|certificate'",
+            scope="site-wide", checked=len(b.ok_pages),
+            action=act("Serve the site over https with a publicly trusted certificate",
+                       "critical",
+                       ["Install a certificate from a public CA covering the "
+                        "apex and www hosts",
+                        "Redirect http to https with a 301",
+                        "Confirm the full chain is served, not just the leaf"],
+                       "M",
+                       "Assistants fetch over https. A site that answers only "
+                       "on http is unreachable to them regardless of its "
+                       "content.",
+                       owner="infrastructure")))
+
+    mixed = []
+    for page in b.ok_pages:
+        url = page.get("final_url") or page["url"]
+        if not url.startswith("https://"):
+            continue
+        ext = b.extracted(page["page_id"])
+        refs = [s.get("src") for s in (ext.get("scripts") or []) if s.get("src")]
+        refs += [s.get("href") for s in (ext.get("stylesheets") or []) if s.get("href")]
+        refs += [i.get("src") for i in (ext.get("images") or []) if i.get("src")]
+        if any(str(r).startswith("http://") for r in refs):
+            mixed.append(page)
+
+    if mixed:
+        out.append(finding(
+            "REACH-014", "Secure pages load subresources over plain http", "medium",
+            f"{len(mixed)} of {len(b.ok_pages)} sampled https pages reference at "
+            f"least one script, stylesheet or image over http. Browsers block or "
+            f"downgrade these, so the rendered page a crawler is shown can differ "
+            f"from the one authored.",
+            ["MANIFEST.json"] + [f"pages/{p['page_id']}/extracted.json"
+                                 for p in mixed[:5]],
+            pages=[p["url"] for p in mixed],
+            counts={"pages_with_mixed_content": len(mixed)},
+            verification=f"Open a page from the list and check the console for mixed-content warnings",
+            checked=len(b.ok_pages),
+            action=act("Load every subresource over https", "medium",
+                       ["Rewrite http:// subresource URLs to https://",
+                        "Where a third-party host offers no https, replace or "
+                        "self-host the asset",
+                        "Add a Content-Security-Policy upgrade-insecure-requests "
+                        "directive once the references are clean"],
+                       "S",
+                       "Blocked subresources can remove content or layout from "
+                       "the page a renderer sees, which changes what is "
+                       "extractable from it.",
+                       owner="engineering")))
+    return out
+
+
+def check_reach_017(b: Bundle) -> list[dict]:
+    """Filter and sort parameters multiplying URLs without a canonical to collapse them.
+
+    Binding guards:
+      - Pagination is not a crawl trap; only combinatorial filter/sort params.
+      - If canonicals already collapse the variants, do not report.
+    """
+    profile = (b.run.get("site_type") or "").lower()
+    if profile and profile not in ("ecommerce", "marketplace", "media-publisher"):
+        return []
+
+    families: dict = {}
+    for page in b.ok_pages:
+        for link in (b.extracted(page["page_id"]).get("links") or []):
+            if not link.get("internal") or not link.get("href"):
+                continue
+            parsed = urlparse(link["href"])
+            if not parsed.query:
+                continue
+            keys = {k.split("=")[0].lower() for k in parsed.query.split("&") if k}
+            facet = {k for k in keys
+                     if any(h in k for h in FILTER_PARAM_HINTS)
+                     and k not in PAGINATION_PARAMS}
+            if not facet:
+                continue  # Guard: pagination alone is not a trap.
+            base = f"{parsed.netloc}{parsed.path}".lower()
+            families.setdefault(base, {"params": set(), "variants": set()})
+            families[base]["params"] |= facet
+            families[base]["variants"].add(parsed.query)
+
+    traps = {b_: v for b_, v in families.items() if len(v["variants"]) >= 4}
+    if not traps:
+        return []
+
+    # Guard: canonicals that already collapse the variants make this moot.
+    canonical_pages = sum(1 for p in b.ok_pages
+                          if (b.extracted(p["page_id"]).get("canonical")))
+    collapsed = canonical_pages == len(b.ok_pages) and canonical_pages > 0
+
+    worst = max(traps.items(), key=lambda kv: len(kv[1]["variants"]))
+    params = ", ".join(sorted(worst[1]["params"])[:4])
+    variants = sum(len(v["variants"]) for v in traps.values())
+
+    if collapsed:
+        return [finding(
+            "REACH-017", "Faceted URLs multiply, though canonicals collapse them",
+            "low",
+            f"{variants} internal links across {len(traps)} path(s) differ only by "
+            f"the parameters {params}. Every sampled page does declare a canonical, "
+            f"so the duplicates should resolve -- this is a crawl-budget note "
+            f"rather than a defect.",
+            ["MANIFEST.json"],
+            counts={"variant_links": variants, "path_families": len(traps)},
+            confidence="medium",
+            verification="Browse a category page and compare the URLs each filter produces",
+            scope="site-wide", checked=len(b.ok_pages),
+            action=act("Keep crawlers out of the filter space", "low",
+                       ["Confirm the canonical on filtered pages points at the "
+                        "unfiltered category",
+                        "Disallow the pure filter parameters in robots.txt"],
+                       "S",
+                       "Canonicals deduplicate after the fetch. Crawl budget is "
+                       "spent before that.",
+                       owner="engineering"))]
+
+    return [finding(
+        "REACH-017", "Faceted or parameterised URLs create a crawl trap",
+        "high" if canonical_pages == 0 else "medium",
+        f"{variants} internal links across {len(traps)} path(s) differ only by the "
+        f"parameters {params}; the widest is {worst[0]} with "
+        f"{len(worst[1]['variants'])} variants. "
+        + ("No sampled page declares a canonical, so nothing tells a crawler these "
+           "are the same page."
+           if canonical_pages == 0 else
+           f"Only {canonical_pages} of {len(b.ok_pages)} sampled pages declare a "
+           f"canonical."),
+        ["MANIFEST.json"],
+        counts={"variant_links": variants, "path_families": len(traps),
+                "pages_with_canonical": canonical_pages},
+        verification="Browse a category page and compare the URLs each filter produces",
+        scope="site-wide", checked=len(b.ok_pages),
+        action=act("Stop filter combinations from consuming the crawl", "high",
+                   ["Add rel=canonical on filtered views pointing at the "
+                    "unfiltered category page",
+                    "Disallow pure filter and sort parameters in robots.txt, "
+                    "leaving pagination crawlable",
+                    "Keep filter state in query parameters rather than in the "
+                    "path so the canonical form stays obvious"],
+                   "M",
+                   "Every filter combination a crawler follows is budget not "
+                   "spent on a product or article page. Sites lose most of "
+                   "their crawl to facets before the catalogue is reached.",
+                   owner="engineering"))]
+
+
+def check_reach_018(b: Bundle) -> list[dict]:
+    """hreflang that is non-reciprocal or points at URLs we could not fetch.
+
+    Binding guards:
+      - A monolingual single-region site needs no hreflang; only run where
+        annotations already exist.
+      - Reciprocity cannot be confirmed outside the sample; say so, cap at
+        medium confidence.
+    """
+    annotated = [(p, b.extracted(p["page_id"]).get("hreflang") or [])
+                 for p in b.ok_pages]
+    annotated = [(p, h) for p, h in annotated if h]
+    if not annotated:
+        # Guard: absence of hreflang on a monolingual site is correct, not a defect.
+        missing_lang = [p for p in b.ok_pages
+                        if not (b.extracted(p["page_id"]).get("lang") or "").strip()]
+        if len(missing_lang) == len(b.ok_pages) and b.ok_pages:
+            return [finding(
+                "REACH-018", "No page declares its language", "low",
+                f"None of the {len(b.ok_pages)} sampled pages carry an html lang "
+                f"attribute. Language is then guessed from the text, which is "
+                f"unreliable for short or mixed-language pages.",
+                ["MANIFEST.json"] + [f"pages/{p['page_id']}/extracted.json"
+                                     for p in b.ok_pages[:5]],
+                counts={"pages_without_lang": len(missing_lang)},
+                verification="View source on the home page and look for <html lang=...>",
+                scope="site-wide", checked=len(b.ok_pages),
+                action=act("Declare the page language", "low",
+                           ['Set <html lang="en"> (or the correct tag) in the '
+                            'base template'],
+                           "S",
+                           "An explicit language tag removes a guess from every "
+                           "consumer of the page.",
+                           owner="engineering"))]
+        return []
+
+    sampled_urls = {_normalise(p.get("final_url") or p["url"]) for p in b.ok_pages}
+    fetched_bad = []
+    non_reciprocal = []
+
+    for page, entries in annotated:
+        self_key = _normalise(page.get("final_url") or page["url"])
+        for e in entries:
+            href = e.get("href")
+            if not href:
+                continue
+            target = _normalise(href)
+            if target in sampled_urls:
+                # We have the counterpart, so reciprocity IS checkable here.
+                counter = next((b.extracted(p["page_id"]).get("hreflang") or []
+                                for p in b.ok_pages
+                                if _normalise(p.get("final_url") or p["url"]) == target),
+                               [])
+                if counter and not any(_normalise(c.get("href") or "") == self_key
+                                       for c in counter):
+                    non_reciprocal.append((page["url"], href))
+        for e in entries:
+            status = next((p.get("status") for p in b.pages
+                           if _normalise(p.get("url") or "") == _normalise(e.get("href") or "")),
+                          None)
+            if status and status >= 400:
+                fetched_bad.append((page["url"], e.get("href"), status))
+
+    if not non_reciprocal and not fetched_bad:
+        return []
+
+    bits = []
+    if non_reciprocal:
+        bits.append(f"{len(non_reciprocal)} annotation(s) name a counterpart that "
+                    f"does not point back (e.g. {non_reciprocal[0][0]} -> "
+                    f"{non_reciprocal[0][1]})")
+    if fetched_bad:
+        bits.append(f"{len(fetched_bad)} annotation(s) reference a URL that "
+                    f"returned {fetched_bad[0][2]}")
+
+    return [finding(
+        "REACH-018", "Language or region targeting is mis-declared", "medium",
+        "; ".join(bits) + ". Reciprocity was checked only among the "
+        f"{len(b.ok_pages)} pages sampled, so counterparts outside the sample "
+        "are neither confirmed nor excluded.",
+        ["MANIFEST.json"] + [f"pages/{p['page_id']}/extracted.json"
+                             for p, _ in annotated[:5]],
+        pages=[u for u, _ in non_reciprocal][:10],
+        counts={"non_reciprocal": len(non_reciprocal),
+                "broken_targets": len(fetched_bad),
+                "pages_with_hreflang": len(annotated)},
+        confidence="medium",
+        verification=f"Compare the hreflang blocks on {annotated[0][0]['url']} and its counterpart",
+        checked=len(b.ok_pages),
+        action=act("Make hreflang annotations reciprocal and resolvable", "medium",
+                   ["Every locale must list every other locale, including itself",
+                    "Point annotations at the canonical URL of each counterpart, "
+                    "not a redirect",
+                    "Remove annotations whose target no longer exists"],
+                   "M",
+                   "Non-reciprocal or broken annotations are discarded wholesale "
+                   "rather than partially honoured, so the locale grouping they "
+                   "were meant to express is lost.",
+                   owner="engineering"))]
+
+# The assistants a brand actually cares about, and the tokens each reaches with.
+# Purpose matters: a training crawler being blocked is a business choice, while a
+# retrieval agent being blocked means a user asking about this brand right now
+# gets nothing. Keep these grouped so the matrix never conflates the two.
+ENGINE_AGENTS = [
+    ("ChatGPT",    ["ChatGPT-User", "OAI-SearchBot"], ["GPTBot"]),
+    ("Claude",     ["Claude-User", "Claude-SearchBot"], ["ClaudeBot", "anthropic-ai"]),
+    ("Perplexity", ["Perplexity-User", "PerplexityBot"], []),
+    ("Google AI",  ["Google-Extended", "Googlebot"], []),
+    ("Bing / Copilot", ["bingbot"], []),
+]
+
+DEGRADED_RATIO = 0.5
+
+
+def engine_reachability(b: Bundle) -> list[dict]:
+    """Per-assistant verdict on whether this site can be fetched at all.
+
+    Everything here is measured, not inferred: robots resolution comes from the
+    per-agent matrix the collector computed, and the edge behaviour comes from
+    the user-agent probe's status and byte counts against a browser baseline.
+
+    This is the one part of engine-specific behaviour a site crawl CAN settle.
+    Which sources an engine prefers, how it reranks, and whether it searches at
+    all remain outside our reach -- see references/audit-boundary.md.
+    """
+    matrix = b.robots.get("agent_matrix") or {}
+    probe_agents = (b.probe.get("agents") or {})
+    baseline = (b.probe.get("baseline") or {})
+    base_bytes = baseline.get("text_bytes") or baseline.get("bytes") or 0
+
+    rows = []
+    for engine, retrieval, training in ENGINE_AGENTS:
+        known = [a for a in retrieval if a in matrix or a in probe_agents]
+        if not known:
+            continue
+
+        blocked_robots, edge_blocked, degraded, ok = [], [], [], []
+        for agent in known:
+            entry = matrix.get(agent) or {}
+            if entry and entry.get("root_allowed") is False:
+                blocked_robots.append(agent)
+                continue
+            pr = probe_agents.get(agent) or {}
+            status = pr.get("status")
+            if pr.get("challenge_detected") or (status and status in (401, 403, 429)):
+                edge_blocked.append(agent)
+                continue
+            got = pr.get("text_bytes") or pr.get("bytes") or 0
+            if base_bytes and got and got < base_bytes * DEGRADED_RATIO:
+                degraded.append(agent)
+                continue
+            if status == 200 or (not pr and entry):
+                ok.append(agent)
+
+        if blocked_robots and not ok:
+            state, detail = "blocked", (
+                "robots.txt disallows " + ", ".join(blocked_robots))
+        elif edge_blocked and not ok:
+            agent = edge_blocked[0]
+            code = (probe_agents.get(agent) or {}).get("status")
+            state, detail = "blocked", (
+                f"the edge returns {code or 'a challenge'} to {agent} even though "
+                f"robots.txt permits it")
+        elif degraded and not ok:
+            agent = degraded[0]
+            got = (probe_agents.get(agent) or {}).get("text_bytes") or 0
+            state, detail = "degraded", (
+                f"{agent} is served {got:,} bytes of text against a browser "
+                f"baseline of {base_bytes:,}")
+        elif ok:
+            state = "reachable"
+            detail = "permitted by robots.txt and served the full page"
+            if blocked_robots or edge_blocked or degraded:
+                state = "partial"
+                hindered = blocked_robots + edge_blocked + degraded
+                detail = (f"reachable via {', '.join(ok)}, but "
+                          f"{', '.join(hindered)} is blocked or degraded")
+        else:
+            continue
+
+        blocked_training = [a for a in training
+                            if (matrix.get(a) or {}).get("root_allowed") is False]
+        rows.append({
+            "engine": engine,
+            "state": state,
+            "detail": detail,
+            "retrieval_agents": known,
+            "training_agents_blocked": blocked_training,
+            "note": ("Training crawlers are blocked for this engine. That is a "
+                     "content-licensing choice and does not affect whether a "
+                     "user asking about you right now gets an answer."
+                     if blocked_training else None),
+        })
+    return rows
+
 CHECKS = [
     check_reach_001, check_reach_002, check_reach_003, check_reach_004,
     check_reach_005, check_reach_006, check_reach_007, check_reach_008,
     check_reach_009, check_reach_010, check_reach_011, check_reach_012,
-    check_reach_015,
+    check_reach_013, check_reach_014, check_reach_015, check_reach_017,
+    check_reach_018,
 ]
 
-# Implemented by teammates against references/checks.yaml -- see docs/todo/.
-NOT_YET_IMPLEMENTED = ["REACH-013", "REACH-014", "REACH-016", "REACH-017", "REACH-018"]
+# REACH-016 (llms.txt) is intentionally not in CHECKS: its registry entry says
+# "never a defect -- emit as a proactive recommendation only", so it lives in
+# proactive() below. Nothing is deferred.
+NOT_YET_IMPLEMENTED: list[str] = []
 
 
 def proactive(b: Bundle) -> list[dict]:
@@ -925,6 +1411,7 @@ def main(argv=None) -> int:
     result = {"skill": "crawl-access-audit", "mechanism": MECHANISM,
               "bundle": args.bundle, "findings": kept,
               "proactive_recommendations": proactive(b),
+              "engine_reachability": engine_reachability(b),
               "checks_not_implemented": NOT_YET_IMPLEMENTED}
 
     text = json.dumps(result, indent=2, ensure_ascii=False)

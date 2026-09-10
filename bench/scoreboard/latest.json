@@ -41,7 +41,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.0,
+      "seconds": 0.9,
       "findings": [
         {
           "check_id": "READ-001",
@@ -294,7 +294,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.0,
+      "seconds": 0.9,
       "findings": [
         {
           "check_id": "PARSE-010",
@@ -414,7 +414,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.1,
+      "seconds": 0.9,
       "findings": [
         {
           "check_id": "STAY-001",
@@ -588,7 +588,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.7,
+      "seconds": 1.5,
       "findings": [
         {
           "check_id": "STAY-001",
@@ -707,7 +707,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.2,
+      "seconds": 1.3,
       "findings": [
         {
           "check_id": "PARSE-010",
@@ -835,7 +835,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.1,
+      "seconds": 1.2,
       "findings": [
         {
           "check_id": "STAY-001",
@@ -936,16 +936,17 @@
       "engagement_score": 88,
       "eng_grade": "B",
       "summary": {
-        "total_findings": 17,
+        "total_findings": 18,
         "critical": 1,
         "high": 1,
         "medium": 4,
-        "low": 11,
+        "low": 12,
         "by_category": {
-          "discoverability": 9,
+          "discoverability": 10,
           "engagement": 8
         },
         "by_mechanism": {
+          "reach": 1,
           "read": 4,
           "parse": 2,
           "quote": 2,
@@ -1005,6 +1006,11 @@
           "check_id": "QUOTE-006",
           "severity": "low",
           "title": "Common buyer questions have no answer on the site"
+        },
+        {
+          "check_id": "REACH-017",
+          "severity": "low",
+          "title": "Faceted URLs multiply, though canonicals collapse them"
         },
         {
           "check_id": "READ-007",
@@ -1263,7 +1269,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.2,
+      "seconds": 1.3,
       "findings": [
         {
           "check_id": "STAY-001",
@@ -1483,7 +1489,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.9,
+      "seconds": 1.1,
       "findings": [
         {
           "check_id": "REACH-012",
@@ -1602,7 +1608,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.9,
+      "seconds": 2.1,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -1844,7 +1850,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.3,
+      "seconds": 1.4,
       "findings": [
         {
           "check_id": "PARSE-010",
@@ -2118,7 +2124,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.4,
+      "seconds": 1.5,
       "findings": [
         {
           "check_id": "STAY-001",
@@ -2292,7 +2298,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.9,
+      "seconds": 1.0,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -2566,7 +2572,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.8,
+      "seconds": 0.9,
       "findings": [
         {
           "check_id": "STAY-001",
@@ -2680,7 +2686,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "STAY-001",
@@ -2795,7 +2801,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.4,
+      "seconds": 1.5,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -3019,7 +3025,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.9,
+      "seconds": 1.0,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -3204,7 +3210,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.9,
+      "seconds": 1.0,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -3530,7 +3536,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -3788,7 +3794,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.6,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -3848,7 +3854,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.0,
+      "seconds": 1.1,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -4058,7 +4064,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.6,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -4084,17 +4090,17 @@
       "engagement_score": 54,
       "eng_grade": "D",
       "summary": {
-        "total_findings": 25,
+        "total_findings": 26,
         "critical": 1,
         "high": 2,
         "medium": 13,
-        "low": 9,
+        "low": 10,
         "by_category": {
-          "discoverability": 18,
+          "discoverability": 19,
           "engagement": 7
         },
         "by_mechanism": {
-          "reach": 6,
+          "reach": 7,
           "read": 3,
           "parse": 3,
           "quote": 4,
@@ -4113,7 +4119,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.9,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -4206,6 +4212,11 @@
           "title": "Common buyer questions have no answer on the site"
         },
         {
+          "check_id": "REACH-018",
+          "severity": "low",
+          "title": "No page declares its language"
+        },
+        {
           "check_id": "STAY-001",
           "severity": "low",
           "title": "The top of the page does not say what this is"
@@ -4254,17 +4265,17 @@
       "engagement_score": 49,
       "eng_grade": "D",
       "summary": {
-        "total_findings": 25,
+        "total_findings": 26,
         "critical": 1,
         "high": 3,
         "medium": 12,
-        "low": 9,
+        "low": 10,
         "by_category": {
-          "discoverability": 16,
+          "discoverability": 17,
           "engagement": 9
         },
         "by_mechanism": {
-          "reach": 4,
+          "reach": 5,
           "read": 3,
           "parse": 4,
           "quote": 3,
@@ -4283,7 +4294,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.6,
+      "seconds": 0.9,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -4371,6 +4382,11 @@
           "title": "Common buyer questions have no answer on the site"
         },
         {
+          "check_id": "REACH-018",
+          "severity": "low",
+          "title": "No page declares its language"
+        },
+        {
           "check_id": "READ-009",
           "severity": "low",
           "title": "Heading structure does not describe the page"
@@ -4452,7 +4468,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.6,
+      "seconds": 0.9,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -4587,7 +4603,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -4737,7 +4753,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.8,
+      "seconds": 0.9,
       "findings": [
         {
           "check_id": "REACH-011",
@@ -4935,7 +4951,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "STAY-001",
@@ -5175,17 +5191,17 @@
       "engagement_score": 54,
       "eng_grade": "D",
       "summary": {
-        "total_findings": 21,
+        "total_findings": 22,
         "critical": 1,
         "high": 3,
         "medium": 11,
-        "low": 6,
+        "low": 7,
         "by_category": {
-          "discoverability": 14,
+          "discoverability": 15,
           "engagement": 7
         },
         "by_mechanism": {
-          "reach": 4,
+          "reach": 5,
           "read": 3,
           "parse": 3,
           "quote": 4,
@@ -5203,7 +5219,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -5296,6 +5312,11 @@
           "title": "Common buyer questions have no answer on the site"
         },
         {
+          "check_id": "REACH-018",
+          "severity": "low",
+          "title": "No page declares its language"
+        },
+        {
           "check_id": "STAY-001",
           "severity": "low",
           "title": "The top of the page does not say what this is"
@@ -5353,7 +5374,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -5498,7 +5519,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -5759,17 +5780,17 @@
       "engagement_score": 46,
       "eng_grade": "D",
       "summary": {
-        "total_findings": 31,
+        "total_findings": 33,
         "critical": 1,
         "high": 2,
         "medium": 14,
-        "low": 14,
+        "low": 16,
         "by_category": {
-          "discoverability": 17,
+          "discoverability": 19,
           "engagement": 14
         },
         "by_mechanism": {
-          "reach": 4,
+          "reach": 6,
           "read": 3,
           "parse": 2,
           "quote": 4,
@@ -5881,6 +5902,16 @@
           "title": "Common buyer questions have no answer on the site"
         },
         {
+          "check_id": "REACH-014",
+          "severity": "low",
+          "title": "Secure pages load subresources over plain http"
+        },
+        {
+          "check_id": "REACH-018",
+          "severity": "low",
+          "title": "No page declares its language"
+        },
+        {
           "check_id": "STAY-001",
           "severity": "low",
           "title": "The top of the page does not say what this is"
@@ -5988,7 +6019,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.0,
+      "seconds": 1.1,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6277,22 +6308,22 @@
       "engagement": "moderate",
       "site_type": "docs",
       "pages": 5,
-      "discoverability": 45,
-      "disc_grade": "D",
+      "discoverability": 17,
+      "disc_grade": "F",
       "engagement_score": 53,
       "eng_grade": "D",
       "summary": {
-        "total_findings": 26,
-        "critical": 1,
+        "total_findings": 27,
+        "critical": 2,
         "high": 3,
         "medium": 11,
         "low": 11,
         "by_category": {
-          "discoverability": 17,
+          "discoverability": 18,
           "engagement": 9
         },
         "by_mechanism": {
-          "reach": 5,
+          "reach": 6,
           "read": 4,
           "parse": 3,
           "quote": 3,
@@ -6313,6 +6344,11 @@
       "false_positives": [],
       "seconds": 0.8,
       "findings": [
+        {
+          "check_id": "REACH-014",
+          "severity": "critical",
+          "title": "The site is not reachable over https"
+        },
         {
           "check_id": "STAY-010",
           "severity": "critical",
@@ -6452,22 +6488,22 @@
       "engagement": "moderate",
       "site_type": "nonprofit-gov",
       "pages": 1,
-      "discoverability": 90,
-      "disc_grade": "A",
+      "discoverability": 54,
+      "disc_grade": "D",
       "engagement_score": 93,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 9,
-        "critical": 0,
+        "total_findings": 10,
+        "critical": 1,
         "high": 1,
         "medium": 3,
         "low": 5,
         "by_category": {
-          "discoverability": 5,
+          "discoverability": 6,
           "engagement": 4
         },
         "by_mechanism": {
-          "reach": 1,
+          "reach": 2,
           "read": 2,
           "parse": 1,
           "quote": 1,
@@ -6485,8 +6521,13 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.9,
+      "seconds": 0.7,
       "findings": [
+        {
+          "check_id": "REACH-014",
+          "severity": "critical",
+          "title": "The site is not reachable over https"
+        },
         {
           "check_id": "STAY-001",
           "severity": "high",
@@ -6575,7 +6616,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.3,
+      "seconds": 1.1,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -6706,17 +6747,17 @@
       "engagement_score": 94,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 14,
+        "total_findings": 15,
         "critical": 0,
         "high": 2,
         "medium": 6,
-        "low": 6,
+        "low": 7,
         "by_category": {
-          "discoverability": 11,
+          "discoverability": 12,
           "engagement": 3
         },
         "by_mechanism": {
-          "reach": 4,
+          "reach": 5,
           "read": 2,
           "parse": 1,
           "quote": 3,
@@ -6793,6 +6834,11 @@
           "title": "No XML sitemap is published or declared"
         },
         {
+          "check_id": "REACH-018",
+          "severity": "low",
+          "title": "No page declares its language"
+        },
+        {
           "check_id": "READ-010",
           "severity": "low",
           "title": "The page uses no semantic landmarks"
@@ -6821,17 +6867,17 @@
       "engagement_score": 88,
       "eng_grade": "B",
       "summary": {
-        "total_findings": 22,
+        "total_findings": 23,
         "critical": 0,
         "high": 2,
         "medium": 9,
-        "low": 11,
+        "low": 12,
         "by_category": {
-          "discoverability": 14,
+          "discoverability": 15,
           "engagement": 8
         },
         "by_mechanism": {
-          "reach": 2,
+          "reach": 3,
           "read": 2,
           "parse": 2,
           "quote": 1,
@@ -6850,7 +6896,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "REACH-011",
@@ -6906,6 +6952,11 @@
           "check_id": "TRUST-004",
           "severity": "medium",
           "title": "Stale year stamps contradict current content"
+        },
+        {
+          "check_id": "REACH-018",
+          "severity": "low",
+          "title": "No page declares its language"
         },
         {
           "check_id": "STAY-001",
@@ -6976,17 +7027,17 @@
       "engagement_score": 48,
       "eng_grade": "D",
       "summary": {
-        "total_findings": 28,
+        "total_findings": 29,
         "critical": 1,
         "high": 2,
         "medium": 14,
-        "low": 11,
+        "low": 12,
         "by_category": {
-          "discoverability": 16,
+          "discoverability": 17,
           "engagement": 12
         },
         "by_mechanism": {
-          "reach": 3,
+          "reach": 4,
           "read": 3,
           "parse": 4,
           "quote": 4,
@@ -7005,7 +7056,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -7098,6 +7149,11 @@
           "title": "Common buyer questions have no answer on the site"
         },
         {
+          "check_id": "REACH-014",
+          "severity": "low",
+          "title": "Secure pages load subresources over plain http"
+        },
+        {
           "check_id": "STAY-001",
           "severity": "low",
           "title": "The top of the page does not say what this is"
@@ -7161,17 +7217,17 @@
       "engagement_score": 82,
       "eng_grade": "B",
       "summary": {
-        "total_findings": 28,
+        "total_findings": 29,
         "critical": 0,
         "high": 4,
         "medium": 11,
-        "low": 13,
+        "low": 14,
         "by_category": {
-          "discoverability": 18,
+          "discoverability": 19,
           "engagement": 10
         },
         "by_mechanism": {
-          "reach": 5,
+          "reach": 6,
           "read": 3,
           "parse": 4,
           "quote": 4,
@@ -7288,6 +7344,11 @@
           "title": "The server responds slowly enough to limit crawling"
         },
         {
+          "check_id": "REACH-018",
+          "severity": "low",
+          "title": "No page declares its language"
+        },
+        {
           "check_id": "READ-009",
           "severity": "low",
           "title": "Heading structure does not describe the page"
@@ -7346,17 +7407,17 @@
       "engagement_score": 48,
       "eng_grade": "D",
       "summary": {
-        "total_findings": 26,
+        "total_findings": 27,
         "critical": 1,
         "high": 2,
         "medium": 13,
-        "low": 10,
+        "low": 11,
         "by_category": {
-          "discoverability": 17,
+          "discoverability": 18,
           "engagement": 9
         },
         "by_mechanism": {
-          "reach": 4,
+          "reach": 5,
           "read": 3,
           "parse": 3,
           "quote": 4,
@@ -7375,7 +7436,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -7468,6 +7529,11 @@
           "title": "The server responds slowly enough to limit crawling"
         },
         {
+          "check_id": "REACH-018",
+          "severity": "low",
+          "title": "No page declares its language"
+        },
+        {
           "check_id": "READ-009",
           "severity": "low",
           "title": "Heading structure does not describe the page"
@@ -7516,22 +7582,22 @@
       "engagement": "moderate",
       "site_type": "media-publisher",
       "pages": 5,
-      "discoverability": 45,
-      "disc_grade": "D",
+      "discoverability": 17,
+      "disc_grade": "F",
       "engagement_score": 48,
       "eng_grade": "D",
       "summary": {
-        "total_findings": 28,
-        "critical": 1,
+        "total_findings": 30,
+        "critical": 2,
         "high": 3,
         "medium": 12,
-        "low": 12,
+        "low": 13,
         "by_category": {
-          "discoverability": 17,
+          "discoverability": 19,
           "engagement": 11
         },
         "by_mechanism": {
-          "reach": 4,
+          "reach": 6,
           "read": 4,
           "parse": 4,
           "quote": 3,
@@ -7550,8 +7616,13 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
+        {
+          "check_id": "REACH-014",
+          "severity": "critical",
+          "title": "The site is not reachable over https"
+        },
         {
           "check_id": "STAY-010",
           "severity": "critical",
@@ -7641,6 +7712,11 @@
           "check_id": "QUOTE-006",
           "severity": "low",
           "title": "Common buyer questions have no answer on the site"
+        },
+        {
+          "check_id": "REACH-018",
+          "severity": "low",
+          "title": "No page declares its language"
         },
         {
           "check_id": "READ-008",
@@ -7735,7 +7811,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.9,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -7911,7 +7987,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.6,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -7976,7 +8052,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "REACH-007",

@@ -321,6 +321,11 @@ checks:
       - "A certificate our Python build distrusts may be fine elsewhere. Report a
          TLS failure only when https fails and http succeeds, and set confidence
          to 'medium'."
+      - "Never report against a development origin. localhost, a loopback or
+         private address, or an explicit non-standard port is someone's test
+         server, where absent TLS is the expected configuration and not a
+         defect. This check makes claims about how the public internet reaches
+         a site; a dev host is not the public internet."
 
   - id: REACH-015
     title_template: "The server responds too slowly for reliable crawling"

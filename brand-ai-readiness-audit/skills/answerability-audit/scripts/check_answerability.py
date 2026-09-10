@@ -1310,6 +1310,91 @@ def proactive(b: Bundle, findings: list) -> list:
         })
         break  # one is enough to make the point
 
+    # QUOTE-P04 -- gate: few headings are phrased as the question a user asks.
+    # Addresses a factor no site crawl can measure: whether the engine retrieves
+    # at all. Question-form queries trigger AI Overviews far more often than the
+    # average query, so content shaped as an answer to a stated question is more
+    # likely to be pulled into a generative answer in the first place. We cannot
+    # observe activation; we can observe whether the site is shaped for it.
+    if content_pages:
+        heads, question_heads = 0, 0
+        for page in content_pages:
+            for h in (b.extracted(page["page_id"]).get("headings") or []):
+                text = (h.get("text") or "").strip()
+                if not text:
+                    continue
+                heads += 1
+                if text.endswith("?") or re.match(
+                        r"^(how|what|why|when|where|which|who|can|do|does|is|are)",
+                        text, re.I):
+                    question_heads += 1
+        if heads >= 8 and question_heads <= max(1, heads // 12):
+            out.append({
+                "id": "P-000",  # QUOTE-P04
+                "title": "Phrase section headings as the questions people actually ask",
+                "category": CATEGORY,
+                "mechanism": MECHANISM,
+                "rationale": (
+                    "{q} of {h} headings across {p} sampled pages are phrased as a "
+                    "question. Assistants answer questions, and a heading that "
+                    "states the question makes the passage beneath it an answer to "
+                    "retrieve rather than prose to summarise. This is a "
+                    "recommendation, not a defect: whether a query reaches the "
+                    "site at all is decided inside the engine and cannot be "
+                    "measured from here."
+                ).format(q=question_heads, h=heads, p=len(content_pages)),
+                "suggested_action": act(
+                    "Rewrite key section headings into question form",
+                    "low",
+                    ["Take the questions sales and support are actually asked",
+                     "Make each one a heading, with the answer in the first "
+                     "sentence beneath it",
+                     "Keep the declarative heading as a subheading where the "
+                     "question form reads awkwardly"],
+                    "S",
+                    "A question heading with its answer directly beneath is the "
+                    "shape a retrieval system can lift whole.",
+                    owner="content"),
+            })
+
+    # QUOTE-P05 -- gate: no comparison or alternatives content anywhere.
+    # Addresses a second unmeasurable factor: the competing candidate pool.
+    # Citation share is relative -- a page is chosen against the others retrieved
+    # for the same query. We cannot see that pool, but a site with no comparison
+    # content never enters the comparison queries where the pool forms.
+    all_urls = [_page_url(p) for p in b.ok_pages] + b.sitemap_locs()
+    comparison = [u for u in all_urls
+                  if re.search(r"(compare|comparison|alternative|vs-|-vs-|/vs/|best-)",
+                               u, re.I)]
+    if content_pages and not comparison:
+        out.append({
+            "id": "P-000",  # QUOTE-P05
+            "title": "Publish the comparison the buyer is already making",
+            "category": CATEGORY,
+            "mechanism": MECHANISM,
+            "rationale": (
+                "No sampled or advertised URL looks like comparison content "
+                "across {n} URLs examined. Buyers ask assistants to compare and "
+                "shortlist, and the answer is assembled from whatever sources "
+                "were retrieved together. A site with nothing comparison-shaped "
+                "is rarely among them. Which competitors share that pool is not "
+                "observable from this site, so this is a recommendation rather "
+                "than a finding."
+            ).format(n=len(all_urls)),
+            "suggested_action": act(
+                "Add honest comparison and alternatives pages",
+                "low",
+                ["Write a page per realistic alternative, naming it plainly",
+                 "State where the alternative is the better choice -- one-sided "
+                 "comparisons read as marketing and get discounted",
+                 "Put the decision criteria in a table so they can be lifted "
+                 "as a unit"],
+                "M",
+                "Comparison pages are what put a brand into the shortlist an "
+                "assistant assembles, which is where mid-funnel buyers arrive.",
+                owner="content"),
+        })
+
     return out
 
 

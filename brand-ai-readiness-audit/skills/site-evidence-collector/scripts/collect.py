@@ -954,6 +954,19 @@ class Collector:
     def time_left(self) -> float:
         return self.args.budget - (time.time() - self.started)
 
+    def timeout_within_budget(self, ceiling: float = None) -> float:
+        """A per-request timeout that cannot outlive the crawl budget.
+
+        Checking the budget before a request is not enough: with one second left,
+        a request that blocks for the full timeout puts the run ten seconds over.
+        Across origin resolution, robots, sitemaps and a multi-agent probe those
+        overshoots compound, which is how a 120s budget produced a 143s run
+        against a site that refused every request. Capping each request by the
+        time actually remaining makes the budget the real ceiling.
+        """
+        ceiling = self.args.timeout if ceiling is None else min(ceiling, self.args.timeout)
+        return max(1.0, min(ceiling, self.time_left()))
+
     def skip(self, url: str, reason: str) -> None:
         self.skipped.append({"url": url, "reason": reason})
 
@@ -979,7 +992,7 @@ class Collector:
         for candidate in list(variants):
             if self.time_left() <= 0:
                 break
-            r = fetch(candidate + "/", timeout=min(self.args.timeout, 8))
+            r = fetch(candidate + "/", timeout=self.timeout_within_budget(8))
             results[candidate] = {
                 "status": r.status,
                 "redirects_to": r.final_url if r.final_url and
@@ -992,7 +1005,7 @@ class Collector:
 
     # -- robots ------------------------------------------------------------
     def load_robots(self, origin: str) -> dict:
-        r = fetch(origin + "/robots.txt", timeout=self.args.timeout)
+        r = fetch(origin + "/robots.txt", timeout=self.timeout_within_budget())
         _write(os.path.join(self.out, "robots.txt.raw"), r.body or "")
         _write_json(os.path.join(self.out, "robots_fetch.json"), {
             "url": r.url, "status": r.status, "final_url": r.final_url,
@@ -1068,14 +1081,14 @@ class Collector:
 
     # -- probe -------------------------------------------------------------
     def ua_probe(self, url: str) -> dict:
-        baseline = fetch(url, ua=BROWSER_UA, timeout=self.args.timeout)
+        baseline = fetch(url, ua=BROWSER_UA, timeout=self.timeout_within_budget())
         result = {"url": url, "baseline": _probe_result(baseline, BROWSER_UA), "agents": {}}
         for token in PROBE_AGENTS:
             if self.time_left() <= 5:
                 break
             time.sleep(self.delay)
             r = fetch(url, ua=f"Mozilla/5.0 (compatible; {token}/1.0)",
-                      timeout=self.args.timeout)
+                      timeout=self.timeout_within_budget())
             result["agents"][token] = _probe_result(r, token)
         return result
 

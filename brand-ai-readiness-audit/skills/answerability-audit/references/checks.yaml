@@ -267,3 +267,28 @@ proactive:
       "'Per seat, annual contract, from GBP X' is quotable and answers the
       question a buyer actually asks, without publishing a rate card. Saying
       nothing leaves an assistant to infer or to recommend a competitor who did."
+
+  - id: QUOTE-P04
+    title: "Phrase section headings as the questions people actually ask"
+    gate: "fewer than one heading in twelve is question-shaped, across >=8 headings"
+    rationale_template: >-
+      {q} of {h} headings across {p} sampled pages are phrased as a question.
+    why: >-
+      This addresses a factor no site crawl can measure: whether the engine
+      retrieves anything at all. Question-form queries trigger AI Overviews far
+      more often than the average query, so content shaped as an answer to a
+      stated question is likelier to be pulled into a generative answer in the
+      first place. We cannot observe activation. We can observe whether the site
+      is shaped for it. Emit as a recommendation, never a finding.
+
+  - id: QUOTE-P05
+    title: "Publish the comparison the buyer is already making"
+    gate: "no sampled or advertised URL matches comparison / alternative / vs / best-"
+    rationale_template: >-
+      No comparison-shaped URL among the {n} examined.
+    why: >-
+      Addresses the competing candidate pool, which is invisible from one site.
+      Citation share is relative: a page is chosen against the others retrieved
+      for the same query. A site with no comparison content rarely enters the
+      comparison queries where that pool forms. Because we cannot see the pool,
+      this is a recommendation and must never be phrased as a defect.
