@@ -59,13 +59,14 @@ function of the bundle, so the same bundle always produces the same findings.
 python scripts/check_trust.py <bundle-path> --out trust-candidates.json
 ```
 
-> **Status: not yet implemented.** The check registry in
-> `references/checks.yaml` is complete and frozen — all 15 checks are
-> specified with severity rules, evidence templates and false-positive guards.
-> `scripts/check_trust.py` is the remaining work. See
-> `docs/todo/freshness-corroboration-audit.md` for the work packet, and use
-> `../crawl-access-audit/scripts/check_access.py` as the reference
-> implementation to copy structurally.
+The script computes the deterministic checks (TRUST-001, 002, 003, 004, 010
+on-site half, 011, 014) in full and emits the precomputed signals for the
+model-judged checks (TRUST-005, 008, 015) with `determinism: "model-judged"`.
+The five purely off-site checks (TRUST-006, 007, 009, 012, 013) require a web
+search or fetch tool; when none is available the script records each in
+`checks_skipped` with a reason, and the orchestrator folds that into
+`coverage.checks_skipped`. It reads only the bundle, does no network I/O, and
+produces byte-identical output on repeated runs.
 
 ### 2. Read the registry before trusting any candidate
 

@@ -51,7 +51,7 @@
       "path": "skills/answerability-audit",
       "concern": "quote",
       "summary": "Can a machine lift a clear, self-contained fact? Chunk-level retrieval simulation, explicit identity and key-fact statements, and coverage of the questions buyers actually ask.",
-      "status": "scaffold",
+      "status": "complete",
       "owner": "mayank"
     },
     {
@@ -59,7 +59,7 @@
       "path": "skills/freshness-corroboration-audit",
       "concern": "trust",
       "summary": "Will a machine believe and repeat the fact? Content recency and date honesty, off-site corroboration of key claims, brand entity ambiguity, and identity anchors.",
-      "status": "scaffold",
+      "status": "complete",
       "owner": "mayank"
     },
     {
@@ -67,7 +67,7 @@
       "path": "skills/engagement-audit",
       "concern": "stay",
       "summary": "Does the visitor who arrives stay? Above-the-fold orientation, AI-referral landing continuity, context retention, friction, interstitials, and performance proxies.",
-      "status": "scaffold",
+      "status": "complete",
       "owner": "mayank"
     }
   ],

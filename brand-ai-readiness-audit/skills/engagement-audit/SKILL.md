@@ -54,13 +54,14 @@ function of the bundle, so the same bundle always produces the same findings.
 python scripts/check_engagement.py <bundle-path> --out stay-candidates.json
 ```
 
-> **Status: not yet implemented.** The check registry in
-> `references/checks.yaml` is complete and frozen — all 16 checks are
-> specified with severity rules, evidence templates and false-positive guards.
-> `scripts/check_engagement.py` is the remaining work. See
-> `docs/todo/engagement-audit.md` for the work packet, and use
-> `../crawl-access-audit/scripts/check_access.py` as the reference
-> implementation to copy structurally.
+The script computes the deterministic checks (STAY-003, 004, 005, 007, 008, 009,
+010, 011, 012, 013, 014) in full and emits the precomputed signals for the
+model-judged checks (STAY-001, 002, 006, 016) with `determinism: "model-judged"`.
+STAY-015 and STAY-016 record themselves in `checks_skipped` when the site profile
+is outside their `applies_when` set; the orchestrator folds that into
+`coverage.checks_skipped`. Every performance figure is a static proxy from the
+HTML, never a Core Web Vitals score. It reads only the bundle, does no network
+I/O, and produces byte-identical output on repeated runs.
 
 ### 2. Read the registry before trusting any candidate
 
