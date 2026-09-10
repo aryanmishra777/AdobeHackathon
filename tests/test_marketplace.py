@@ -721,3 +721,24 @@ def test_model_judged_findings_cannot_reach_critical_through_the_merge():
         if f.get("determinism") == "model-judged":
             assert f["severity"] != "critical", (
                 "model-judged finding reached critical through the merge")
+
+
+def test_read_001_ignores_games_and_utility_pages():
+    """A puzzle game has no article to server-render.
+
+    nytimes.com produced a high-severity READ-001 built entirely from Wordle,
+    the mini crossword, Spelling Bee, /gift and /newsletters -- six pages with
+    0-12 words -- while its fourteen actual articles carried 267 to 2007 words
+    each. "Page content is missing from the HTML" was true of those six and
+    useless about the site.
+    """
+    import importlib
+    sys.path.insert(0, os.path.dirname(CHECK_RENDER))
+    mod = importlib.import_module(os.path.basename(CHECK_RENDER)[:-3])
+
+    for path in ("/games/wordle/index.html", "/crosswords/game/mini",
+                 "/puzzles/spelling-bee", "/newsletters", "/gift", "/account"):
+        assert mod._is_application_page({"url": "https://example.com" + path}), path
+    for path in ("/2026/09/10/world/story.html", "/wirecutter/money/phone",
+                 "/athletic/live-blogs/match", "/about"):
+        assert not mod._is_application_page({"url": "https://example.com" + path}), path

@@ -114,3 +114,23 @@ candidates:
   - {url: "https://www.ams.org",             seo_prior: poor, site_type: nonprofit-gov,      vertical: research}
   - {url: "https://www.jwz.org",             seo_prior: poor, site_type: media-publisher,    vertical: personal}
   - {url: "https://blog.codinghorror.com",   seo_prior: poor, site_type: media-publisher,    vertical: personal}
+
+# Added 2026-09-11 to restore the good-SEO / poor-GEO quadrant. It had fallen to
+# eight: apnews.com began refusing our browser probe (now inconclusive, so
+# excluded rather than guessed at) and slack.com stopped blocking retrieval
+# crawlers entirely. Both are live drift, which is exactly why corpus entries are
+# smoke signals and the hard assertions live in tests/.
+#
+# Each of these was verified to disallow named RETRIEVAL agents in robots.txt at
+# the time of adding -- not training crawlers, which are a licensing choice and
+# never a defect. Labels below are still only priors: build_corpus.py measures
+# both axes from the crawl and overwrites them.
+  - {url: "https://www.economist.com",       seo_prior: good, site_type: media-publisher,    vertical: news}
+  - {url: "https://www.bloomberg.com",       seo_prior: good, site_type: media-publisher,    vertical: finance-news}
+  - {url: "https://www.vox.com",             seo_prior: good, site_type: media-publisher,    vertical: news}
+  - {url: "https://www.quora.com",           seo_prior: good, site_type: marketplace,        vertical: community}
+  - {url: "https://www.ft.com",              seo_prior: good, site_type: media-publisher,    vertical: finance-news}
+  - {url: "https://www.nytimes.com",         seo_prior: good, site_type: media-publisher,    vertical: news}
+  - {url: "https://www.usatoday.com",        seo_prior: good, site_type: media-publisher,    vertical: news}
+  - {url: "https://www.theatlantic.com",     seo_prior: good, site_type: media-publisher,    vertical: news}
+  - {url: "https://www.nature.com",          seo_prior: good, site_type: media-publisher,    vertical: research}

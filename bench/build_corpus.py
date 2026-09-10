@@ -102,8 +102,18 @@ def measure(bundle: str) -> dict | None:
     probe = m.get("ua_probe") or {}
     baseline = probe.get("baseline") or {}
     base_bytes = baseline.get("bytes") or 0
+    # REACH-005 is about DIFFERENTIAL treatment: a browser is served the page
+    # and a bot is not. When the browser baseline is itself blocked or
+    # challenged, nothing differential has been observed -- the site is refusing
+    # us, not refusing bots -- and the check correctly stays silent. Expecting it
+    # anyway records the false-positive guard doing its job as a miss, which is
+    # how ft.com and quora.com arrived as misses while behaving exactly right.
+    baseline_blocked = bool(baseline.get("challenge_detected")) or         baseline.get("status") in (401, 403, 429) or not baseline.get("status")
+
     challenged, degraded = [], []
     for token, res in (probe.get("agents") or {}).items():
+        if baseline_blocked:
+            continue  # no browser-versus-bot contrast to draw
         if matrix.get(token, {}).get("root_allowed") is False:
             continue  # robots already states this; not a CDN block
         if res.get("challenge_detected") or res.get("status") in (401, 403, 429):
@@ -259,22 +269,36 @@ def measure(bundle: str) -> dict | None:
     # We cannot observe ranking, so this measures the technical hygiene a
     # conventional SEO audit checks. That is the honest comparison to draw:
     # the money quadrant is a site that passes THIS and still fails GEO.
-    seo_score, seo_reasons = 100, []
+    # Deduct in PROPORTION to what is missing, not in full for any imperfection.
+    # A flat penalty makes the score depend on how many pages we sampled: at 5
+    # pages bbc.co.uk scored 100, and at 20 pages the same site scored 40, with
+    # 16/20 canonicals, 19/20 titles and 18/20 h1s -- hygiene most sites would
+    # envy, scored as though it had none. A label that moves with sample size is
+    # not a measurement.
+    seo_score, seo_reasons = 100.0, []
+
+    def shortfall(covered: int, weight: int, label: str) -> None:
+        """Penalise the fraction missing, ignoring a small tail.
+
+        Real sites legitimately have a few pages without a meta description.
+        The first 10% is free; beyond that the deduction scales to the gap.
+        """
+        nonlocal seo_score
+        if not n or covered >= n:
+            return
+        missing = 1.0 - (covered / float(n))
+        if missing <= 0.10:
+            return
+        seo_score -= weight * missing
+        seo_reasons.append(f"{label} on only {covered}/{n} pages")
+
     if not sitemaps:
         seo_score -= 25
         seo_reasons.append("no XML sitemap")
-    if n and canonical_pages < n:
-        seo_score -= 20
-        seo_reasons.append(f"canonical tags on only {canonical_pages}/{n} pages")
-    if n and titled < n:
-        seo_score -= 20
-        seo_reasons.append(f"page titles on only {titled}/{n} pages")
-    if n and described < n:
-        seo_score -= 10
-        seo_reasons.append(f"meta descriptions on only {described}/{n} pages")
-    if n and h1_pages < n:
-        seo_score -= 10
-        seo_reasons.append(f"an h1 on only {h1_pages}/{n} pages")
+    shortfall(canonical_pages, 20, "canonical tags")
+    shortfall(titled, 20, "page titles")
+    shortfall(described, 10, "meta descriptions")
+    shortfall(h1_pages, 10, "an h1")
     if med_inlinks < 3:
         seo_score -= 10
         seo_reasons.append("sparse in-content internal linking")
@@ -284,7 +308,7 @@ def measure(bundle: str) -> dict | None:
     if outcome in ("crawler-refused", "inconclusive"):
         seo_score, seo_reasons = None, []
     else:
-        seo_score = max(0, seo_score)
+        seo_score = int(round(max(0.0, seo_score)))
 
     return {
         "pages": n,

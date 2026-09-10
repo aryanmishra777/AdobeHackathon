@@ -42,6 +42,13 @@ checks:
     verification: "curl -s https://{site}/{path} | wc -w, then compare with the page in a browser"
     fix_ref: references/fixes/js-rendering.md
     false_positive_guards:
+      - "A game, quiz, crossword, sign-in form or newsletter page is an
+         interactive application, not an article. It has no prose to render
+         server-side, so an empty body there is the correct design and never a
+         defect. nytimes.com produced a high-severity READ-001 assembled
+         entirely from Wordle, the mini crossword, Spelling Bee, /gift and
+         /newsletters while its fourteen actual articles carried 267-2007 words
+         each. Excluded via NON_CONTENT_PATH_HINTS."
       - "A rendered.html captured by a renderer is the ground truth. When one is
          present, report only the measured raw-versus-rendered delta. When it is
          absent, this is an INFERENCE: cap confidence at 'medium', say the gap

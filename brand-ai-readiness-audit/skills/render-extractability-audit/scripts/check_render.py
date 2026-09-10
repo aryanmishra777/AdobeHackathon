@@ -212,6 +212,25 @@ WEAK_PAYLOAD_BYTES = 500
 WEAK_RATIO = 0.05
 
 
+# Pages that are an interactive application or a utility, not prose. A puzzle
+# game has no article to server-render, so "content is missing from the HTML"
+# is true of it and useless. nytimes.com produced a high-severity READ-001 built
+# entirely from Wordle, the mini crossword, Spelling Bee, /gift and /newsletters
+# while its 14 actual articles carried 267-2007 words each.
+NON_CONTENT_PATH_HINTS = (
+    "/games", "/game/", "/puzzle", "/crossword", "/wordle", "/quiz",
+    "/sudoku", "/tools/", "/calculator", "/login", "/signin", "/register",
+    "/account", "/subscribe", "/newsletter", "/gift", "/cart", "/checkout",
+    "/search", "/player", "/embed",
+)
+
+
+def _is_application_page(page: dict) -> bool:
+    url = (page.get("final_url") or page.get("url") or "").lower()
+    path = urlparse(url).path or "/"
+    return any(h in path for h in NON_CONTENT_PATH_HINTS)
+
+
 def _render_signals(page: dict, ext: dict) -> dict | None:
     """The client-rendering signals that actually fired, or None.
 
@@ -306,6 +325,11 @@ def check_read_001(b: Bundle) -> list[dict]:
         # Guard: check request.json#truncated first
         req = b.request(page["page_id"])
         if req.get("truncated"):
+            continue
+        # Guard: a game, quiz or sign-in form is an application, not an article.
+        # It has no prose to render server-side, so its empty body is the
+        # correct design rather than a defect.
+        if _is_application_page(page):
             continue
         valid_pages.append(page)
 
