@@ -400,7 +400,11 @@ class PageParser(HTMLParser):
         if tag not in VOID:
             self._stack.append(tag)
 
-        if tag in STRUCTURE_TAGS:
+        # Count structure only where the prose lives. Counting a nav menu's
+        # list items against a word total taken from main content puts the
+        # ratios on a different scale from the published figures they are
+        # compared against -- a big menu would read as a well-structured page.
+        if tag in STRUCTURE_TAGS and not self._boilerplate_depth:
             self.structure[tag] += 1
 
         if tag in BOILERPLATE:
@@ -758,9 +762,19 @@ def _structure_block(parser, main_text: str, html: str) -> dict:
     st = dict(parser.structure)
     words = max(1, len((main_text or "").split()))
 
-    blocks = st["li"] + st["tr"] + st["pre"] + st["table"] + st["ul"] + st["ol"]
-    paragraphs = max(1, html.lower().count("<p"))
-    st["format_density"] = round(blocks / float(blocks + paragraphs), 4)
+    # Yu et al. define F_d as the proportion of CONTENT ELEMENTS that are
+    # lists, tables or code: sum(n_i for i in {list, table, code}) / N_total.
+    # Those are containers, not items -- counting <li> and <tr> makes one
+    # twenty-item list score twenty and puts the ratio on a completely
+    # different scale from the 0.25-0.35 band the paper reports.
+    containers = st["ul"] + st["ol"] + st["dl"] + st["table"] + st["pre"]
+    # A raw "<p" substring also matches <path, <pre, <picture, <param and
+    # <progress. Inline SVG icons are everywhere, so that inflates the
+    # denominator badly on modern pages.
+    paragraphs = len(re.findall(r"<p[\s>/]", html, re.I))
+    total = max(1, containers + paragraphs)
+    st["format_density"] = round(containers / float(total), 4)
+    st["content_elements"] = total
 
     emphasised = st["strong"] + st["b"] + st["em"] + st["i"] + st["mark"]
     st["emphasis_density"] = round(emphasised / float(words), 4)
@@ -769,17 +783,23 @@ def _structure_block(parser, main_text: str, html: str) -> dict:
     st["list_items"] = st["li"]
     st["table_rows"] = st["tr"]
 
-    # Where the first substantial paragraph begins, as a fraction of the body.
+    # Where the first substantial paragraph begins, as a fraction of the
+    # READING FLOW. Measuring this in raw markup instead makes the number a
+    # function of how much inline script and JSON-LD the page ships, and an
+    # unanchored search for the first word matches inside the first class
+    # attribute that happens to contain it.
     offset = None
-    lowered = html.lower()
-    body = lowered.find("<body")
-    if body >= 0 and main_text:
-        probe = " ".join((main_text or "").split()[:12])[:60]
-        if probe:
-            head = probe.split()[0] if probe.split() else ""
-            pos = lowered.find(head.lower(), body) if head else -1
-            if pos > 0:
-                offset = round((pos - body) / float(max(1, len(html) - body)), 4)
+    words = (main_text or "").split()
+    if len(words) >= 40:
+        pos = 0
+        for sentence in re.split(r"(?<=[.!?])\s+", main_text):
+            n = len(sentence.split())
+            if n >= 12:            # the first sentence carrying real content
+                offset = round(pos / float(len(words)), 4)
+                break
+            pos += n
+        if offset is None:
+            offset = 1.0
     st["first_answer_offset"] = offset
     return st
 
@@ -1056,6 +1076,7 @@ class Collector:
             r = fetch(candidate + "/", timeout=self.timeout_within_budget(8))
             results[candidate] = {
                 "status": r.status,
+                "error": getattr(r, "error", None),
                 "redirects_to": r.final_url if r.final_url and
                 normalize_url(r.final_url) != normalize_url(candidate + "/") else None,
             }
@@ -1125,7 +1146,7 @@ class Collector:
                 if url in seen or len(out) >= 6:
                     continue
                 seen.add(url)
-                r = fetch(url, timeout=self.args.timeout)
+                r = fetch(url, timeout=self.timeout_within_budget())
                 record = {"url": url, "status": r.status, "kind": "unreachable",
                           "parse_errors": [], "entry_count": 0, "entries": []}
                 if r.status == 200 and r.body:
@@ -1313,7 +1334,7 @@ class Collector:
         try:
             proc = subprocess.run(self.args.renderer.split() + [url],
                                   capture_output=True, text=True, encoding="utf-8",
-                                  timeout=self.args.timeout * 3)
+                                  timeout=self.timeout_within_budget(self.args.timeout * 3))
             return proc.stdout if proc.returncode == 0 else None
         except Exception:
             return None

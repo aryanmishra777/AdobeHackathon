@@ -42,9 +42,10 @@ emits a single report.
 - **Never touch authenticated areas**, even when credentials are offered.
 - **Stay inside the budget.** Default ceiling is 25 pages and 120 seconds of
   fetching, with a mandatory politeness delay and never more than 8 concurrent
-  requests. Every request is capped by the time actually remaining, so the true
-  wall-clock ceiling is the budget plus roughly one in-flight request -- measured
-  at 129s against a 120s budget on a site that refused every fetch. That is the
+  requests. Every network request the collector makes is capped by the time
+  actually remaining, so the wall-clock ceiling is the budget plus at most one
+  in-flight request -- measured at 129s against a 120s budget on a site that
+  refused every fetch. That is the
   worst case, and it leaves better than a 2x margin against the five-minute
   limit. A healthy site completes in 12-36s.
 - **Report honestly.** If coverage was cut short, say so in `coverage` rather

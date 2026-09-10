@@ -1408,8 +1408,9 @@ def proactive(b: Bundle, findings: list) -> list:
 
     if struct:
         quoting = sum(1 for _, st in struct if (st.get("quotation_markers") or 0) > 0)
+        struct_pages = [p_ for p_, _ in struct]
         outbound = 0
-        for page in content_pages:
+        for page in struct_pages:
             links = b.extracted(page["page_id"]).get("links") or []
             if any(l.get("href") and not l.get("internal") for l in links):
                 outbound += 1
@@ -1446,9 +1447,18 @@ def proactive(b: Bundle, findings: list) -> list:
             })
 
         numeric = 0
-        for page in content_pages:
+        for page in struct_pages:
             body = ((b.extracted(page["page_id"]).get("text") or {}).get("main") or "")
-            if len(re.findall(r"(?<![\w.])(?:[$£€₹]\s?\d|\d[\d,]*(?:\.\d+)?\s?%|\d[\d,]{2,})", body)) >= 3:
+            # Currency, percentages and measured quantities with units. A bare
+            # 3+ digit run matches years and phone numbers, which are not the
+            # quantitative evidence the literature measures.
+            figures = re.findall(
+                r"(?<![\w.])(?:[$£€₹]\s?\d[\d,]*(?:\.\d+)?"
+                r"|\d[\d,]*(?:\.\d+)?\s?%"
+                r"|\d[\d,]*(?:\.\d+)?\s?(?:x|hrs?|hours?|mins?|minutes?|days?|"
+                r"weeks?|months?|years?|kg|lbs?|gb|tb|mb|ms|km|mi|users?|"
+                r"customers?|seats?))", body, re.I)
+            if len(figures) >= 3:
                 numeric += 1
         if struct and numeric <= len(struct) // 4:
             out.append({

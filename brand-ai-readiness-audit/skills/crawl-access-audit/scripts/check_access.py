@@ -28,6 +28,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import statistics
 import sys
 from urllib.parse import urlparse
@@ -823,8 +824,8 @@ def _is_development_origin(host: str) -> bool:
     bare, _, port = name.partition(":")
     if bare in ("localhost", "127.0.0.1", "::1", "0.0.0.0") or bare.endswith(".local"):
         return True
-    if bare.startswith(("192.168.", "10.", "172.16.", "172.17.", "172.18.",
-                        "172.19.", "172.2", "172.30.", "172.31.")):
+    private_16 = tuple(f"172.{n}." for n in range(16, 32))
+    if bare.startswith(("192.168.", "10.") + private_16):
         return True
     if port and port not in ("80", "443"):
         return True
@@ -832,7 +833,10 @@ def _is_development_origin(host: str) -> bool:
 
 
 MIN_PAGES_FOR_ORPHAN_CLAIM = 10
-DEEP_CLICK_DEPTH = 3
+# Campaign and landing-page patterns that are unlinked from navigation on
+# purpose. Reporting these as orphans is a false positive.
+CAMPAIGN_PATH_HINTS = ("/lp/", "/landing", "/campaign", "/promo", "/offer",
+                       "/webinar", "/ebook", "/download/", "/go/", "/ads/")
 FILTER_PARAM_HINTS = ("filter", "sort", "order", "facet", "refine", "price",
                       "colour", "color", "size", "brand", "view", "layout")
 PAGINATION_PARAMS = ("page", "p", "offset", "start", "from", "cursor")
@@ -842,7 +846,7 @@ def _sitemap_urls(b: Bundle) -> list:
     """Every URL the site's own sitemaps advertise, deduplicated, order kept."""
     seen, out = set(), []
     for sm in b.sitemaps:
-        for entry in (sm.get("urls") or []):
+        for entry in (sm.get("entries") or []):
             loc = entry.get("loc") if isinstance(entry, dict) else entry
             if loc and loc not in seen:
                 seen.add(loc)
@@ -881,8 +885,14 @@ def check_reach_013(b: Bundle) -> list[dict]:
         key = _normalise(loc)
         if key in linked:
             continue
-        # Guard: a campaign landing page is unlinked on purpose.
-        if any(h in key for h in UTILITY_PATH_HINTS):
+        # Guard: utility and campaign landing pages are unlinked on purpose.
+        if any(h in key for h in UTILITY_PATH_HINTS + CAMPAIGN_PATH_HINTS):
+            continue
+        # Guard: a noindex page is deliberately out of the index; not an orphan.
+        noindexed = next((p for p in sampled
+                          if _normalise(p.get("final_url") or p["url"]) == key
+                          and "noindex" in b.robots_meta(p["page_id"])), None)
+        if noindexed:
             continue
         orphans.append(loc)
 
@@ -892,7 +902,7 @@ def check_reach_013(b: Bundle) -> list[dict]:
     n = len(orphans)
     examples = ", ".join(orphans[:3])
     return [finding(
-        "REACH-013", "Pages are orphaned or buried too deep to be crawled",
+        "REACH-013", "Sitemap pages that nothing links to",
         "medium",
         f"{n} URL(s) listed in the sitemap are reached by no internal link on "
         f"any of the {len(sampled)} pages sampled: {examples}"
@@ -939,13 +949,29 @@ def check_reach_014(b: Bundle) -> list[dict]:
     http_ok = any(v.get("status") for host, v in variants.items()
                   if host.startswith("http://") and v.get("status"))
 
+    https_errors = [str((v.get("error") or "")) for host, v in variants.items()
+                    if host.startswith("https://") and not v.get("status")]
+    tls_shaped = [e for e in https_errors
+                  if re.search(r"ssl|certificate|tls|handshake|cert_", e, re.I)]
+
     if variants and not https_ok and http_ok:
+        # A blank failure is not evidence of a TLS problem: resolve_origin
+        # records a DNS failure, a reset and a timeout identically. Only claim
+        # TLS when the error says TLS; otherwise report the weaker, true thing.
+        if tls_shaped:
+            sev = "critical"
+            what = (f"Every https variant failed with a TLS error "
+                    f"({tls_shaped[0][:80]}) while http succeeded.")
+        else:
+            sev = "medium"
+            what = ("Every https variant failed to respond while http succeeded. "
+                    "The cause is not recorded as a TLS error, so this may be "
+                    "DNS, a reset, or our own timeout rather than a certificate "
+                    "problem.")
         out.append(finding(
-            "REACH-014", "The site is not reachable over https", "critical",
-            "Every https variant of this origin failed to respond while http "
-            "succeeded. Retrieval agents that require TLS cannot fetch the site "
-            "at all. (Verified against one TLS stack only, so confirm from "
-            "another network before acting.)",
+            "REACH-014", "The site did not answer over https", sev,
+            what + " Retrieval agents generally require TLS. Verified against "
+            "one network and one TLS stack, so confirm before acting.",
             ["run.json"],
             counts={"https_variants_tried": sum(1 for h in variants
                                                 if h.startswith("https://"))},
@@ -970,8 +996,9 @@ def check_reach_014(b: Bundle) -> list[dict]:
         if not url.startswith("https://"):
             continue
         ext = b.extracted(page["page_id"])
+        # stylesheets is a list of URL strings; scripts and images are dicts.
         refs = [s.get("src") for s in (ext.get("scripts") or []) if s.get("src")]
-        refs += [s.get("href") for s in (ext.get("stylesheets") or []) if s.get("href")]
+        refs += [str(href) for href in (ext.get("stylesheets") or []) if href]
         refs += [i.get("src") for i in (ext.get("images") or []) if i.get("src")]
         if any(str(r).startswith("http://") for r in refs):
             mixed.append(page)
@@ -1010,7 +1037,9 @@ def check_reach_017(b: Bundle) -> list[dict]:
       - Pagination is not a crawl trap; only combinatorial filter/sort params.
       - If canonicals already collapse the variants, do not report.
     """
-    profile = (b.run.get("site_type") or "").lower()
+    profile = str(((b.run.get("site_profile") or {}).get("site_type")
+                   or (b.manifest.get("site_profile") or {}).get("site_type")
+                   or "")).lower()
     if profile and profile not in ("ecommerce", "marketplace", "media-publisher"):
         return []
 
@@ -1206,8 +1235,8 @@ ENGINE_AGENTS = [
     ("ChatGPT",    ["ChatGPT-User", "OAI-SearchBot"], ["GPTBot"]),
     ("Claude",     ["Claude-User", "Claude-SearchBot"], ["ClaudeBot", "anthropic-ai"]),
     ("Perplexity", ["Perplexity-User", "PerplexityBot"], []),
-    ("Google AI",  ["Google-Extended", "Googlebot"], []),
-    ("Bing / Copilot", ["bingbot"], []),
+    ("Google AI",  ["Googlebot"], ["Google-Extended"]),
+    ("Bing / Copilot", ["Bingbot"], []),
 ]
 
 DEGRADED_RATIO = 0.5
@@ -1236,6 +1265,7 @@ def engine_reachability(b: Bundle) -> list[dict]:
             continue
 
         blocked_robots, edge_blocked, degraded, ok = [], [], [], []
+        allowed_unprobed: list = []
         for agent in known:
             entry = matrix.get(agent) or {}
             if entry and entry.get("root_allowed") is False:
@@ -1250,8 +1280,13 @@ def engine_reachability(b: Bundle) -> list[dict]:
             if base_bytes and got and got < base_bytes * DEGRADED_RATIO:
                 degraded.append(agent)
                 continue
-            if status == 200 or (not pr and entry):
+            if status == 200:
                 ok.append(agent)
+            elif not pr and entry:
+                # robots permits it, but this agent is not in PROBE_AGENTS so no
+                # request was made under its name. Permission is not delivery:
+                # record it separately rather than claiming a full page.
+                allowed_unprobed.append(agent)
 
         if blocked_robots and not ok:
             state, detail = "blocked", (
@@ -1270,12 +1305,21 @@ def engine_reachability(b: Bundle) -> list[dict]:
                 f"baseline of {base_bytes:,}")
         elif ok:
             state = "reachable"
-            detail = "permitted by robots.txt and served the full page"
+            detail = f"{', '.join(ok)} was served the full page"
+            if allowed_unprobed:
+                detail += (f"; {', '.join(allowed_unprobed)} is permitted by "
+                           f"robots.txt but was not probed")
             if blocked_robots or edge_blocked or degraded:
                 state = "partial"
                 hindered = blocked_robots + edge_blocked + degraded
                 detail = (f"reachable via {', '.join(ok)}, but "
                           f"{', '.join(hindered)} is blocked or degraded")
+        elif allowed_unprobed:
+            # Permission verified, delivery not. Say exactly that.
+            state = "partial"
+            detail = (f"{', '.join(allowed_unprobed)} is permitted by robots.txt, "
+                      f"but no request was made under that agent name, so whether "
+                      f"the edge serves it is unverified")
         else:
             continue
 
@@ -1286,6 +1330,7 @@ def engine_reachability(b: Bundle) -> list[dict]:
             "state": state,
             "detail": detail,
             "retrieval_agents": known,
+            "agents_probed": [a for a in known if a in probe_agents],
             "training_agents_blocked": blocked_training,
             "note": ("Training crawlers are blocked for this engine. That is a "
                      "content-licensing choice and does not affect whether a "

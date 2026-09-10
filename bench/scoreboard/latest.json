@@ -835,7 +835,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.2,
+      "seconds": 1.1,
       "findings": [
         {
           "check_id": "STAY-001",
@@ -1269,7 +1269,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.4,
+      "seconds": 1.3,
       "findings": [
         {
           "check_id": "STAY-001",
@@ -1608,7 +1608,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.5,
+      "seconds": 2.0,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -1721,7 +1721,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.1,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "STAY-001",
@@ -1936,16 +1936,17 @@
       "engagement_score": 87,
       "eng_grade": "B",
       "summary": {
-        "total_findings": 23,
+        "total_findings": 24,
         "critical": 0,
         "high": 2,
         "medium": 10,
-        "low": 11,
+        "low": 12,
         "by_category": {
-          "discoverability": 12,
+          "discoverability": 13,
           "engagement": 11
         },
         "by_mechanism": {
+          "reach": 1,
           "read": 1,
           "parse": 7,
           "quote": 1,
@@ -2025,6 +2026,11 @@
           "check_id": "STAY-014",
           "severity": "medium",
           "title": "Third-party scripts dominate the page"
+        },
+        {
+          "check_id": "REACH-014",
+          "severity": "low",
+          "title": "Secure pages load subresources over plain http"
         },
         {
           "check_id": "STAY-007",
@@ -2124,7 +2130,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.6,
+      "seconds": 1.5,
       "findings": [
         {
           "check_id": "STAY-001",
@@ -3406,7 +3412,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.2,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -3794,7 +3800,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.6,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -4119,7 +4125,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.0,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -4294,7 +4300,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.0,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -4468,7 +4474,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.9,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -4753,7 +4759,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.9,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "REACH-011",
@@ -4951,7 +4957,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.8,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "STAY-001",
@@ -5219,7 +5225,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.8,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -5374,7 +5380,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.8,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -5519,7 +5525,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.8,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -5809,7 +5815,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.9,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -6162,7 +6168,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.9,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6308,15 +6314,15 @@
       "engagement": "moderate",
       "site_type": "docs",
       "pages": 5,
-      "discoverability": 17,
-      "disc_grade": "F",
+      "discoverability": 45,
+      "disc_grade": "D",
       "engagement_score": 53,
       "eng_grade": "D",
       "summary": {
         "total_findings": 27,
-        "critical": 2,
+        "critical": 1,
         "high": 3,
-        "medium": 11,
+        "medium": 12,
         "low": 11,
         "by_category": {
           "discoverability": 18,
@@ -6342,13 +6348,8 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
-        {
-          "check_id": "REACH-014",
-          "severity": "critical",
-          "title": "The site is not reachable over https"
-        },
         {
           "check_id": "STAY-010",
           "severity": "critical",
@@ -6398,6 +6399,11 @@
           "check_id": "REACH-010",
           "severity": "medium",
           "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-014",
+          "severity": "medium",
+          "title": "The site did not answer over https"
         },
         {
           "check_id": "READ-009",
@@ -6488,15 +6494,15 @@
       "engagement": "moderate",
       "site_type": "nonprofit-gov",
       "pages": 1,
-      "discoverability": 54,
-      "disc_grade": "D",
+      "discoverability": 85,
+      "disc_grade": "B",
       "engagement_score": 93,
       "eng_grade": "A",
       "summary": {
         "total_findings": 10,
-        "critical": 1,
+        "critical": 0,
         "high": 1,
-        "medium": 3,
+        "medium": 4,
         "low": 5,
         "by_category": {
           "discoverability": 6,
@@ -6524,11 +6530,6 @@
       "seconds": 0.7,
       "findings": [
         {
-          "check_id": "REACH-014",
-          "severity": "critical",
-          "title": "The site is not reachable over https"
-        },
-        {
           "check_id": "STAY-001",
           "severity": "high",
           "title": "The top of the page does not say what this is"
@@ -6537,6 +6538,11 @@
           "check_id": "QUOTE-005",
           "severity": "medium",
           "title": "The site has none of the page types assistants cite most"
+        },
+        {
+          "check_id": "REACH-014",
+          "severity": "medium",
+          "title": "The site did not answer over https"
         },
         {
           "check_id": "STAY-003",
@@ -6896,7 +6902,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.8,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-011",
@@ -7056,7 +7062,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -7436,7 +7442,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.8,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -7582,15 +7588,15 @@
       "engagement": "moderate",
       "site_type": "media-publisher",
       "pages": 5,
-      "discoverability": 17,
-      "disc_grade": "F",
+      "discoverability": 45,
+      "disc_grade": "D",
       "engagement_score": 48,
       "eng_grade": "D",
       "summary": {
         "total_findings": 30,
-        "critical": 2,
+        "critical": 1,
         "high": 3,
-        "medium": 12,
+        "medium": 13,
         "low": 13,
         "by_category": {
           "discoverability": 19,
@@ -7618,11 +7624,6 @@
       "false_positives": [],
       "seconds": 0.8,
       "findings": [
-        {
-          "check_id": "REACH-014",
-          "severity": "critical",
-          "title": "The site is not reachable over https"
-        },
         {
           "check_id": "STAY-010",
           "severity": "critical",
@@ -7677,6 +7678,11 @@
           "check_id": "REACH-010",
           "severity": "medium",
           "title": "No canonical tags anywhere on the site"
+        },
+        {
+          "check_id": "REACH-014",
+          "severity": "medium",
+          "title": "The site did not answer over https"
         },
         {
           "check_id": "READ-009",
@@ -8172,7 +8178,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.9,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "STAY-010",

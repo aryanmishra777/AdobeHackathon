@@ -288,7 +288,7 @@ checks:
       - "Soft 404s (a 200 that renders a 'not found' page) belong to READ, not here."
 
   - id: REACH-013
-    title_template: "Pages are orphaned or buried too deep to be crawled"
+    title_template: "Sitemap pages that nothing links to"
     applies_when: always
     inputs: [MANIFEST.json#sitemaps, MANIFEST.json#pages, pages/*/extracted.json#links]
     detection: deterministic
@@ -304,16 +304,23 @@ checks:
          Report only when the sample is >=10 pages and confidence is at most
          'medium', and say so in the evidence."
       - "Landing pages deliberately excluded from navigation (campaign pages) are
-         not orphans. Check for noindex or a campaign URL pattern first."
+         not orphans. Check for noindex or a campaign URL pattern first.
+         Implemented as CAMPAIGN_PATH_HINTS plus a robots_meta noindex lookup."
+      - "Read sitemap entries from the manifest's `entries` key. An earlier
+         implementation read `urls`, which does not exist, so the check silently
+         returned nothing on every site while appearing to be implemented."
 
   - id: REACH-014
-    title_template: "TLS or mixed-content problems block secure fetching"
+    title_template: "The site did not answer over https, or mixes http subresources"
     applies_when: always
     inputs: [MANIFEST.json#run.origin_variants, pages/*/extracted.json]
     detection: deterministic
     severity_rule: >-
-      critical when https fails entirely while http works;
-      medium when pages reference http subresources from an https document.
+      critical only when the https failure is recorded as a TLS error
+      (certificate, handshake, SSL); medium when https simply did not answer,
+      because a blank failure is indistinguishable from DNS, a reset or our own
+      timeout; medium when pages reference http subresources from an https
+      document.
     evidence_template: "{detail}"
     verification: "curl -svI https://{site}/ 2>&1 | grep -i 'SSL\\|certificate'"
     fix_ref: references/fixes/canonical-redirects.md

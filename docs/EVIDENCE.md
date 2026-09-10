@@ -54,6 +54,26 @@ paper, including the per-architecture breakdown (+19.2% search-then-synthesize,
 (`CHUNK_TARGET_WORDS`). Previously 320/512, chosen by feel — past the cliff. A
 well-sourced design principle is not a measured optimum, but it beats a guess.
 
+### How our numbers map to the paper's
+
+`format_density` implements the paper's `F_d = Σ n_i / N_total` over list, table
+and code **elements** — containers, not items. Counting `<li>` and `<tr>` instead
+made one twenty-item list score twenty and put the ratio on a different scale
+from the published 0.25-0.35 band; a code review caught the inflated values and
+reading the definition confirmed why. Structural elements inside `nav`, `header`,
+`footer` and `aside` are excluded, because the word count they are measured
+against comes from main content only — otherwise a large navigation menu reads as
+a well-structured page.
+
+`first_answer_offset` is measured in the reading flow (words into the extracted
+text), not in raw markup. Measured in markup it is mostly a function of how much
+inline script and JSON-LD a page ships.
+
+Both are approximations of someone else's operationalisation, and neither has
+been calibrated against the paper's own corpus. They are good enough to rank
+pages against each other and to justify a recommendation; they are not
+interchangeable with the paper's measurements.
+
 ### Why these ship as recommendations, not findings
 
 All six are `proactive_recommendations`, never `findings`. The effect sizes are
