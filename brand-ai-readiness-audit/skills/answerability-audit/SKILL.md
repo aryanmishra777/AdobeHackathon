@@ -54,13 +54,11 @@ function of the bundle, so the same bundle always produces the same findings.
 python scripts/check_answerability.py <bundle-path> --out quote-candidates.json
 ```
 
-> **Status: not yet implemented.** The check registry in
-> `references/checks.yaml` is complete and frozen — all 12 checks are
-> specified with severity rules, evidence templates and false-positive guards.
-> `scripts/check_answerability.py` is the remaining work. See
-> `docs/todo/answerability-audit.md` for the work packet, and use
-> `../crawl-access-audit/scripts/check_access.py` as the reference
-> implementation to copy structurally.
+The script computes the four deterministic checks (QUOTE-001, 005, 009, 010) in
+full and emits the precomputed signals for the eight model-judged checks
+(QUOTE-002, 003, 004, 006, 007, 008, 011, 012) with `determinism: "model-judged"`
+for the agent to finish per the steps below. It reads only the bundle, does no
+network I/O, and produces byte-identical output on repeated runs.
 
 ### 2. Read the registry before trusting any candidate
 
