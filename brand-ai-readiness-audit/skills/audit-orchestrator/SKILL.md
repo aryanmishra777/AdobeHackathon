@@ -45,6 +45,17 @@ emits a single report.
   requests.
 - **Report honestly.** If coverage was cut short, say so in `coverage` rather
   than issuing a clean bill of health from a partial crawl.
+- **State the boundary of the audit.** Several factors that decide whether an
+  assistant cites a site are not properties of the site: whether the engine
+  retrieved anything at all, what third-party sources say, which competitors were
+  in the same retrieval pool, and which engine was asking. Read
+  `references/audit-boundary.md` and put the relevant entries in
+  `coverage.limitations` on every report. A grade that silently ignores them
+  claims more than was measured.
+- **Never grade an axis nothing measured.** If no analyzer ran for a mechanism,
+  its axis is `"not assessed"`, not a score. Pass `--mechanisms` to
+  `scripts/merge_findings.py` listing the mechanisms whose analyzer actually ran,
+  and it will do this for you.
 
 ## Inputs
 

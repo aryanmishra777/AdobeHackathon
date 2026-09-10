@@ -331,7 +331,13 @@ def sort_and_number(findings: list[dict]) -> list[dict]:
     return ordered
 
 
-def score_axes(findings: list[dict]) -> dict:
+AXIS_MECHANISMS = {
+    "discoverability": ("reach", "read", "parse", "quote", "trust"),
+    "engagement": ("stay",),
+}
+
+
+def score_axes(findings: list[dict], mechanisms_analyzed=None) -> dict:
     """Grade how badly the mechanism chain is broken, not how many nits we counted.
 
     Blocking findings (critical, high) deduct without limit: they are the ones
@@ -365,8 +371,24 @@ def score_axes(findings: list[dict]) -> dict:
     for cat in scores:
         scores[cat] -= min(hygiene[cat], HYGIENE_DEDUCTION_CAP)
 
+    ran = None if mechanisms_analyzed is None else {m.lower() for m in mechanisms_analyzed}
+
     out = {}
     for axis, raw in scores.items():
+        # An axis nobody measured must not be graded. Starting every axis at 100
+        # and deducting means a mechanism with no analyzer reports a perfect
+        # score -- a confident claim about something we never looked at, which
+        # is a worse failure than reporting nothing. Silence is the honest
+        # output; the report renders it as "not assessed".
+        if ran is not None and not (set(AXIS_MECHANISMS.get(axis, ())) & ran):
+            out[axis] = {
+                "score": None,
+                "grade": "not assessed",
+                "reason": ("no analyzer ran for this axis (" +
+                           ", ".join(AXIS_MECHANISMS.get(axis, ())) +
+                           "); it was not measured, so it is not graded"),
+            }
+            continue
         score = int(round(max(0.0, min(100.0, raw))))
         if has_critical[axis]:
             score = min(score, 54)  # a critical finding caps the axis at D
@@ -408,6 +430,11 @@ def main(argv=None) -> int:
                     help="pages in the evidence bundle, for scope collapse")
     ap.add_argument("--supersession", help="JSON file of supersession rules "
                                            "(defaults to the built-in table)")
+    ap.add_argument("--mechanisms", default=None,
+                    help="comma-separated mechanisms whose analyzer actually ran "
+                         "(reach,read,parse,quote,trust,stay). An axis with no "
+                         "mechanism analysed is reported as 'not assessed' rather "
+                         "than graded. Omit only when every analyzer ran.")
     args = ap.parse_args(argv)
 
     findings = load_candidates(args.inputs)
@@ -452,7 +479,10 @@ def main(argv=None) -> int:
             "by_mechanism": {m: by_mechanism[m] for m in MECHANISM_ORDER
                              if m in by_mechanism},
         },
-        "scorecard_input": score_axes(findings),
+        "scorecard_input": score_axes(
+            findings,
+            [m.strip() for m in args.mechanisms.split(",") if m.strip()]
+            if args.mechanisms else None),
         "merge_log": log,
     }
 

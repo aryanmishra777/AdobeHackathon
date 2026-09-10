@@ -708,7 +708,19 @@ def _norm_date(value: str):
 # chunking
 # --------------------------------------------------------------------------
 
-def chunk_page(extracted: dict, target_words: int = 320, max_words: int = 512) -> dict:
+# Retrieval pipelines segment documents before an LLM ever sees them, and the
+# window is not arbitrary. Yu et al. (2026), "Structural Feature Engineering for
+# Generative Engine Optimization" (arXiv:2603.29979), measured citation behaviour
+# across six generative engines and found passages beyond 300 words suffer ~31%
+# attention degradation in their middle segments, while passages under 150 words
+# fragment the information flow and lose ~23% citation probability. We simulate
+# the middle of that measured window rather than a guessed one.
+CHUNK_TARGET_WORDS = 225
+CHUNK_MAX_WORDS = 300
+
+
+def chunk_page(extracted: dict, target_words: int = CHUNK_TARGET_WORDS,
+               max_words: int = CHUNK_MAX_WORDS) -> dict:
     """Split the page the way a retrieval pipeline would: on heading boundaries,
     with a target window. Attach the deterministic signals answerability-audit
     reasons over. The script counts; the model judges."""

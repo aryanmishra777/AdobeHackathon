@@ -20,9 +20,9 @@ this repo is the harness that proves it works.
 |---|---|
 | **`brand-ai-readiness-audit/`** | **THE SUBMISSION.** `marketplace.json` + 8 skills. This is the only directory that gets zipped. |
 | `bench/` | 76 real-site candidates → 57 measured corpus entries across the SEO×GEO quadrants, plus the live/replay runner. |
-| `tests/` | 7 local fixture sites, the bundles built from them, and 57 pytest assertions. |
+| `tests/` | 7 local fixture sites, the bundles built from them, and 127 pytest assertions. |
 | `tools/` | `validate.py`, `package.py`, `install_local.py`. |
-| `docs/` | `ROLES.md` (who does what), `CONTRIBUTING.md` (the 6 hard rules), `todo/` (5 work packets). |
+| `docs/` | `EVIDENCE.md` (what the literature supports, and what it doesn't), `ROLES.md`, `CONTRIBUTING.md`, `todo/` (5 work packets). |
 | `TODO.md` | Who builds what, in what order. Index into `docs/todo/`. |
 | `PLAN.md` | The full architecture and build plan. The shared spec. |
 
@@ -55,13 +55,13 @@ no model weights. A check that always runs beats a stronger check that can't.
 | `audit-orchestrator` | Aryan | complete |
 | `site-evidence-collector` | Aryan | complete |
 | `crawl-access-audit` | Aryan | complete — the reference implementation |
-| `render-extractability-audit` | Lakshay | scaffold: `SKILL.md` + `checks.yaml` done, scripts open |
-| `structured-data-audit` | Lakshay | scaffold |
+| `render-extractability-audit` | Lakshay | complete — 16/16 checks |
+| `structured-data-audit` | Lakshay | complete — 14/14 checks |
 | `answerability-audit` | Mayank | scaffold |
 | `freshness-corroboration-audit` | Mayank | scaffold |
 | `engagement-audit` | Mayank | scaffold |
 
-91 checks are specified across the six registries; 13 are implemented. "Scaffold"
+91 checks are specified across the six registries; 43 are implemented. "Scaffold"
 means the design is finished and written down — every check has its ID, severity
 rule, required evidence, human verification step, and its false-positive guards.
 What is left is translating a finished specification into Python. See
@@ -75,8 +75,8 @@ pip install -r tools/requirements-dev.txt   # dev tooling only, never shipped
 python tests/make_fixtures.py               # build the local test websites
 python tests/make_bundles.py                # crawl them into evidence bundles
 
-python -m pytest tests/ -q                  # expect: 57 passed
-python tools/validate.py                    # expect: PASS (23 TODOs outstanding)
+python -m pytest tests/ -q                  # expect: 127 passed
+python tools/validate.py                    # expect: PASS (13 TODOs outstanding)
 python tools/package.py                     # builds dist/ and checks the 50 MB ceiling
 ```
 
@@ -92,16 +92,40 @@ SEO from technical hygiene. The result:
 
 ```
                         n    disc
-SEO good / GEO good    20     97     control — healthy on both axes
-SEO good / GEO poor    10     74     the money quadrant
-SEO poor / GEO good    14     67     great content, weak technical SEO
-SEO poor / GEO poor    13     61     both, and we name the mechanism
+SEO good / GEO good    20     75     control — healthy on both axes
+SEO good / GEO poor    10     60     the money quadrant
+SEO poor / GEO good    14     61     great content, weak technical SEO
+SEO poor / GEO poor    13     55     both, and we name the mechanism
 ```
 
-Good-SEO/poor-GEO scores 23 points below good-SEO/good-GEO. Those ten sites are
+Good-SEO/poor-GEO scores 15 points below good-SEO/good-GEO. Those ten sites are
 ones a conventional SEO linter passes clean: perfect sitemaps and canonicals,
 while the edge returns 429 to `ClaudeBot` or robots.txt disallows the retrieval
 crawlers outright.
+
+**Independent evidence that these are different problems.** Published audits put
+URL-level Jaccard overlap between Google's SERP and AI engines at **0.11-0.18**,
+and find **53% of AI-Overview cited domains absent from the organic top 10**. A
+site can be optimised for one and invisible to the other, which is the premise
+this marketplace is built on. A further **27.1% of the URLs engines retrieve are
+inaccessible** — which is why REACH is stage one and not an afterthought.
+
+**Every threshold is traceable.** [`docs/EVIDENCE.md`](docs/EVIDENCE.md) records
+what the GEO literature actually measures, with effect sizes and study designs;
+what it merely asserts; and which of our numbers are still judgment calls. The
+retrieval chunk window is 150-300 words because passages beyond 300 lose ~31% of
+attention in their middle segments, not because it looked reasonable. The same
+file records what we may *not* claim — notably that structured-data markup has no
+controlled evidence of citation lift, so `structured-data-audit` reports what a
+machine cannot extract and never promises a ranking or traffic gain.
+
+**We state our own blind spots.** Five of the seven causal factors the literature
+identifies are outside any single-site crawl: whether the engine retrieved at all,
+what third-party sources say, the competing candidate pool, engine-specific
+routing, and off-site content placed to steer retrieval. Every report carries
+them in `coverage.limitations`, and an axis with no analyzer is reported as
+**not assessed** rather than graded. See
+[`audit-boundary.md`](brand-ai-readiness-audit/skills/audit-orchestrator/references/audit-boundary.md).
 
 **False positives are the thing we defend hardest.** Six layered gates, per-check
 binding guards, and a clean-fixture tripwire that must produce zero critical and

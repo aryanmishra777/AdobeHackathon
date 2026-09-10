@@ -1,3 +1,28 @@
+# EVIDENCE STATUS -- read before writing any finding text from this registry.
+#
+# Every check below is worth running: structured data is how a machine reads a
+# price, a location or an opening time without guessing, and malformed or
+# contradictory markup is a real defect we can prove from the bundle.
+#
+# What we may NOT claim is that adding schema.org markup causes an assistant to
+# cite the page. Martinez (2026), a critical survey of 45 GEO studies, classifies
+# schema markup as a NORMATIVE RECOMMENDATION with no controlled ablation behind
+# it: across the reviewed literature there is no A/B experiment showing JSON-LD
+# produces a statistically significant lift in retrieval or citation share in a
+# RAG benchmark. It is universally recommended by practitioner frameworks and by
+# the classic SEO texts, and it is unmeasured.
+#
+# So findings from this registry describe what is broken or absent and what that
+# prevents a machine from extracting. They must not promise a citation gain, a
+# ranking gain, or a traffic gain. Where a fix template wants an impact
+# rationale, the honest one is machine-readability -- an agent can resolve the
+# price without parsing prose -- not visibility.
+#
+# The measured citation drivers live in other registries: verbatim quotations and
+# source citations (+41% PAWC), statistics and prices in text (+30-40%), tables
+# and lists (+17.3% citation rate, p<0.001), and answer placement in the first
+# 30% of the DOM (44.2% of ChatGPT citations). See docs/EVIDENCE.md.
+
 # PARSE check registry -- structured-data-audit
 #
 # Mechanism: can a machine parse a SPECIFIC fact out of the page? The crawler got
