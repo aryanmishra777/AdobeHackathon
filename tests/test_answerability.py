@@ -44,7 +44,7 @@ def bundle(name: str) -> str:
 
 
 def run(*args) -> subprocess.CompletedProcess:
-    return subprocess.run([sys.executable, *args], capture_output=True, text=True)
+    return subprocess.run([sys.executable, *args], capture_output=True, text=True, encoding="utf-8")
 
 
 def quote_output(name: str) -> dict:

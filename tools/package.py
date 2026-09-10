@@ -57,7 +57,7 @@ def main(argv=None) -> int:
         cmd = [sys.executable, os.path.join(REPO, "tools", "validate.py")]
         if not args.allow_todos:
             cmd.append("--strict")
-        proc = subprocess.run(cmd, capture_output=True, text=True)
+        proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
         sys.stderr.write(proc.stderr)
         print(proc.stdout)
         if proc.returncode != 0:

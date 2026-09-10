@@ -70,7 +70,7 @@ def collect(url: str, out: str, pages: int, budget: int) -> bool:
         [sys.executable, COLLECT, url, "--out", out,
          "--max-pages", str(pages), "--budget", str(budget),
          "--delay", "0.5", "--timeout", "12"],
-        capture_output=True, text=True)
+        capture_output=True, text=True, encoding="utf-8")
     return proc.returncode == 0
 
 

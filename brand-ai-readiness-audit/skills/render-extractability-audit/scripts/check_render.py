@@ -1637,6 +1637,15 @@ def proactive(b: Bundle) -> list[dict]:
 
 
 def main(argv=None) -> int:
+    # Windows consoles default to a legacy codepage (cp1252 here), and evidence
+    # strings quote real page content -- one arrow, curly quote, em dash or any
+    # non-Latin script raises UnicodeEncodeError and aborts the entire audit.
+    # The report is JSON and JSON is UTF-8, so say so explicitly.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):  # pragma: no cover - exotic stdout
+        pass
+
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("bundle")

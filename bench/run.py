@@ -98,7 +98,7 @@ def collect_live(site: dict, out_dir: str, max_pages: int, budget: int) -> bool:
         [sys.executable, COLLECT, site["url"], "--out", out_dir,
          "--max-pages", str(max_pages), "--budget", str(budget),
          "--delay", "0.5", "--timeout", "10"],
-        capture_output=True, text=True)
+        capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         print(f"    collect failed: {proc.stderr.strip()[:200]}", file=sys.stderr)
         return False
@@ -110,7 +110,7 @@ def analyze(bundle: str, tmp: str) -> tuple[list[dict], list[str]]:
     for skill, script in available_analyzers():
         out = os.path.join(tmp, f"{skill}.json")
         proc = subprocess.run([sys.executable, script, bundle, "--out", out],
-                              capture_output=True, text=True)
+                              capture_output=True, text=True, encoding="utf-8")
         if proc.returncode != 0:
             print(f"    {skill} failed: {proc.stderr.strip()[:160]}", file=sys.stderr)
             continue
@@ -130,7 +130,7 @@ def merge(candidates: list[dict], pages: int, tmp: str) -> dict:
     with io.open(src, "w", encoding="utf-8") as fh:
         json.dump(candidates, fh)
     proc = subprocess.run([sys.executable, MERGE, src, "--pages-sampled", str(pages),
-                           "--stdout"], capture_output=True, text=True)
+                           "--stdout"], capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr)
     return json.loads(proc.stdout)

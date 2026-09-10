@@ -1234,7 +1234,7 @@ class Collector:
     def render(self, url: str):
         try:
             proc = subprocess.run(self.args.renderer.split() + [url],
-                                  capture_output=True, text=True,
+                                  capture_output=True, text=True, encoding="utf-8",
                                   timeout=self.args.timeout * 3)
             return proc.stdout if proc.returncode == 0 else None
         except Exception:

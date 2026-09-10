@@ -67,7 +67,7 @@ def collect(name: str, port: int) -> bool:
          "--budget", "60",
          "--delay", "0",          # a local fixture needs no politeness delay
          "--timeout", "5"],
-        capture_output=True, text=True)
+        capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         print(proc.stdout)
         print(proc.stderr, file=sys.stderr)

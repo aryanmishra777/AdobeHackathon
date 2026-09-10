@@ -15,6 +15,7 @@ Layers 2 and 3 (corpus replay and the live bench) live in bench/.
 from __future__ import annotations
 
 import json
+import tempfile
 import os
 import subprocess
 import sys
@@ -47,7 +48,7 @@ def bundle(name: str) -> str:
 
 
 def run(*args) -> subprocess.CompletedProcess:
-    return subprocess.run([sys.executable, *args], capture_output=True, text=True)
+    return subprocess.run([sys.executable, *args], capture_output=True, text=True, encoding="utf-8")
 
 
 def reach_findings(name: str) -> list[dict]:
@@ -557,3 +558,64 @@ def test_parse_fix_snippets_are_tailored_not_templated(name):
                 f"{f['check_id']} ships an untailored snippet containing {placeholder!r}")
 
 
+
+
+# --------------------------------------------------------------------------
+# Encoding: reports are JSON, JSON is UTF-8, and evidence quotes real pages
+# --------------------------------------------------------------------------
+
+# merge_findings takes candidate finding files rather than a bundle, so it is
+# covered by the end-to-end test below instead of this parametrized one.
+ALL_SHIPPED_SCRIPTS = [CHECK_ACCESS, CHECK_RENDER, CHECK_PARSE] + [
+    os.path.join(SKILLS, skill, "scripts", script)
+    for skill, script in (
+        ("answerability-audit", "check_answerability.py"),
+        ("freshness-corroboration-audit", "check_trust.py"),
+        ("engagement-audit", "check_engagement.py"),
+    )
+]
+
+
+@pytest.mark.parametrize("script", ALL_SHIPPED_SCRIPTS)
+def test_scripts_write_utf8_to_stdout_on_a_legacy_codepage(script):
+    """A non-Latin-1 character in evidence text must not abort the audit.
+
+    Evidence strings quote real page content, so one arrow, curly quote, em
+    dash or non-Latin script is routine. Windows consoles default to a legacy
+    codepage (cp1252), where `print()` on such a character raises
+    UnicodeEncodeError and kills the whole run -- which is what happened to 10
+    of 57 corpus sites, python.org among them, over a single U+25BC.
+
+    Forcing the child's IO encoding to cp1252 reproduces a grader's Windows
+    machine on any host.
+    """
+    assert os.path.exists(script), script
+    env = dict(os.environ, PYTHONIOENCODING="cp1252")
+    proc = subprocess.run([sys.executable, script, bundle("clean"), "--stdout"],
+                          capture_output=True, env=env)
+    assert proc.returncode == 0, (
+        f"{os.path.basename(script)} died under a cp1252 console:\n"
+        + proc.stderr.decode("utf-8", "replace")[-1500:])
+    assert b"UnicodeEncodeError" not in proc.stderr
+
+
+def test_reports_survive_non_latin1_evidence_end_to_end():
+    """The full pipeline must carry a non-Latin-1 character through the merge."""
+    findings = json.loads(run(CHECK_ACCESS, bundle("clean"), "--stdout").stdout)
+    items = findings if isinstance(findings, list) else findings.get("findings", [])
+    if not items:
+        pytest.skip("clean fixture produced no finding to decorate")
+    items[0]["evidence"] = "Navigation collapses behind a \u25bc toggle \u2014 caf\u00e9 \u4f60\u597d."
+
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, "candidates.json")
+        with open(src, "w", encoding="utf-8") as fh:
+            json.dump(items, fh, ensure_ascii=False)
+        env = dict(os.environ, PYTHONIOENCODING="cp1252")
+        proc = subprocess.run(
+            [sys.executable, MERGE, src, "--pages-sampled", "5", "--stdout"],
+            capture_output=True, env=env)
+        assert proc.returncode == 0, proc.stderr.decode("utf-8", "replace")[-1500:]
+        merged = json.loads(proc.stdout.decode("utf-8"))
+    text = json.dumps(merged, ensure_ascii=False)
+    assert "\u25bc" in text and "caf\u00e9" in text, "characters lost in the merge"
