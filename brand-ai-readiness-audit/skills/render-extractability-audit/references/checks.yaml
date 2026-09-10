@@ -329,3 +329,23 @@ proactive:
       "Aggregate values rendered by a widget are invisible to extraction. Writing
       the rating and review count into the page as text plus structured data
       keeps the widget and makes the numbers citable."
+
+  - id: READ-P03
+    title: "Put the comparable facts in tables and lists, not paragraphs"
+    gate: "median format_density < 0.10 across sampled pages"
+    why: >-
+      Yu et al. (arXiv:2603.29979) measure +17.3% citation rate from structural
+      transformation across six generative engines (n=200, p<0.001, d=0.64), and
+      report a working range around 0.25-0.35. But C-SEO Bench found only 3 of 54
+      method-domain combinations significant, so the optimal edit is
+      instance-dependent. Recommendation only. "This page has no table" is not a
+      defect and must never be emitted as one.
+
+  - id: READ-P04
+    title: "Mark the key terms so the important sentence is visibly the important one"
+    gate: "median emphasis_density < 0.01 and format_density < 0.25"
+    why: >-
+      Reported useful range is ~0.05-0.10, with sentence-initial emphasis
+      weighted most. This is the least-supported item in the structural
+      literature; phrase it as worth doing while editing for other reasons,
+      never as a deficiency.

@@ -1633,6 +1633,77 @@ def proactive(b: Bundle) -> list[dict]:
             )
         })
 
+    # READ-P03 / READ-P04 -- structural shape, measured against the GEO
+    # literature. These are recommendations and never findings: Yu et al.
+    # (arXiv:2603.29979) measure +17.3% citation rate (n=200 x 6 engines,
+    # p<0.001, d=0.64) from structural transformation, but C-SEO Bench found
+    # only 3 of 54 method-domain combinations significant, so the optimal edit
+    # is instance-dependent. "This page has no table" is not a defect.
+    structured = [(p_, b.extracted(p_["page_id"]).get("structure") or {})
+                  for p_ in b.ok_pages]
+    structured = [(p_, st) for p_, st in structured if st]
+    if structured:
+        fds = [st.get("format_density") or 0.0 for _, st in structured]
+        median_fd = sorted(fds)[len(fds) // 2]
+        if median_fd < 0.10:
+            out.append({
+                "id": "P-000",  # READ-P03
+                "title": "Put the comparable facts in tables and lists, not paragraphs",
+                "category": CATEGORY,
+                "mechanism": MECHANISM,
+                "rationale": (
+                    "Across {n} sampled pages the median proportion of content in "
+                    "tables, lists or code is {fd:.2f}. Structured formats are "
+                    "reported to extract substantially more accurately than the "
+                    "same facts in prose, and structural transformation measured "
+                    "+17.3% citation rate across six generative engines. The "
+                    "reported working range is roughly 0.25-0.35; above that, "
+                    "readability suffers for humans."
+                ).format(n=len(structured), fd=median_fd),
+                "suggested_action": act(
+                    "Move specifications, pricing tiers and step sequences into "
+                    "tables and lists",
+                    "low",
+                    ["Convert any paragraph that enumerates options, steps or "
+                     "specifications into a list or table",
+                     "Keep one fact per row or item so a single row can be "
+                     "lifted without its neighbours",
+                     "Leave narrative as prose -- the goal is a mix, not a "
+                     "document made entirely of tables"],
+                    "M",
+                    "A table row is a self-contained fact with its own labels. A "
+                    "sentence buried mid-paragraph is not, and has to be "
+                    "reconstructed before it can be quoted.",
+                    owner="content"),
+            })
+
+        eds = [st.get("emphasis_density") or 0.0 for _, st in structured]
+        median_ed = sorted(eds)[len(eds) // 2]
+        if median_ed < 0.01 and median_fd < 0.25:
+            out.append({
+                "id": "P-000",  # READ-P04
+                "title": "Mark the key terms so the important sentence is visibly the important one",
+                "category": CATEGORY,
+                "mechanism": MECHANISM,
+                "rationale": (
+                    "Median emphasis density across {n} sampled pages is {ed:.3f} "
+                    "of body words; the range reported as useful is about "
+                    "0.05-0.10. Emphasis is a weak signal on its own and this is "
+                    "the least-supported item in the structural literature -- "
+                    "worth doing while editing for other reasons, not worth a "
+                    "dedicated pass."
+                ).format(n=len(structured), ed=median_ed),
+                "suggested_action": act(
+                    "Emphasise the term each section is actually about",
+                    "low",
+                    ["Bold the subject term in the first sentence of each section",
+                     "Do not emphasise whole sentences -- that marks nothing"],
+                    "S",
+                    "Emphasis marks which words carry the claim, which helps both "
+                    "a reader skimming and a model weighting the passage.",
+                    owner="content"),
+            })
+
     return out
 
 

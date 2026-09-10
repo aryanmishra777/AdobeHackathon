@@ -292,3 +292,42 @@ proactive:
       for the same query. A site with no comparison content rarely enters the
       comparison queries where that pool forms. Because we cannot see the pool,
       this is a recommendation and must never be phrased as a defect.
+
+  - id: QUOTE-P06
+    title: "Quote and attribute the sources behind your claims"
+    gate: "no quotation element on any sampled content page, and few outbound references"
+    why: >-
+      Adding quotations (+41% PAWC) and citing sources (+30-40%) are the two
+      largest measured effects in Aggarwal et al. (arXiv:2311.09735). Those are
+      RELATIVE gains inside a simulator with five documents pre-injected into the
+      context window -- not a traffic promise. The gain was largest for pages not
+      already ranking first. Recommendation only.
+
+  - id: QUOTE-P07
+    title: "Put numbers on the claims that have them"
+    gate: "fewer than a quarter of sampled content pages carry >=3 concrete figures"
+    why: >-
+      Quantitative statements measure +30-40% relative visibility, and are what a
+      buyer asked an assistant to compare. Note the tension with QUOTE-001: a
+      bare number hurts standalone comprehension. The recommendation is a number
+      WITH its subject and unit in the same sentence, never numbers alone.
+
+  - id: QUOTE-P08
+    title: "Answer in the opening third of the page"
+    gate: "median first_answer_offset > 0.30"
+    why: >-
+      One industry measurement found 44.2% of ChatGPT citations came from the
+      first 30% of a page. The paper reporting it calls it "industry research and
+      correlational" and says the safe conclusion is NOT that moving text upward
+      guarantees citations. Phrase it as: where the answer sits is measurable,
+      and here it is late.
+
+  - id: QUOTE-P09
+    title: "Shorten the sentences that carry the facts"
+    gate: "median sentence length > 25 words, or >25% of sentences over 30 words, across >=25 sentences"
+    why: >-
+      Fluency optimisation measured +15-30% relative visibility in Aggarwal et
+      al. We count sentence length -- the term that dominates every readability
+      formula and the only one countable exactly without guessing syllables.
+      Report it as sentence length, never as a reading-grade score, and scope the
+      advice to fact-bearing pages rather than brand narrative.

@@ -326,6 +326,14 @@ NON_TEXT = {"script", "style", "template", "svg", "canvas", "noscript"}
 BOILERPLATE = {"nav", "header", "footer", "aside"}
 
 
+# Structural elements the GEO literature ties to citation behaviour: meso
+# structure (tables, lists), micro structure (emphasis), and the markers of
+# quoted or attributed material.
+STRUCTURE_TAGS = ("table", "tr", "td", "th", "ul", "ol", "li", "dl", "dt", "dd",
+                  "strong", "b", "em", "i", "mark", "blockquote", "q", "cite",
+                  "code", "pre", "figure", "figcaption", "time")
+
+
 class PageParser(HTMLParser):
     """Single pass over the document producing everything the analysis skills
     need, so no skill ever re-parses HTML differently from another."""
@@ -349,6 +357,11 @@ class PageParser(HTMLParser):
         self.charset = None
         self.app_shell: list[str] = []
         self.element_count = 0
+        # Structural inventory. The GEO literature measures citation against
+        # these shapes -- tables and lists, emphasis density, quotations and
+        # attributed sources -- so the collector counts them once here rather
+        # than leaving six analysis skills to re-parse the HTML differently.
+        self.structure: dict = {t: 0 for t in STRUCTURE_TAGS}
         self.time_datetimes: list[str] = []
 
         self._stack: list[str] = []
@@ -386,6 +399,9 @@ class PageParser(HTMLParser):
         self.element_count += 1
         if tag not in VOID:
             self._stack.append(tag)
+
+        if tag in STRUCTURE_TAGS:
+            self.structure[tag] += 1
 
         if tag in BOILERPLATE:
             self._boilerplate_depth += 1
@@ -678,6 +694,7 @@ def extract_page(page_id: str, url: str, html: str, origin: str) -> dict:
             "hydration_payload_bytes": hydration,
             "body_element_count": parser.element_count,
         },
+        "structure": _structure_block(parser, main_text, html),
         "forms": parser.forms,
         "dates": dates,
         "timing": {},
@@ -721,6 +738,50 @@ def _norm_date(value: str):
 # optimum -- which still beats the 320/512 we had chosen by feel.
 CHUNK_TARGET_WORDS = 225
 CHUNK_MAX_WORDS = 300
+
+
+
+def _structure_block(parser, main_text: str, html: str) -> dict:
+    """Structural shape of the page, counted once for every analysis skill.
+
+    The ratios are the ones the GEO literature reports against citation:
+    `format_density` is the proportion of content units that are tables, lists
+    or code (Yu et al. report an optimum around 0.25-0.35), and
+    `emphasis_density` is the share of words carrying visual emphasis (around
+    0.05-0.10). `first_answer_offset` is where the first substantial paragraph
+    starts as a fraction of the document, because industry measurement puts a
+    large share of citations in the opening third.
+
+    We count and expose. Whether any of it is a problem is a judgment the
+    analysis skills make, against their own registries.
+    """
+    st = dict(parser.structure)
+    words = max(1, len((main_text or "").split()))
+
+    blocks = st["li"] + st["tr"] + st["pre"] + st["table"] + st["ul"] + st["ol"]
+    paragraphs = max(1, html.lower().count("<p"))
+    st["format_density"] = round(blocks / float(blocks + paragraphs), 4)
+
+    emphasised = st["strong"] + st["b"] + st["em"] + st["i"] + st["mark"]
+    st["emphasis_density"] = round(emphasised / float(words), 4)
+
+    st["quotation_markers"] = st["blockquote"] + st["q"] + st["cite"]
+    st["list_items"] = st["li"]
+    st["table_rows"] = st["tr"]
+
+    # Where the first substantial paragraph begins, as a fraction of the body.
+    offset = None
+    lowered = html.lower()
+    body = lowered.find("<body")
+    if body >= 0 and main_text:
+        probe = " ".join((main_text or "").split()[:12])[:60]
+        if probe:
+            head = probe.split()[0] if probe.split() else ""
+            pos = lowered.find(head.lower(), body) if head else -1
+            if pos > 0:
+                offset = round((pos - body) / float(max(1, len(html) - body)), 4)
+    st["first_answer_offset"] = offset
+    return st
 
 
 def chunk_page(extracted: dict, target_words: int = CHUNK_TARGET_WORDS,

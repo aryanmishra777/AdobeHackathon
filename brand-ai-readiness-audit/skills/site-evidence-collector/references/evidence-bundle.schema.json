@@ -5,16 +5,37 @@
   "description": "The frozen interface between acquisition and analysis. site-evidence-collector writes it once; all six analysis skills read it and none re-fetch. Layout: .audit/<domain>/<run-id>/{MANIFEST.json, run.json, robots.txt.raw, robots_fetch.json, sitemaps/, ua_probe.json, coverage.json, pages/<page-id>/{request.json, response.headers.json, raw.html, rendered.html?, extracted.json, chunks.json}, external/?}. This schema describes MANIFEST.json plus the shape of each per-page document.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "run", "pages", "robots", "coverage"],
+  "required": [
+    "schema_version",
+    "run",
+    "pages",
+    "robots",
+    "coverage"
+  ],
   "properties": {
-    "schema_version": { "type": "string", "const": "1.0" },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
     "run": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["target", "origin", "started_at", "collector_version", "budget"],
+      "required": [
+        "target",
+        "origin",
+        "started_at",
+        "collector_version",
+        "budget"
+      ],
       "properties": {
-        "target": { "type": "string", "description": "As supplied by the user." },
-        "origin": { "type": "string", "description": "Canonical scheme+host after redirect resolution, e.g. 'https://example.com'." },
+        "target": {
+          "type": "string",
+          "description": "As supplied by the user."
+        },
+        "origin": {
+          "type": "string",
+          "description": "Canonical scheme+host after redirect resolution, e.g. 'https://example.com'."
+        },
         "origin_variants": {
           "type": "object",
           "description": "Observed behaviour of the four host/scheme forms. Feeds REACH-011.",
@@ -22,33 +43,80 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "status": { "type": ["integer", "null"] },
-              "redirects_to": { "type": ["string", "null"] }
+              "status": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "redirects_to": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
             }
           }
         },
-        "started_at": { "type": "string", "format": "date-time" },
-        "finished_at": { "type": "string", "format": "date-time" },
-        "collector_version": { "type": "string" },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "collector_version": {
+          "type": "string"
+        },
         "renderer": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["available"],
+          "required": [
+            "available"
+          ],
           "properties": {
-            "available": { "type": "boolean" },
-            "name": { "type": ["string", "null"], "description": "Populated only when the host agent supplied a rendering tool. When false, READ checks fall back to raw-HTML heuristics and must lower confidence accordingly." }
+            "available": {
+              "type": "boolean"
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Populated only when the host agent supplied a rendering tool. When false, READ checks fall back to raw-HTML heuristics and must lower confidence accordingly."
+            }
           }
         },
         "budget": {
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "max_pages": { "type": "integer", "default": 25 },
-            "max_concurrency": { "type": "integer", "default": 8, "maximum": 8 },
-            "request_timeout_s": { "type": "number", "default": 10 },
-            "total_fetch_budget_s": { "type": "number", "default": 120 },
-            "politeness_delay_s": { "type": "number", "default": 0.5 },
-            "max_bytes_per_page": { "type": "integer", "default": 3000000 }
+            "max_pages": {
+              "type": "integer",
+              "default": 25
+            },
+            "max_concurrency": {
+              "type": "integer",
+              "default": 8,
+              "maximum": 8
+            },
+            "request_timeout_s": {
+              "type": "number",
+              "default": 10
+            },
+            "total_fetch_budget_s": {
+              "type": "number",
+              "default": 120
+            },
+            "politeness_delay_s": {
+              "type": "number",
+              "default": 0.5
+            },
+            "max_bytes_per_page": {
+              "type": "integer",
+              "default": 3000000
+            }
           }
         }
       }
@@ -57,42 +125,106 @@
       "type": "object",
       "description": "Raw text is preserved verbatim in robots.txt.raw; this is the parsed view. The collector parses, it does not judge — crawl-access-audit decides what any of it means.",
       "additionalProperties": false,
-      "required": ["fetched", "status"],
+      "required": [
+        "fetched",
+        "status"
+      ],
       "properties": {
-        "fetched": { "type": "boolean" },
-        "status": { "type": ["integer", "null"] },
-        "parse_errors": { "type": "array", "items": { "type": "string" } },
+        "fetched": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "parse_errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "groups": {
           "type": "array",
           "description": "One entry per user-agent group, in file order.",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["user_agents", "allow", "disallow"],
+            "required": [
+              "user_agents",
+              "allow",
+              "disallow"
+            ],
             "properties": {
-              "user_agents": { "type": "array", "items": { "type": "string" } },
-              "allow": { "type": "array", "items": { "type": "string" } },
-              "disallow": { "type": "array", "items": { "type": "string" } },
-              "crawl_delay": { "type": ["number", "null"] }
+              "user_agents": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "allow": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "disallow": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "crawl_delay": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
             }
           }
         },
-        "sitemap_urls": { "type": "array", "items": { "type": "string" } },
+        "sitemap_urls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "agent_matrix": {
           "type": "object",
           "description": "Resolved allow/deny for each known AI and search agent against '/' and against each sampled page path. Keys are the literal user-agent tokens from references/ai-user-agents.md.",
           "additionalProperties": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["root_allowed", "purpose"],
+            "required": [
+              "root_allowed",
+              "purpose"
+            ],
             "properties": {
-              "root_allowed": { "type": "boolean" },
+              "root_allowed": {
+                "type": "boolean"
+              },
               "purpose": {
-                "enum": ["retrieval", "training", "search-index", "mixed"],
+                "enum": [
+                  "retrieval",
+                  "training",
+                  "search-index",
+                  "mixed"
+                ],
                 "description": "Decisive for false-positive gate 6: blocking a 'training' agent is a business choice, blocking a 'retrieval' agent removes the brand from live answers."
               },
-              "matched_group": { "type": ["integer", "null"] },
-              "blocked_paths": { "type": "array", "items": { "type": "string" } }
+              "matched_group": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "blocked_paths": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
             }
           }
         },
@@ -100,9 +232,21 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "present": { "type": "boolean" },
-            "status": { "type": ["integer", "null"] },
-            "bytes": { "type": ["integer", "null"] }
+            "present": {
+              "type": "boolean"
+            },
+            "status": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "bytes": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
           }
         }
       }
@@ -112,13 +256,37 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["url", "status"],
+        "required": [
+          "url",
+          "status"
+        ],
         "properties": {
-          "url": { "type": "string" },
-          "status": { "type": ["integer", "null"] },
-          "kind": { "enum": ["index", "urlset", "invalid", "unreachable"] },
-          "parse_errors": { "type": "array", "items": { "type": "string" } },
-          "entry_count": { "type": "integer" },
+          "url": {
+            "type": "string"
+          },
+          "status": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "kind": {
+            "enum": [
+              "index",
+              "urlset",
+              "invalid",
+              "unreachable"
+            ]
+          },
+          "parse_errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "entry_count": {
+            "type": "integer"
+          },
           "entries": {
             "type": "array",
             "description": "Capped sample. Each entry preserves lastmod verbatim so TRUST-003 can test whether the claim is honest.",
@@ -126,10 +294,27 @@
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "loc": { "type": "string" },
-                "lastmod": { "type": ["string", "null"] },
-                "changefreq": { "type": ["string", "null"] },
-                "priority": { "type": ["number", "null"] }
+                "loc": {
+                  "type": "string"
+                },
+                "lastmod": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "changefreq": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "priority": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                }
               }
             }
           }
@@ -141,11 +326,17 @@
       "description": "The two-request probe: one already-allowed URL fetched with a browser UA and with each bot UA. Catches CDNs and WAFs that serve 403 or a challenge page to bots regardless of what robots.txt permits. Feeds REACH-005.",
       "additionalProperties": false,
       "properties": {
-        "url": { "type": "string" },
-        "baseline": { "$ref": "#/$defs/probeResult" },
+        "url": {
+          "type": "string"
+        },
+        "baseline": {
+          "$ref": "#/$defs/probeResult"
+        },
         "agents": {
           "type": "object",
-          "additionalProperties": { "$ref": "#/$defs/probeResult" }
+          "additionalProperties": {
+            "$ref": "#/$defs/probeResult"
+          }
         }
       }
     },
@@ -155,45 +346,115 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["page_id", "url", "status", "role"],
+        "required": [
+          "page_id",
+          "url",
+          "status",
+          "role"
+        ],
         "properties": {
-          "page_id": { "type": "string", "pattern": "^p[0-9]{3}$" },
-          "url": { "type": "string" },
-          "final_url": { "type": "string" },
-          "status": { "type": ["integer", "null"] },
+          "page_id": {
+            "type": "string",
+            "pattern": "^p[0-9]{3}$"
+          },
+          "url": {
+            "type": "string"
+          },
+          "final_url": {
+            "type": "string"
+          },
+          "status": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "role": {
-            "enum": ["home", "sitemap-priority", "crawl-discovered", "seed-override"],
+            "enum": [
+              "home",
+              "sitemap-priority",
+              "crawl-discovered",
+              "seed-override"
+            ],
             "description": "How the page entered the sample. Selection is deterministic: home first, then sitemap order, then breadth-first from home with URLs sorted lexicographically."
           },
           "page_type": {
-            "enum": ["home", "product", "category", "article", "docs", "pricing", "about", "contact", "faq", "legal", "other"],
+            "enum": [
+              "home",
+              "product",
+              "category",
+              "article",
+              "docs",
+              "pricing",
+              "about",
+              "contact",
+              "faq",
+              "legal",
+              "other"
+            ],
             "description": "Heuristic classification from URL shape and on-page signals. Gates which checks apply to this page."
           },
-          "content_type": { "type": "string" },
-          "bytes": { "type": "integer" }
+          "content_type": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "integer"
+          }
         }
       }
     },
     "coverage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["pages_discovered", "pages_fetched", "complete"],
+      "required": [
+        "pages_discovered",
+        "pages_fetched",
+        "complete"
+      ],
       "properties": {
-        "pages_discovered": { "type": "integer" },
-        "pages_fetched": { "type": "integer" },
-        "complete": { "type": "boolean" },
+        "pages_discovered": {
+          "type": "integer"
+        },
+        "pages_fetched": {
+          "type": "integer"
+        },
+        "complete": {
+          "type": "boolean"
+        },
         "stopped_reason": {
-          "enum": ["completed", "max-pages", "time-budget", "site-blocked", "dns-failure", "error"]
+          "enum": [
+            "completed",
+            "max-pages",
+            "time-budget",
+            "site-blocked",
+            "dns-failure",
+            "error"
+          ]
         },
         "skipped": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["url", "reason"],
+            "required": [
+              "url",
+              "reason"
+            ],
             "properties": {
-              "url": { "type": "string" },
-              "reason": { "enum": ["robots-disallow", "budget-exceeded", "timeout", "http-error", "non-html", "duplicate", "out-of-scope"] }
+              "url": {
+                "type": "string"
+              },
+              "reason": {
+                "enum": [
+                  "robots-disallow",
+                  "budget-exceeded",
+                  "timeout",
+                  "http-error",
+                  "non-html",
+                  "duplicate",
+                  "out-of-scope"
+                ]
+              }
             }
           }
         }
@@ -209,42 +470,110 @@
     "probeResult": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "bytes"],
+      "required": [
+        "status",
+        "bytes"
+      ],
       "properties": {
-        "user_agent": { "type": "string" },
-        "status": { "type": ["integer", "null"] },
-        "bytes": { "type": ["integer", "null"] },
-        "text_bytes": { "type": ["integer", "null"] },
+        "user_agent": {
+          "type": "string"
+        },
+        "status": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "bytes": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "text_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
         "challenge_detected": {
           "type": "boolean",
           "description": "True when the body matches a known interstitial or bot-challenge signature. A 200 that returns a challenge page is a block in every way that matters."
         },
-        "error": { "type": ["string", "null"] }
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
       }
     },
     "extractedPage": {
       "$comment": "Shape of pages/<page_id>/extracted.json — the normalized page model. This is the workhorse: the collector parses HTML exactly once so six analysis skills never each re-parse it differently. It records what is on the page and never what that implies.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["page_id", "url", "title", "headings", "links", "images", "scripts", "jsonld", "text"],
+      "required": [
+        "page_id",
+        "url",
+        "title",
+        "headings",
+        "links",
+        "images",
+        "scripts",
+        "jsonld",
+        "text"
+      ],
       "properties": {
-        "page_id": { "type": "string" },
-        "url": { "type": "string" },
-        "lang": { "type": ["string", "null"] },
-        "charset": { "type": ["string", "null"] },
-        "title": { "type": ["string", "null"] },
+        "page_id": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        },
+        "lang": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "charset": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "meta": {
           "type": "object",
           "description": "name/property -> content, including robots, description, viewport, og:*, twitter:*.",
-          "additionalProperties": { "type": "string" }
+          "additionalProperties": {
+            "type": "string"
+          }
         },
-        "canonical": { "type": ["string", "null"] },
+        "canonical": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "hreflang": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "properties": { "lang": { "type": "string" }, "href": { "type": "string" } }
+            "properties": {
+              "lang": {
+                "type": "string"
+              },
+              "href": {
+                "type": "string"
+              }
+            }
           }
         },
         "headings": {
@@ -253,10 +582,19 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["level", "text"],
+            "required": [
+              "level",
+              "text"
+            ],
             "properties": {
-              "level": { "type": "integer", "minimum": 1, "maximum": 6 },
-              "text": { "type": "string" }
+              "level": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 6
+              },
+              "text": {
+                "type": "string"
+              }
             }
           }
         },
@@ -265,13 +603,26 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["href", "internal"],
+            "required": [
+              "href",
+              "internal"
+            ],
             "properties": {
-              "href": { "type": "string" },
-              "text": { "type": "string" },
-              "internal": { "type": "boolean" },
-              "rel": { "type": "string" },
-              "in_nav": { "type": "boolean" }
+              "href": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "internal": {
+                "type": "boolean"
+              },
+              "rel": {
+                "type": "string"
+              },
+              "in_nav": {
+                "type": "boolean"
+              }
             }
           }
         },
@@ -280,14 +631,44 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["src"],
+            "required": [
+              "src"
+            ],
             "properties": {
-              "src": { "type": "string" },
-              "alt": { "type": ["string", "null"], "description": "null means the attribute is absent; empty string means an explicit decorative alt. The distinction matters for READ-008." },
-              "width": { "type": ["integer", "null"] },
-              "height": { "type": ["integer", "null"] },
-              "loading": { "type": ["string", "null"] },
-              "bytes": { "type": ["integer", "null"] }
+              "src": {
+                "type": "string"
+              },
+              "alt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "null means the attribute is absent; empty string means an explicit decorative alt. The distinction matters for READ-008."
+              },
+              "width": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "height": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "loading": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "bytes": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              }
             }
           }
         },
@@ -297,56 +678,140 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "src": { "type": ["string", "null"] },
-              "inline_bytes": { "type": ["integer", "null"] },
-              "async": { "type": "boolean" },
-              "defer": { "type": "boolean" },
-              "third_party": { "type": "boolean" },
-              "blocking": { "type": "boolean" }
+              "src": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "inline_bytes": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "async": {
+                "type": "boolean"
+              },
+              "defer": {
+                "type": "boolean"
+              },
+              "third_party": {
+                "type": "boolean"
+              },
+              "blocking": {
+                "type": "boolean"
+              }
             }
           }
         },
-        "stylesheets": { "type": "array", "items": { "type": "string" } },
-        "iframes": { "type": "array", "items": { "type": "string" } },
+        "stylesheets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "iframes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "jsonld": {
           "type": "array",
           "description": "Verbatim contents of every script[type='application/ld+json'] block. Preserved as raw text alongside the parsed value so structured-data-audit can distinguish 'absent' from 'present but malformed'.",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["raw", "parsed_ok"],
+            "required": [
+              "raw",
+              "parsed_ok"
+            ],
             "properties": {
-              "raw": { "type": "string" },
-              "parsed_ok": { "type": "boolean" },
-              "parse_error": { "type": ["string", "null"] },
+              "raw": {
+                "type": "string"
+              },
+              "parsed_ok": {
+                "type": "boolean"
+              },
+              "parse_error": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "value": {}
             }
           }
         },
-        "microdata": { "type": "array", "items": {} },
-        "rdfa": { "type": "array", "items": {} },
+        "microdata": {
+          "type": "array",
+          "items": {}
+        },
+        "rdfa": {
+          "type": "array",
+          "items": {}
+        },
         "text": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["main", "word_count"],
+          "required": [
+            "main",
+            "word_count"
+          ],
           "properties": {
-            "main": { "type": "string", "description": "Best-effort main-content extraction with nav, header and footer removed." },
-            "full": { "type": "string" },
-            "word_count": { "type": "integer" },
-            "main_word_count": { "type": "integer" },
-            "text_to_markup_ratio": { "type": "number" }
+            "main": {
+              "type": "string",
+              "description": "Best-effort main-content extraction with nav, header and footer removed."
+            },
+            "full": {
+              "type": "string"
+            },
+            "word_count": {
+              "type": "integer"
+            },
+            "main_word_count": {
+              "type": "integer"
+            },
+            "text_to_markup_ratio": {
+              "type": "number"
+            }
           }
         },
-        "noscript": { "type": "array", "items": { "type": "string" } },
+        "noscript": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "render_signals": {
           "type": "object",
           "description": "Raw indicators of JS dependency. The collector reports the signals; render-extractability-audit decides whether they constitute a defect.",
           "additionalProperties": false,
           "properties": {
-            "app_shell_selectors": { "type": "array", "items": { "type": "string" }, "description": "Matched empty mount points such as #root, #app, [data-reactroot], <app-root>." },
-            "framework_markers": { "type": "array", "items": { "type": "string" } },
-            "hydration_payload_bytes": { "type": ["integer", "null"], "description": "Bytes of __NEXT_DATA__, __NUXT__ or similar. A large payload with a small body is the signature of content that exists but is not in the HTML a crawler reads." },
-            "body_element_count": { "type": "integer" }
+            "app_shell_selectors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Matched empty mount points such as #root, #app, [data-reactroot], <app-root>."
+            },
+            "framework_markers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "hydration_payload_bytes": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "description": "Bytes of __NEXT_DATA__, __NUXT__ or similar. A large payload with a small body is the signature of content that exists but is not in the HTML a crawler reads."
+            },
+            "body_element_count": {
+              "type": "integer"
+            }
           }
         },
         "forms": {
@@ -355,10 +820,24 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "action": { "type": ["string", "null"] },
-              "method": { "type": ["string", "null"] },
-              "field_count": { "type": "integer" },
-              "required_count": { "type": "integer" }
+              "action": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "method": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "field_count": {
+                "type": "integer"
+              },
+              "required_count": {
+                "type": "integer"
+              }
             }
           }
         },
@@ -369,10 +848,31 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "value": { "type": "string" },
-              "iso": { "type": ["string", "null"] },
-              "source": { "enum": ["jsonld", "meta", "time-element", "visible-text", "url", "copyright"] },
-              "field": { "type": ["string", "null"] }
+              "value": {
+                "type": "string"
+              },
+              "iso": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "source": {
+                "enum": [
+                  "jsonld",
+                  "meta",
+                  "time-element",
+                  "visible-text",
+                  "url",
+                  "copyright"
+                ]
+              },
+              "field": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
             }
           }
         },
@@ -380,10 +880,57 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "ttfb_ms": { "type": ["number", "null"] },
-            "total_ms": { "type": ["number", "null"] },
-            "transfer_bytes": { "type": ["integer", "null"] }
+            "ttfb_ms": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "total_ms": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "transfer_bytes": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
           }
+        },
+        "structure": {
+          "type": "object",
+          "description": "Structural inventory of the page, counted once by the collector so no two analysis skills re-parse the HTML differently. Raw tag counts plus the three ratios the GEO literature reports against citation behaviour. The collector counts; the analysis skills judge.",
+          "properties": {
+            "format_density": {
+              "type": "number",
+              "description": "Share of content units that are tables, lists or code rather than prose. Yu et al. (arXiv:2603.29979) report an optimum around 0.25-0.35."
+            },
+            "emphasis_density": {
+              "type": "number",
+              "description": "Emphasised elements per word of body text. Reported optimum ~0.05-0.10."
+            },
+            "quotation_markers": {
+              "type": "integer",
+              "description": "blockquote + q + cite. Quotation and source attribution are the strongest measured citation drivers (+41% and +30-40% PAWC)."
+            },
+            "list_items": {
+              "type": "integer"
+            },
+            "table_rows": {
+              "type": "integer"
+            },
+            "first_answer_offset": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "description": "Where the first substantial paragraph begins as a fraction of the body, or null when it could not be located."
+            }
+          },
+          "additionalProperties": true
         }
       }
     },
@@ -391,31 +938,71 @@
       "$comment": "Shape of pages/<page_id>/chunks.json — the page split the way a retrieval pipeline would split it, on heading boundaries with a target window. answerability-audit scores each chunk for standalone comprehensibility (QUOTE-001). Produced by the collector so the chunking is identical across runs and skills.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["page_id", "chunks"],
+      "required": [
+        "page_id",
+        "chunks"
+      ],
       "properties": {
-        "page_id": { "type": "string" },
-        "strategy": { "type": "string", "description": "e.g. 'heading-boundary, target 320 words, max 512, no overlap'." },
+        "page_id": {
+          "type": "string"
+        },
+        "strategy": {
+          "type": "string",
+          "description": "e.g. 'heading-boundary, target 320 words, max 512, no overlap'."
+        },
         "chunks": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["chunk_id", "text", "word_count"],
+            "required": [
+              "chunk_id",
+              "text",
+              "word_count"
+            ],
             "properties": {
-              "chunk_id": { "type": "string" },
-              "heading_path": { "type": "array", "items": { "type": "string" } },
-              "text": { "type": "string" },
-              "word_count": { "type": "integer" },
+              "chunk_id": {
+                "type": "string"
+              },
+              "heading_path": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "text": {
+                "type": "string"
+              },
+              "word_count": {
+                "type": "integer"
+              },
               "signals": {
                 "type": "object",
                 "description": "Deterministic precursors to the standalone-comprehension judgment. The script counts; the model judges.",
                 "additionalProperties": false,
                 "properties": {
-                  "names_subject": { "type": "boolean", "description": "Brand, product or entity name appears in the chunk itself." },
-                  "leading_pronoun": { "type": "boolean", "description": "Opens with an unresolved 'it', 'they', 'this', 'we'." },
-                  "bare_numbers": { "type": "integer", "description": "Numeric or currency values with no adjacent noun binding them to a subject." },
-                  "has_date": { "type": "boolean" },
-                  "deictic_terms": { "type": "array", "items": { "type": "string" }, "description": "'above', 'below', 'the following', 'as mentioned' — references that break when the chunk is retrieved alone." }
+                  "names_subject": {
+                    "type": "boolean",
+                    "description": "Brand, product or entity name appears in the chunk itself."
+                  },
+                  "leading_pronoun": {
+                    "type": "boolean",
+                    "description": "Opens with an unresolved 'it', 'they', 'this', 'we'."
+                  },
+                  "bare_numbers": {
+                    "type": "integer",
+                    "description": "Numeric or currency values with no adjacent noun binding them to a subject."
+                  },
+                  "has_date": {
+                    "type": "boolean"
+                  },
+                  "deictic_terms": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "'above', 'below', 'the following', 'as mentioned' — references that break when the chunk is retrieved alone."
+                  }
                 }
               }
             }

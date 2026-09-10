@@ -31,13 +31,13 @@ Primary sources, by arXiv/SSRN id:
 
 | Factor | Effect | Evidence | Our check |
 |---|---|---|---|
-| Verbatim quotations | **+41% PAWC** (19.3 → 27.2); +22% on live Perplexity | Controlled, GEO-bench 10k queries | *none yet* |
-| Cite external sources | **+30-40% PAWC**; **+115% for rank-5 pages** | Controlled, same benchmark | *none yet* |
-| Statistics, prices, dates in text | **+30-40% PAWC**; +37% subjective on Perplexity | Controlled | *none yet* |
-| Tables and lists (`F_d` 0.25-0.35) | **+17.3% citation rate**, p<0.001, d=0.64; +43% extraction accuracy | Controlled, 200 docs × 6 engines  | *none yet* |
-| Answer in first 30% of DOM | **44.2% of ChatGPT citations** originate there | Observational industry study; the SEEN paper that reports it calls it "industry research and correlational" and warns the safe reading is *not* that moving text up guarantees citations | *none yet* |
-| Emphasis density (`E_d` 0.05-0.10) | Sentence-initial bold carries **2.0× attention weight** | Controlled ablation  | *none yet* |
-| Readability / fluency | **+15-30% PAWC** | Controlled | *none yet* |
+| Verbatim quotations | **+41% PAWC** (19.3 → 27.2); +22% on live Perplexity | Controlled, GEO-bench 10k queries | `QUOTE-P06` |
+| Cite external sources | **+30-40% PAWC**; **+115% for rank-5 pages** | Controlled, same benchmark | `QUOTE-P06` |
+| Statistics, prices, dates in text | **+30-40% PAWC**; +37% subjective on Perplexity | Controlled | `QUOTE-P07` |
+| Tables and lists (`F_d` 0.25-0.35) | **+17.3% citation rate**, p<0.001, d=0.64; +43% extraction accuracy | Controlled, 200 docs × 6 engines | `READ-P03` |
+| Answer in first 30% of DOM | **44.2% of ChatGPT citations** originate there | Observational industry study; the SEEN paper that reports it calls it "industry research and correlational" and warns the safe reading is *not* that moving text up guarantees citations | `QUOTE-P08` |
+| Emphasis density (`E_d` 0.05-0.10) | Sentence-initial bold carries **2.0× attention weight** | Controlled ablation | `READ-P04` |
+| Readability / fluency | **+15-30% PAWC** | Controlled | `QUOTE-P09` |
 | Heading hierarchy (depth 3-5) | Feature weight 0.25-0.45; removing it costs **9% of top-20 retrieval** | Controlled  | `READ-009` |
 | Keyword stuffing | **−8.3% PAWC**, −10% on Perplexity | Controlled, rejected | deliberately none |
 
@@ -53,6 +53,24 @@ paper, including the per-architecture breakdown (+19.2% search-then-synthesize,
 `site-evidence-collector` targets **225 words, hard cap 300**
 (`CHUNK_TARGET_WORDS`). Previously 320/512, chosen by feel — past the cliff. A
 well-sourced design principle is not a measured optimum, but it beats a guess.
+
+### Why these ship as recommendations, not findings
+
+All six are `proactive_recommendations`, never `findings`. The effect sizes are
+real, but C-SEO Bench found only **3 of 54** method-domain combinations
+significant, so the optimal edit is instance-dependent. "This page has no table"
+is not a defect, and emitting it as one would be exactly the confident false
+positive the rest of this marketplace exists to avoid. The collector counts the
+structure (`extracted.json#structure`); the skills recommend against it.
+
+The unmeasurable engine-side factors are handled the same way: `QUOTE-P04`
+(question-shaped headings) stands in for search activation and `QUOTE-P05`
+(comparison content) for the competing candidate pool. Neither can be measured
+from one site, so neither is ever phrased as a defect.
+
+One factor is now genuinely measured rather than proxied: **engine-specific
+reachability**. `crawl-access-audit` emits `engine_reachability`, a per-assistant
+verdict derived from the per-agent robots resolution and the user-agent probe.
 
 ## Claims we may not make
 

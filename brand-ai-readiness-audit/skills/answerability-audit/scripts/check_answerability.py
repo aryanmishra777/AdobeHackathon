@@ -1395,6 +1395,171 @@ def proactive(b: Bundle, findings: list) -> list:
                 owner="content"),
         })
 
+    # QUOTE-P06 / P07 / P08 -- the three strongest measured citation drivers in
+    # the literature, emitted as recommendations rather than defects. Aggarwal
+    # et al. (arXiv:2311.09735) measure +41% PAWC from adding quotations and
+    # +30-40% from citing sources and adding statistics, on GEO-bench. Those are
+    # relative gains inside a simulator with five documents pre-injected into
+    # context -- not a promise of traffic -- and the absence of a quotation is
+    # not a defect in any page. Recommend; never flag.
+    struct = [(p_, b.extracted(p_["page_id"]).get("structure") or {})
+              for p_ in content_pages]
+    struct = [(p_, st) for p_, st in struct if st]
+
+    if struct:
+        quoting = sum(1 for _, st in struct if (st.get("quotation_markers") or 0) > 0)
+        outbound = 0
+        for page in content_pages:
+            links = b.extracted(page["page_id"]).get("links") or []
+            if any(l.get("href") and not l.get("internal") for l in links):
+                outbound += 1
+        if quoting == 0 and outbound <= len(struct) // 3:
+            out.append({
+                "id": "P-000",  # QUOTE-P06
+                "title": "Quote and attribute the sources behind your claims",
+                "category": CATEGORY,
+                "mechanism": MECHANISM,
+                "rationale": (
+                    "None of the {n} sampled content pages contain a quotation "
+                    "element, and {o} carry an outbound reference. Adding "
+                    "quotations and cited sources are the two largest measured "
+                    "effects in the GEO literature (+41% and +30-40% relative "
+                    "visibility on the GEO-bench simulator). The measurement is "
+                    "a relative gain inside a fixed context window rather than a "
+                    "traffic promise, and the effect was largest for pages that "
+                    "were not already ranking first."
+                ).format(n=len(struct), o=outbound),
+                "suggested_action": act(
+                    "Attribute the claims that carry weight",
+                    "low",
+                    ["Where a page asserts an industry fact, quote the source "
+                     "and link it",
+                     "Use blockquote or q so the quotation is structurally "
+                     "marked, not just typographic quotes",
+                     "Attribute to a named source -- an unattributed quotation "
+                     "adds nothing"],
+                    "M",
+                    "A quoted, attributed claim can be repeated by an assistant "
+                    "with its provenance intact, which is what makes it safe to "
+                    "repeat at all.",
+                    owner="content"),
+            })
+
+        numeric = 0
+        for page in content_pages:
+            body = ((b.extracted(page["page_id"]).get("text") or {}).get("main") or "")
+            if len(re.findall(r"(?<![\w.])(?:[$£€₹]\s?\d|\d[\d,]*(?:\.\d+)?\s?%|\d[\d,]{2,})", body)) >= 3:
+                numeric += 1
+        if struct and numeric <= len(struct) // 4:
+            out.append({
+                "id": "P-000",  # QUOTE-P07
+                "title": "Put numbers on the claims that have them",
+                "category": CATEGORY,
+                "mechanism": MECHANISM,
+                "rationale": (
+                    "Only {k} of {n} sampled content pages carry three or more "
+                    "concrete figures. Quantitative statements are among the "
+                    "strongest measured citation drivers (+30-40% relative "
+                    "visibility), and they are also what a buyer asked an "
+                    "assistant to compare. Qualitative superlatives are not "
+                    "quotable as evidence."
+                ).format(k=numeric, n=len(struct)),
+                "suggested_action": act(
+                    "Replace superlatives with figures",
+                    "low",
+                    ["Give prices, capacities, durations, guarantees and "
+                     "measured results as numbers with units",
+                     "Attach each figure to its subject in the same sentence, "
+                     "so it survives being retrieved alone",
+                     "Where an exact figure cannot be published, give the range "
+                     "or the basis"],
+                    "M",
+                    "A number with its subject and unit attached is the smallest "
+                    "unit an assistant can lift and still be correct.",
+                    owner="content"),
+            })
+
+        offsets = [st.get("first_answer_offset") for _, st in struct
+                   if st.get("first_answer_offset") is not None]
+        if offsets:
+            median_off = sorted(offsets)[len(offsets) // 2]
+            if median_off > 0.30:
+                out.append({
+                    "id": "P-000",  # QUOTE-P08
+                    "title": "Answer in the opening third of the page",
+                    "category": CATEGORY,
+                    "mechanism": MECHANISM,
+                    "rationale": (
+                        "The first substantial paragraph begins at a median "
+                        "{o:.0%} through the document across {n} sampled pages. "
+                        "One industry measurement found 44.2% of ChatGPT "
+                        "citations came from the first 30% of a page. That study "
+                        "is correlational, and the honest reading is not that "
+                        "moving text upward guarantees citation -- it is that "
+                        "where the answer sits is measurable and currently late."
+                    ).format(o=median_off, n=len(offsets)),
+                    "suggested_action": act(
+                        "Lead with the answer, then elaborate",
+                        "low",
+                        ["Open each page with a short paragraph that answers the "
+                         "question the page exists to answer",
+                         "Move preamble, brand narrative and navigation copy "
+                         "below that",
+                         "Keep the detail -- this is about order, not length"],
+                        "M",
+                        "Retrieval reads the opening of a document first and "
+                        "attends to it most; an answer that arrives late may not "
+                        "be reached at all.",
+                        owner="content"),
+                })
+
+    # QUOTE-P09 -- sentence length as a readability proxy. Aggarwal et al.
+    # measure +15-30% relative visibility from fluency optimisation. Rather than
+    # approximate Flesch-Kincaid with a guessed syllable counter, we report the
+    # term that dominates every readability formula and can be counted exactly:
+    # sentence length. Named for what it is, so nobody mistakes it for a grade.
+    if content_pages:
+        lengths = []
+        for page in content_pages:
+            body = ((b.extracted(page["page_id"]).get("text") or {}).get("main") or "")
+            for sentence in re.split(r"(?<=[.!?])\s+", body):
+                words = sentence.split()
+                if len(words) >= 3:
+                    lengths.append(len(words))
+        if len(lengths) >= 25:
+            lengths.sort()
+            median_len = lengths[len(lengths) // 2]
+            long_share = sum(1 for l in lengths if l > 30) / float(len(lengths))
+            if median_len > 25 or long_share > 0.25:
+                out.append({
+                    "id": "P-000",  # QUOTE-P09
+                    "title": "Shorten the sentences that carry the facts",
+                    "category": CATEGORY,
+                    "mechanism": MECHANISM,
+                    "rationale": (
+                        "Median sentence length across {n} sentences on {p} "
+                        "sampled pages is {m} words, and {s:.0%} run past 30. "
+                        "Simplifying language measured +15-30% relative "
+                        "visibility on the GEO-bench simulator. This counts "
+                        "sentence length, the term that dominates every "
+                        "readability formula -- it is not a reading-grade score "
+                        "and should not be reported as one."
+                    ).format(n=len(lengths), p=len(content_pages), m=median_len,
+                             s=long_share),
+                    "suggested_action": act(
+                        "Split the long sentences on fact-bearing pages",
+                        "low",
+                        ["Break sentences carrying more than one claim into one "
+                         "sentence per claim",
+                         "Put the claim before the qualification, not after it",
+                         "Leave narrative and brand copy alone -- this matters "
+                         "where facts live"],
+                        "M",
+                        "One claim per sentence survives being retrieved alone; "
+                        "a claim buried in a subordinate clause does not.",
+                        owner="content"),
+                })
+
     return out
 
 
