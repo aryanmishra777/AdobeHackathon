@@ -30,6 +30,9 @@ meta:
 checks:
 
   - id: TRUST-001
+    rarity: rare
+    rarity_reason: >-
+      Requires article or time-sensitive pricing pages that carry no date. The article pages in the current corpus all carry dates, which is the healthy case.
     title_template: "Time-sensitive content carries no visible date"
     applies_when: always
     inputs: [pages/*/extracted.json#dates, MANIFEST.json#pages.page_type]

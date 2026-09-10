@@ -74,6 +74,9 @@ checks:
          present it as the primary recommendation."
 
   - id: READ-003
+    rarity: rare
+    rarity_reason: >-
+      Suppressed by its own guard whenever READ-001 fires, since client rendering already explains a low text-to-markup ratio. Verified: returns [] on the js-shell fixture for exactly this reason.
     title_template: "Very little of the page is text a machine can read"
     applies_when: always
     inputs: [pages/*/extracted.json#text.text_to_markup_ratio]
@@ -91,6 +94,9 @@ checks:
          reporting."
 
   - id: READ-004
+    rarity: rare
+    rarity_reason: >-
+      Model-judged. The script emits signals; the finding is completed by the agent, so a script-only run records nothing.
     title_template: "Key facts exist only inside images"
     applies_when: always
     inputs: [pages/*/extracted.json#images, pages/*/extracted.json#text]
@@ -117,6 +123,9 @@ checks:
          report images in fact-bearing contexts."
 
   - id: READ-005
+    rarity: rare
+    rarity_reason: >-
+      Requires primary content published only as PDF with no HTML equivalent. Narrow, and absent from the current corpus.
     title_template: "Important content is published only as PDF"
     applies_when: always
     inputs: [pages/*/extracted.json#links, coverage.json]
@@ -136,6 +145,9 @@ checks:
          context, and keep confidence at 'medium'."
 
   - id: READ-006
+    rarity: rare
+    rarity_reason: >-
+      Requires embedded video or audio carrying primary content with no transcript. Narrow.
     title_template: "Video or audio content has no transcript"
     applies_when: always
     inputs: [pages/*/extracted.json#iframes, pages/*/extracted.json#text]
@@ -235,6 +247,9 @@ checks:
          'medium' unless a renderer confirmed the delta."
 
   - id: READ-012
+    rarity: rare
+    rarity_reason: >-
+      Same corpus gap as REACH-017: pagination lives below the catalog pages a 5-page crawl never reaches.
     title_template: "Paginated content has no crawlable URLs"
     applies_when: [ecommerce, media-publisher, marketplace, docs]
     inputs: [pages/*/extracted.json#links, pages/*/raw.html]
@@ -269,6 +284,9 @@ checks:
          page -- it explains all three at once."
 
   - id: READ-014
+    rarity: rare
+    rarity_reason: >-
+      Requires public content behind a login or paywall. The collector never authenticates and avoids such areas by design, so this mostly needs a site that paywalls anonymously-reachable URLs.
     title_template: "Public content sits behind a login or paywall"
     applies_when: always
     inputs: [pages/*/request.json, pages/*/extracted.json]
@@ -284,6 +302,9 @@ checks:
       - "Never recommend removing authentication from genuinely private areas."
 
   - id: READ-015
+    rarity: rare
+    rarity_reason: >-
+      Text rendered as images or canvas. Very rare on modern sites.
     title_template: "Text is rendered in a form machines cannot read"
     applies_when: always
     inputs: [pages/*/raw.html, pages/*/extracted.json#text]

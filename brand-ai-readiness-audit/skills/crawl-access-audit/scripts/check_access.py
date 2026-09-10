@@ -1037,10 +1037,13 @@ def check_reach_017(b: Bundle) -> list[dict]:
       - Pagination is not a crawl trap; only combinatorial filter/sort params.
       - If canonicals already collapse the variants, do not report.
     """
-    profile = str(((b.run.get("site_profile") or {}).get("site_type")
-                   or (b.manifest.get("site_profile") or {}).get("site_type")
-                   or "")).lower()
-    if profile and profile not in ("ecommerce", "marketplace", "media-publisher"):
+    # The registry restricts this to catalog-shaped sites. The bundle carries no
+    # site_profile -- that is detected by the orchestrator, after this runs -- so
+    # gate on the page types the collector did classify, the same way READ-012
+    # does. Reading a site_profile key here would be a gate that never closes.
+    catalog_pages = [p_ for p_ in b.ok_pages
+                     if p_.get("page_type") in ("category", "product", "article")]
+    if not catalog_pages:
         return []
 
     families: dict = {}

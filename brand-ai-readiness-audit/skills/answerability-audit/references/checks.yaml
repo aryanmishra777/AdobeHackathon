@@ -81,6 +81,9 @@ checks:
          perform themselves."
 
   - id: QUOTE-003
+    rarity: rare
+    rarity_reason: >-
+      Gated conservatively because the bundle carries no site_profile; applicability is inferred from observed page types and stays silent when they are absent.
     title_template: "Facts buyers ask about are absent or unextractable"
     applies_when: [ecommerce, saas, local-business, marketplace, nonprofit-gov]
     inputs: [pages/*/extracted.json#text, pages/*/chunks.json, MANIFEST.json#pages.page_type]
@@ -185,6 +188,9 @@ checks:
          so nothing on the page connects the product to what it actually is."
 
   - id: QUOTE-009
+    rarity: rare
+    rarity_reason: >-
+      Restricted to ecommerce, saas and marketplace, inferred from page types. Silent where the sample shows no product or spec pages.
     title_template: "Specifications are prose or images rather than structured text"
     applies_when: [ecommerce, saas, marketplace]
     inputs: [pages/*/extracted.json#text, pages/*/extracted.json#images, pages/*/raw.html]
@@ -232,6 +238,9 @@ checks:
          re-report the same pages."
 
   - id: QUOTE-012
+    rarity: rare
+    rarity_reason: >-
+      Requires a long page with no liftable summary. Silent where sampled pages are short.
     title_template: "Long pages carry no summary a machine can lift"
     applies_when: always
     inputs: [pages/*/chunks.json, pages/*/extracted.json#text]

@@ -200,6 +200,9 @@ checks:
       - "'noindex, follow' is still noindex for our purposes."
 
   - id: REACH-009
+    rarity: rare
+    rarity_reason: >-
+      nosnippet, max-snippet:0 and data-nosnippet are deliberate publisher choices and rare outside news. Absence is the normal case.
     title_template: "Snippet directives prevent assistants from quoting the page"
     applies_when: always
     inputs: [pages/*/extracted.json#meta.robots, pages/*/response.headers.json]
@@ -288,6 +291,9 @@ checks:
       - "Soft 404s (a 200 that renders a 'not found' page) belong to READ, not here."
 
   - id: REACH-013
+    rarity: rare
+    rarity_reason: >-
+      Requires at least 10 sampled pages before it will generalise. Every bundle in tests/ and bench/ is 5 pages, so it cannot fire there by construction -- exercise it with --max-pages 25.
     title_template: "Sitemap pages that nothing links to"
     applies_when: always
     inputs: [MANIFEST.json#sitemaps, MANIFEST.json#pages, pages/*/extracted.json#links]
@@ -366,6 +372,9 @@ checks:
          must be described as forward-looking rather than expected."
 
   - id: REACH-017
+    rarity: rare
+    rarity_reason: >-
+      Requires catalog-shaped pages (product, category) in the sample. Every bundle we hold is a 5-page crawl that lands on home and top-level pages, so no catalog page is ever classified -- even for the ecommerce sites in the corpus. Exercise with --max-pages 25 against a shop.
     title_template: "Faceted or parameterised URLs create a crawl trap"
     applies_when: [ecommerce, marketplace, media-publisher]
     inputs: [pages/*/extracted.json#links, MANIFEST.json#sitemaps]

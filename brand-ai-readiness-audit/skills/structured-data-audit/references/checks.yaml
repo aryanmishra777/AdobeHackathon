@@ -67,6 +67,9 @@ checks:
          valid itemscope markup and would be wrongly reported as having none."
 
   - id: PARSE-002
+    rarity: rare
+    rarity_reason: >-
+      Fires only when a JSON-LD or microdata block is present but malformed. Most published markup parses; a site with broken markup usually has none at all, which is PARSE-001.
     title_template: "Structured data is present but does not parse"
     applies_when: always
     inputs: [pages/*/extracted.json#jsonld]
@@ -187,6 +190,9 @@ checks:
          text rather than removing the markup."
 
   - id: PARSE-009
+    rarity: rare
+    rarity_reason: >-
+      Requires the same entity marked up twice in conflicting formats (JSON-LD and microdata disagreeing). Uncommon outside sites carrying two generations of markup.
     title_template: "Conflicting or duplicated markup formats"
     applies_when: always
     inputs: [pages/*/extracted.json#jsonld, pages/*/extracted.json#microdata]

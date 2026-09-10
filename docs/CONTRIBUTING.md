@@ -125,3 +125,44 @@ a brand is invisible.
 
 The same applies to recommendations: a proactive suggestion must cite something
 actually observed in the bundle. Generic advice is worth nothing here.
+
+## A check that never fires
+
+`python tools/check_coverage.py` runs every analysis skill over every bundle it
+can find and lists the checks that produced no finding anywhere.
+
+This exists because two checks once shipped as dead code and every other gate
+stayed green. `REACH-014` raised an exception that the driver swallowed;
+`REACH-013` read a manifest key that does not exist. Neither produced a single
+finding on any site. The tests passed, the validator passed, the bench passed --
+because all of them ask "did anything go wrong?" and none asked "did this check
+ever do anything?".
+
+A silent check is not automatically broken. Some detect genuinely rare things.
+So say which, in the registry entry:
+
+```yaml
+  - id: PARSE-002
+    rarity: rare
+    rarity_reason: >-
+      Fires only when a JSON-LD block is present but malformed. Most published
+      markup parses.
+```
+
+Declaring it is a claim someone made deliberately, and that is the point. The
+alternative is silence, and silence is what let the dead checks through.
+
+Run it before you claim a check is finished, and with `--strict` in any final
+pass: it exits non-zero on an undeclared silent check, and on any check that
+crashes.
+
+Two traps it will not catch, both of which have bitten us:
+
+- **A gate that never closes.** `REACH-017` read `run.site_profile`, which the
+  collector never writes, so its "ecommerce only" restriction silently applied to
+  every site. If your check gates on something, assert that the something exists.
+- **A metric on the wrong scale.** `format_density` counted list *items* where
+  the paper counts list *elements*, so it read 0.65 against a published band of
+  0.25-0.35. It fired, so coverage looked fine; it was measuring a different
+  quantity. When a threshold comes from a paper, check the definition, not just
+  the number.
