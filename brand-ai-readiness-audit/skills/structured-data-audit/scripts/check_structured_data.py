@@ -1332,6 +1332,16 @@ def check_parse_013(b: Bundle) -> list[dict]:
 
     missing = []
     for page in pages:
+        # Guard: a breadcrumb shows where a page sits beneath its ancestors. The
+        # home page has none, and a top-level page (about, contact, legal) sits
+        # directly under home, so there is nothing to show. vox.com carried
+        # BreadcrumbList on all 22 of its articles and was reported for the
+        # three pages that could not sensibly have one.
+        if page.get("page_type") in ("home", "about", "contact", "legal"):
+            continue
+        depth = len([seg for seg in urlparse(page["url"]).path.strip("/").split("/") if seg])
+        if depth < 2:
+            continue
         ext = b.extracted(page["page_id"])
         declared = []
         for blk in ext.get("jsonld") or []:
@@ -1345,6 +1355,11 @@ def check_parse_013(b: Bundle) -> list[dict]:
         has_nav_breadcrumb = any(l.get("rel") == "breadcrumb" or "breadcrumb" in (l.get("text") or "").lower() for l in links)
         if not has_nav_breadcrumb:
             missing.append(page)
+
+    # Guard: one or two stray pages are not "no breadcrumb markup". Require a
+    # real share of the sample before making a claim about the site.
+    if len(missing) < 3 or len(missing) < 0.15 * len(pages):
+        return []
 
     if not missing:
         return []

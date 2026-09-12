@@ -6,7 +6,7 @@ QUADRANT CHART -- mean discoverability score by SEO x GEO
   SEO good / GEO good         22     66     85  
   SEO good / GEO poor         12     51     86  <-- must score WORSE than good/good
   SEO poor / GEO good         14     54     64  
-  SEO poor / GEO poor         13     50     76  
+  SEO poor / GEO poor         13     51     76  
 
   VERDICT: PASS -- good-SEO/poor-GEO scores 15 points below good-SEO/good-GEO.
            The marketplace separates GEO failure from SEO health.

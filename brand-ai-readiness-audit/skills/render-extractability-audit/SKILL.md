@@ -55,13 +55,6 @@ function of the bundle, so the same bundle always produces the same findings.
 python scripts/check_render.py <bundle-path> --out read-candidates.json
 ```
 
-> **Status: not yet implemented.** The check registry in
-> `references/checks.yaml` is complete and frozen — all 16 checks are
-> specified with severity rules, evidence templates and false-positive guards.
-> `scripts/check_render.py` is the remaining work. See
-> `docs/todo/render-extractability-audit.md` for the work packet, and use
-> `../crawl-access-audit/scripts/check_access.py` as the reference
-> implementation to copy structurally.
 
 ### 2. Read the registry before trusting any candidate
 

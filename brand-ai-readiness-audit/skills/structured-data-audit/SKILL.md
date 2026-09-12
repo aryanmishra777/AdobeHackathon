@@ -54,13 +54,6 @@ function of the bundle, so the same bundle always produces the same findings.
 python scripts/check_structured_data.py <bundle-path> --out parse-candidates.json
 ```
 
-> **Status: not yet implemented.** The check registry in
-> `references/checks.yaml` is complete and frozen — all 14 checks are
-> specified with severity rules, evidence templates and false-positive guards.
-> `scripts/check_structured_data.py` is the remaining work. See
-> `docs/todo/structured-data-audit.md` for the work packet, and use
-> `../crawl-access-audit/scripts/check_access.py` as the reference
-> implementation to copy structurally.
 
 ### 2. Read the registry before trusting any candidate
 

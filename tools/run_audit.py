@@ -94,7 +94,12 @@ def render_markdown(report: dict, engine_rows: list) -> str:
     dg, ds = cell("discoverability")
     eg, es = cell("engagement")
 
-    out = [f"# AI-Readiness Audit — {site}", "", grade_line(sc), "",
+    # The orchestrator writes a verdict in the site's own terms; the score-band
+    # line is only a fallback. Rendering the fallback over a written verdict put
+    # "Assistants can reach this site" above a table showing three of them
+    # blocked.
+    verdict = sc.get("verdict") or grade_line(sc)
+    out = [f"# AI-Readiness Audit — {site}", "", verdict, "",
            "| | Grade | Score |", "|---|---|---|",
            f"| **Discoverability** — can AI assistants find, trust and cite you? | {dg} | {ds} |",
            f"| **Engagement** — do visitors who arrive stay? | {eg} | {es} |", ""]
@@ -122,9 +127,14 @@ def render_markdown(report: dict, engine_rows: list) -> str:
     plan = report.get("priority_plan") or []
     if plan:
         out += ["## Fix these first", ""]
-        for i, step in enumerate(plan[:5], 1):
-            ids = ", ".join(step.get("fixes") or [])
-            out.append(f"{i}. **{step.get('action')}** — {step.get('why_first', '')}"
+        for step in plan[:5]:
+            # Field names come from report.schema.json: rank + finding_ids. The
+            # first draft of this renderer read a key called `fixes` that the
+            # schema does not define, and rendered an empty plan from a valid
+            # report -- caught only by assembling one the way the agent does.
+            ids = ", ".join(step.get("finding_ids") or [])
+            out.append(f"{step.get('rank', '?')}. **{step.get('action')}** — "
+                       f"{step.get('why_first', '')}"
                        + (f" *(fixes {ids}; effort: {step.get('effort', '?')})*" if ids else ""))
         out.append("")
 

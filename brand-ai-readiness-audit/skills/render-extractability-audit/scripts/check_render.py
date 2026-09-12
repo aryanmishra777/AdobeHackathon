@@ -1330,8 +1330,24 @@ def check_read_014(b: Bundle) -> list[dict]:
         raw = b.raw_html(pid).lower()
         jsonld_blocks = ext.get("jsonld") or []
 
-        # Check for paywall presence
-        is_paywalled = "paywall" in raw or "subscription required" in raw or "subscriber-only" in raw
+        # Check for paywall presence. Evidence has to come from what a READER
+        # sees, not from the page's scripts: a CMS that ships a `paywall: false`
+        # config flag in its JavaScript is not paywalled, and matching the raw
+        # HTML called six vox.com articles paywalled on a site with no paywall.
+        # Require the wall to be visible in the extracted text, on a page whose
+        # body is short enough to be cut off -- or an explicit
+        # isAccessibleForFree: false declaration.
+        visible = ((text_obj.get("main") or "") + " " + (text_obj.get("full") or "")).lower()
+        wall_phrase = any(k in visible for k in (
+            "subscribe to continue", "subscribe to read", "subscription required",
+            "subscriber-only", "subscribers only", "to continue reading",
+            "unlock this article", "this article is for subscribers"))
+        declared_paid = any(
+            isinstance(jb.get("value"), dict)
+            and jb["value"].get("isAccessibleForFree") in (False, "False", "false")
+            for jb in jsonld_blocks)
+        is_paywalled = declared_paid or (
+            wall_phrase and (text_obj.get("main_word_count") or 0) < 250)
         if is_paywalled:
             has_free_markup = False
             for jb in jsonld_blocks:

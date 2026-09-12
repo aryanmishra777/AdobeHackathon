@@ -152,5 +152,7 @@ would be exactly the confident false positive the rubric punishes.
 tooling and the bench. **Lakshay** — READ and PARSE. **Mayank** — QUOTE, TRUST
 and STAY.
 
-See [`docs/examples/report-bbc-co-uk.md`](docs/examples/report-bbc-co-uk.md) for
-what the marketplace actually produces.
+See [`docs/examples/report-vox-com.md`](docs/examples/report-vox-com.md) for
+what the marketplace produces when an agent drives it end to end, and
+[`report-bbc-co-uk.md`](docs/examples/report-bbc-co-uk.md) for the scripts-only
+harness output.

@@ -79,9 +79,16 @@ CHALLENGE_SIGNATURES = [
     "perimeterx", "datadome", "enable javascript and cookies to continue",
 ]
 
+# Paths that are never content: transactional and authenticated areas the
+# handout forbids us to touch, plus machine-facing utility pages. An HTML
+# sitemap index (vox.com/sitemaps/entries/2026/9) sampled as a content page
+# tripped four checks at once -- no viewport, no breadcrumb, no orientation, no
+# structured data -- all of them true and none of them about the site.
 SKIP_PATH_PATTERNS = re.compile(
     r"/(cart|checkout|account|login|logout|signin|signout|register|admin|"
-    r"wp-admin|wp-login|my-account|basket|order|payment)(/|$|\?)", re.I)
+    r"wp-admin|wp-login|my-account|basket|order|payment|"
+    r"sitemaps?|sitemap[-_]?index|feed|feeds|rss|atom|search|"
+    r"wp-json|xmlrpc\.php|cgi-bin)(/|$|\?)", re.I)
 SKIP_QUERY_PATTERNS = re.compile(
     r"(add-to-cart|remove_item|replytocom|share=|print=|sessionid|utm_)", re.I)
 

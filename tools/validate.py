@@ -413,6 +413,35 @@ def check_activation_hygiene(skills, r):
                          "component; consider naming audit-orchestrator or the "
                          "evidence bundle so it never activates on its own")
 
+STALE_STATUS_PHRASES = ("not yet implemented", "is the remaining work",
+                        "see docs/todo/", "scaffold")
+
+
+def check_status_matches_prose(skills, r):
+    """A skill marked complete must not tell the agent it is unfinished.
+
+    Two skills shipped with `status: complete` in the manifest while their
+    SKILL.md still carried the scaffold notice: "Status: not yet implemented ...
+    scripts/check_render.py is the remaining work." Every script gate was green
+    because the script existed. But SKILL.md is what the AGENT reads, and an
+    agent told the script does not exist may skip the stage or report it as
+    unavailable. The prose has to agree with the manifest.
+    """
+    for entry in skills:
+        if entry.get("status") != "complete":
+            continue
+        folder = os.path.join(MARKET, (entry.get("path") or "").replace("/", os.sep))
+        skill_md = os.path.join(folder, "SKILL.md")
+        if not os.path.exists(skill_md):
+            continue
+        body = io.open(skill_md, encoding="utf-8").read().lower()
+        for phrase in STALE_STATUS_PHRASES:
+            if phrase in body:
+                r.error(entry.get("id", "?"),
+                        f"manifest says complete but SKILL.md still says "
+                        f"{phrase!r} -- the agent reads SKILL.md, fix the prose")
+                break
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -433,6 +462,7 @@ def main(argv=None) -> int:
 
     check_subskill_table(skills, r)
     check_activation_hygiene(skills, r)
+    check_status_matches_prose(skills, r)
     check_stdlib_only(r)
     check_determinism(r)
 

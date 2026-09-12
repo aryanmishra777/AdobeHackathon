@@ -92,7 +92,13 @@ CATEGORY_NOUN_RE = re.compile(
     r"manufacturer|maker|supplier|provider|consultancy|consultant|charity|"
     r"nonprofit|non-profit|foundation|institute|school|university|college|clinic|"
     r"practice|restaurant|cafe|bakery|brewery|distillery|retailer|wholesaler|"
-    r"boutique|magazine|newspaper|network|collective|cooperative|co-op)\b", re.I)
+    r"boutique|magazine|newspaper|network|collective|cooperative|co-op|"
+    # media, publishing and the generic nouns real About pages actually use.
+    # The list above grew from the coffee-roaster fixture; vox.com's "general
+    # interest news outlet" matched none of it.
+    r"outlet|publication|media|news|site|website|blog|journal|broadcaster|"
+    r"organization|organisation|business|group|team|project|library|archive|"
+    r"lab|laboratory|initiative|programme|program|association)\b", re.I)
 LOCATION_RE = re.compile(
     r"\b(based in|located in|headquartered in|operating (?:from|out of)|"
     r"serving|founded in)\b"
@@ -778,6 +784,17 @@ def check_trust_005(b: Bundle) -> list:
         ex = b.extracted(p["page_id"])
         text = b.page_text(p["page_id"])
         reasons = []
+        # Guard: a dated article is anchored by its date. A 2017 piece that is
+        # clearly dated 2017 and says "this year" is internally consistent --
+        # the reader and the machine both see the date -- and archived
+        # reporting is not required to be rewritten. The contradiction this
+        # check exists for is a page that presents itself as CURRENT (pricing,
+        # product, about, home) while carrying stale time-relative claims.
+        # vox.com produced three false positives on correctly dated archives.
+        if p.get("page_type") == "article" and any(
+                d.get("source") in ("time-element", "visible-text", "jsonld")
+                for d in (ex.get("dates") or [])):
+            continue
         if ref_year and CURRENCY_LANGUAGE_RE.search(text):
             yrs = [_year(d.get("value")) for d in ex.get("dates") or []
                    if d.get("source") in ("time-element", "visible-text")]
@@ -858,6 +875,21 @@ def check_trust_008(b: Bundle) -> list:
             if (_has_brand(sent, phrases) and CATEGORY_NOUN_RE.search(sent)
                     and LOCATION_RE.search(sent)):
                 return []  # an unambiguous identity sentence exists
+    # Guard: an Organization's JSON-LD `description` is an identity sentence in
+    # the one place a machine reads first. vox.com carries "Vox is a general
+    # interest news outlet founded in 2014 with a focus on explanatory
+    # journalism" in NewsMediaOrganization markup on its home page; checking
+    # only visible prose called that site unidentified.
+    for p in b.content_pages:
+        for block in (b.extracted(p["page_id"]).get("jsonld") or []):
+            val = block.get("value") if isinstance(block, dict) else None
+            if not isinstance(val, dict):
+                continue
+            if "Organization" not in str(val.get("@type", "")):
+                continue
+            desc = str(val.get("description") or "")
+            if _has_brand(desc, phrases) and CATEGORY_NOUN_RE.search(desc):
+                return []  # identity stated in machine-readable markup
     home = next((p for p in b.content_pages if p.get("page_type") == "home"),
                b.content_pages[0])
     excerpt = re.sub(r"\s+", " ", b.page_text(home["page_id"])[:220]).strip()
