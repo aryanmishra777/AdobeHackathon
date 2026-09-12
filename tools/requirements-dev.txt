@@ -4,3 +4,15 @@ pytest>=8.0
 # brand-ai-readiness-audit/requirements-optional.txt); the tests exercise both paths.
 playwright>=1.45
 beautifulsoup4>=4.12
+brotli>=1.1
+zstandard>=0.22
+trafilatura>=2.0
+protego>=0.3
+pysbd>=0.3
+dateparser>=1.2
+json5>=0.9
+phonenumbers>=8.13
+ftfy>=6.1
+tldextract>=5.1
+rapidfuzz>=3.5
+langdetect>=1.0.9

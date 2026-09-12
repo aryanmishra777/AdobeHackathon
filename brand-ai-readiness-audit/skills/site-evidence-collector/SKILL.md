@@ -15,9 +15,9 @@ license: MIT
 compatibility: >-
   Requires Python 3.9+ (standard library only) and outbound HTTPS access to the
   audited site. No browser or rendering engine is required. Optional extras,
-  never required: Playwright (auto-detected; renders a sample of pages so
-  READ-001 becomes a measurement) and BeautifulSoup (cross-checks the extractor).
-  See requirements-optional.txt at the marketplace root.
+  auto-detected and never required: Playwright (renders a sample so READ-001 is
+  measured), BeautifulSoup, brotli/zstandard, trafilatura, protego, pysbd,
+  dateparser, json5. See requirements-optional.txt; run.json#extras records use.
 allowed-tools: Bash Read Write
 metadata:
   marketplace: brand-ai-readiness-audit

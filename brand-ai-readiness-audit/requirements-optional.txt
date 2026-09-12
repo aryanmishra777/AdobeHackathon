@@ -1,20 +1,55 @@
 # Optional extras. NOTHING here is required: every script runs on a bare
-# Python 3.9+ install and every check degrades to the documented inference
-# path when these are absent. Install them to turn two inferences into
-# measurements:
-#
-#   playwright      site-evidence-collector renders a sample of pages after
-#                   the crawl (--renderer auto, --render-pages 6), so READ-001
-#                   reports a measured raw-versus-rendered delta instead of an
-#                   inference from raw-HTML signals.
-#                   Needs a browser build too:  python -m playwright install chromium
-#                   (downloads ~150 MB; a sandbox without network cannot, and
-#                   falls back cleanly).
-#   beautifulsoup4  the collector cross-checks its own extraction (title,
-#                   links, robots meta, h1 count) and writes
-#                   pages/<id>/extract_diff.json only where the two disagree.
-#                   The stdlib parser remains the record.
+# Python 3.9+ install and every check has a documented stdlib path. Each
+# library is imported behind a guard at exactly one call site, and what was
+# used is written to run.json#extras so a report can say so. The bench and the
+# fixture bundles measure the bare path.
 #
 #   pip install -r requirements-optional.txt && python -m playwright install chromium
+#
+# Collector (site-evidence-collector)
+#   playwright       renders a six-page sample after the crawl so READ-001 is a
+#                    measured raw-versus-rendered delta, not an inference.
+#                    Needs a browser build (python -m playwright install chromium,
+#                    ~150 MB, needs network); without it, inference.
+#   beautifulsoup4   cross-checks the extractor (title, links, robots meta, h1)
+#                    and writes pages/<id>/extract_diff.json only on disagreement.
+#   brotli, zstandard
+#                    decode Brotli/zstd response bodies; without them a site that
+#                    insists on those encodings is recorded as undecodable.
+#   trafilatura      boilerplate-free main text (text.main_clean); on prose
+#                    pages the chunker cuts from it (chunks.json#chunk_source).
+#   protego          Google-spec robots.txt parser as a second opinion on every
+#                    allow decision; the stricter answer wins (robots.crosscheck).
+#   pysbd            sentence boundaries for chunk cuts and claim analysis.
+#   dateparser       date phrases the three-shape regex cannot read
+#                    ("7th September, 2026 11:59 PM"), dates[].source
+#                    visible-text-parsed; feeds TRUST-001/003/005.
+#   json5            recovers a JSON-LD block the strict parser rejects
+#                    (trailing comma) so property checks still read it;
+#                    parsed_ok stays false and PARSE-002 still reports it.
+# Analyzers
+#   phonenumbers     TRUST-010 uses libphonenumber with a region from the ccTLD;
+#                    size runs and year ranges never parse as numbers.
+#   ftfy             READ-016 mojibake detection by repair, not by regex.
+#   tldextract       registrable-domain comparison for REACH-010/011.
+#   rapidfuzz        token-set similarity for PARSE-010 title-vs-h1 and
+#                    QUOTE-010 name variants.
+#   langdetect       declared-versus-detected language sentence in READ-016.
+#
+# Not adopted: spaCy (model weights, ~1 s/page; the handout forbids weights in
+# the zip), extruct (JSON-LD parsing is fine; microdata/RDFa are rare), lxml
+# (marginal over html.parser).
 playwright>=1.45
 beautifulsoup4>=4.12
+brotli>=1.1
+zstandard>=0.22
+trafilatura>=2.0
+protego>=0.3
+pysbd>=0.3
+dateparser>=1.2
+json5>=0.9
+phonenumbers>=8.13
+ftfy>=6.1
+tldextract>=5.1
+rapidfuzz>=3.5
+langdetect>=1.0.9

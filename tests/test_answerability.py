@@ -303,7 +303,7 @@ def test_quote_010_treats_a_handle_as_the_same_name():
     handle, not a second name for the organisation."""
     mod = _quote_module()
     src = open(CHECK_QUOTE, encoding="utf-8").read()
-    assert "squash(n) in squash(other)" in src
+    assert "squash(x) in squash(y)" in src
     assert mod._norm_name("boAt Lifestyle") == "boat lifestyle"
 
 

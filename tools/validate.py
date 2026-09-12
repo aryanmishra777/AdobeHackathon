@@ -59,6 +59,7 @@ STDLIB_OK = {
     "socket", "ssl", "statistics", "string", "subprocess", "sys", "textwrap",
     "threading", "time", "traceback", "types", "typing", "unicodedata",
     "urllib", "uuid", "warnings", "xml", "zipfile", "zlib", "__future__",
+    "importlib",
 }
 
 # Non-determinism in an analysis script means two runs over one bundle can
@@ -234,7 +235,9 @@ def check_registry(skill_dir, entry, r, seen_ids):
 # Optional extras declared in brand-ai-readiness-audit/requirements-optional.txt.
 # They may be imported only inside a try/except that survives their absence, so
 # a bare Python install still runs every script; the validator checks that.
-OPTIONAL_OK = {"playwright", "bs4"}
+OPTIONAL_OK = {"playwright", "bs4", "brotli", "zstandard", "trafilatura", "protego", "pysbd",
+               "dateparser", "phonenumbers", "ftfy", "tldextract", "rapidfuzz", "json5",
+               "langdetect"}
 
 
 def _guarded_import_lines(tree) -> set:

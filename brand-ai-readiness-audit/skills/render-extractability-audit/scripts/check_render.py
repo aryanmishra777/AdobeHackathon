@@ -34,6 +34,20 @@ import time
 from urllib.parse import urlparse
 
 MECHANISM = "read"
+
+# Optional libraries (requirements-optional.txt at the marketplace root):
+# imported behind a guard at the call site, cached here, never required.
+_OPTIONAL: dict = {}
+
+
+def _optional(name: str):
+    if name not in _OPTIONAL:
+        try:
+            import importlib
+            _OPTIONAL[name] = importlib.import_module(name)
+        except Exception:
+            _OPTIONAL[name] = None
+    return _OPTIONAL[name]
 CATEGORY = "discoverability"
 
 # Utility paths exempt from content authentication / paywall checks
@@ -1553,6 +1567,38 @@ def check_read_015(b: Bundle) -> list[dict]:
     )]
 
 
+def _looks_mojibake(text: str) -> bool:
+    """With ftfy installed, mojibake is whatever fix_text changes (three or
+    more characters in the first 20 KB); the regex of common UTF-8-as-cp1252
+    sequences is the fallback."""
+    ftfy = _optional("ftfy")
+    sample = (text or "")[:20000]
+    if ftfy is not None:
+        try:
+            fixed = ftfy.fix_text(sample, normalization=None, uncurl_quotes=False,
+                                  fix_latin_ligatures=False, fix_character_width=False)
+            if fixed != sample:
+                changed = sum(1 for x, y in zip(sample, fixed) if x != y) + abs(len(sample) - len(fixed))
+                return changed >= 3
+            return False
+        except Exception:
+            pass
+    return bool(MOJIBAKE_PATTERN.search(sample))
+
+
+def _detect_language(text: str):
+    """ISO 639-1 code langdetect assigns to the first 3,000 characters of a
+    page with at least 200 words, or None. Seeded for determinism."""
+    ld = _optional("langdetect")
+    if ld is None or len((text or "").split()) < 200:
+        return None
+    try:
+        ld.DetectorFactory.seed = 0
+        return ld.detect(text[:3000]).split("-")[0].lower()
+    except Exception:
+        return None
+
+
 def check_read_016(b: Bundle) -> list[dict]:
     """Character encoding or language is undeclared or wrong.
 
@@ -1564,6 +1610,7 @@ def check_read_016(b: Bundle) -> list[dict]:
     """
     no_charset = []
     no_lang = []
+    lang_mismatch = []
     mojibake_pages = []
 
     for page in b.ok_pages:
@@ -1582,10 +1629,17 @@ def check_read_016(b: Bundle) -> list[dict]:
         lang = ext.get("lang")
         if not lang or not lang.strip():
             no_lang.append(page)
+        elif _optional("langdetect") is not None:
+            # With langdetect present, a declared language the text does not
+            # match is worth a sentence (never its own finding): lang="en"
+            # over a German page misroutes it for every language-aware reader.
+            detected = _detect_language((ext.get("text") or {}).get("main") or "")
+            if detected and detected != lang.strip().split("-")[0].lower():
+                lang_mismatch.append((page, lang.strip(), detected))
 
         # Check for mojibake in visible text
         full_text = (ext.get("text") or {}).get("full") or ""
-        if MOJIBAKE_PATTERN.search(full_text):
+        if _looks_mojibake(full_text):
             mojibake_pages.append(page)
 
     out = []
@@ -1616,17 +1670,21 @@ def check_read_016(b: Bundle) -> list[dict]:
             )
         ))
 
-    if no_charset or no_lang:
-        affected_set = {p["url"] for p in (no_charset + no_lang)}
+    if no_charset or no_lang or lang_mismatch:
+        mismatched_pages = [t[0] for t in lang_mismatch]
+        affected_set = {p["url"] for p in (no_charset + no_lang + mismatched_pages)}
         urls = sorted(list(affected_set))
-        first_page = (no_charset or no_lang)[0]
-        refs = [f"pages/{p['page_id']}/extracted.json" for p in (no_charset or no_lang)[:5]]
+        first_page = (no_charset or no_lang or mismatched_pages)[0]
+        refs = [f"pages/{p['page_id']}/extracted.json" for p in (no_charset or no_lang or mismatched_pages)[:5]]
 
         out.append(finding(
             "READ-016",
             "Character encoding or language is undeclared",
             "low",
-            f"{len(no_charset)} pages declare no charset in headers or meta; {len(no_lang)} pages declare no lang attribute.",
+            f"{len(no_charset)} pages declare no charset in headers or meta; {len(no_lang)} pages declare no lang attribute."
+            + (f" On {len(lang_mismatch)} page(s) the declared language does not match the text "
+               f"(e.g. {lang_mismatch[0][0]['url']} declares {lang_mismatch[0][1]!r}, reads as "
+               f"{lang_mismatch[0][2]!r})." if lang_mismatch else ""),
             refs,
             pages=urls,
             counts={"no_charset": len(no_charset), "no_lang": len(no_lang)},

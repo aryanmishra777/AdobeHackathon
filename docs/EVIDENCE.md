@@ -234,3 +234,12 @@ trustworthy. These belong in `coverage.limitations` on every report.
 Five of seven are outside any site crawl. That is not a defect in the tool; it is
 the honest boundary of what auditing one website can tell you, and saying so is
 worth more than a confident number.
+
+## Chunk source
+
+With trafilatura installed the collector chunks prose pages from its
+boilerplate-free extraction (the input most retrieval pipelines actually see);
+without it, from the stdlib main text. `chunks.json#chunk_source` records which.
+The stdlib chunker is the floor every machine gets; product, category, pricing
+and home pages always use it, because a boilerplate extractor discards the
+grids and boxes that carry their facts.

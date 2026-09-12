@@ -20,7 +20,7 @@ this repo is the harness that proves it works.
 |---|---|
 | **`brand-ai-readiness-audit/`** | **THE SUBMISSION.** `marketplace.json` + 8 skills. This is the only directory that gets zipped. |
 | `bench/` | 85 real-site candidates → 64 measured corpus entries across the SEO×GEO quadrants, plus the live/replay runner. |
-| `tests/` | 7 local fixture sites, the bundles built from them, and 369 pytest assertions. |
+| `tests/` | 7 local fixture sites, the bundles built from them, and 385 pytest assertions. |
 | `tools/` | `validate.py`, `package.py`, `check_coverage.py`, `run_audit.py`, `install_local.py`. |
 | `docs/` | `EVIDENCE.md` (what the literature supports, and what it doesn't), `ADOBE-BRAND-VISIBILITY.md` (how our checks map to Adobe's own product), `ROLES.md`, `CONTRIBUTING.md`, `todo/`. |
 | `TODO.md` | Who builds what, in what order. Index into `docs/todo/`. |
@@ -47,12 +47,15 @@ pure functions over that bundle. That gives determinism, no re-fetching a site
 six times, and every safety guardrail auditable in a single folder.
 
 Everything inside the zip runs on **stdlib-only Python** — no `requests`, no
-model weights. A check that always runs beats a stronger check that can't. Two
+model weights. A check that always runs beats a stronger check that can't. Fourteen
 *optional* extras (`brand-ai-readiness-audit/requirements-optional.txt`) are
-auto-detected and never required: Playwright renders a six-page sample so the
-JS-rendering check becomes a measurement, and BeautifulSoup cross-checks the
-extractor and records disagreements. Without them the behaviour is exactly the
-stdlib path, which is what the bench and the fixture bundles measure.
+auto-detected and never required -- Playwright renders a six-page sample so the
+JS-rendering check becomes a measurement, protego gives the robots.txt guardrail
+a second opinion where the stricter answer wins, trafilatura strips boilerplate
+before chunking, dateparser and phonenumbers read dates and phone numbers
+properly, and so on -- each imported behind a guard at one call site and each
+recorded in `run.json#extras` when used. Without them the behaviour is exactly
+the stdlib path, which is what the bench and the fixture bundles measure.
 
 ## Status
 
@@ -84,7 +87,7 @@ pip install -r tools/requirements-dev.txt   # dev tooling only, never shipped
 python tests/make_fixtures.py               # build the local test websites
 python tests/make_bundles.py                # crawl them into evidence bundles
 
-python -m pytest tests/ -q                  # expect: 369 passed
+python -m pytest tests/ -q                  # expect: 385 passed
 python tools/validate.py                    # expect: PASS (0 TODOs)
 python tools/package.py                     # builds dist/ and checks the 50 MB ceiling
 python tools/check_coverage.py              # find checks that never fire anywhere

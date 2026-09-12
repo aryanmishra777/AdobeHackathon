@@ -181,18 +181,30 @@ that cannot, so every script runs on a bare install and every check has a
 documented fallback. Two extras, declared in `requirements-optional.txt`, turn
 inferences into measurements when they happen to be present:
 
-- **Playwright** — the collector auto-detects it (`--renderer auto`, the
-  default) and renders a sample of pages after the crawl (`--render-pages 6`:
-  the seed page plus the thinnest ones). The READ stage then reports a measured
-  raw-versus-rendered delta for those pages and says which pages were inferred.
-  `--renderer none` disables it; any other value is a command that prints
-  rendered HTML for a URL.
-- **BeautifulSoup** — the collector cross-checks its own extraction against a
-  tree parser and writes `pages/<id>/extract_diff.json` only where they
-  disagree. The stdlib parser stays the record.
+| Library | Where | What it adds | Without it |
+|---|---|---|---|
+| Playwright | collector | renders a six-page sample (`--renderer auto`, `--render-pages 6`); READ-001 becomes a measured raw-versus-rendered delta | inference from raw-HTML signals, so labelled |
+| BeautifulSoup | collector | second opinion on title, links, robots meta, h1; `extract_diff.json` only on disagreement | no cross-check |
+| brotli, zstandard | collector | decodes `br`/`zstd` bodies | such a site is recorded as undecodable, never analysed as mojibake |
+| trafilatura | collector | boilerplate-free `text.main_clean`; on prose pages the chunker cuts from it (`chunks.json#chunk_source`) | chunks from the stdlib main text |
+| protego | collector | Google-spec robots.txt parser as a second opinion on every allow decision; the stricter answer wins, disagreements in `robots.crosscheck` | our parser alone |
+| pysbd | collector, TRUST | sentence boundaries that know "U.S." and "Inc." | a punctuation regex |
+| dateparser | collector | date phrases the regex cannot read ("7th September, 2026"), `dates[].source = visible-text-parsed`; TRUST-005 can see an expired offer | three date shapes |
+| json5 | collector | recovers a JSON-LD block the strict parser rejects so property checks still read it; PARSE-002 still reports the failure | the block is opaque |
+| phonenumbers | TRUST-010 | libphonenumber with a region from the ccTLD | a digit regex with guards |
+| ftfy | READ-016 | mojibake detected by repair | a regex of common sequences |
+| tldextract | REACH-010/011 | registrable-domain comparison | hosts minus `www.` |
+| rapidfuzz | PARSE-010, QUOTE-010 | token-set similarity for title-vs-h1 and name variants | containment and token overlap |
+| langdetect | READ-016 | declared-versus-detected language | not checked |
 
-A sandbox without either gets exactly the stdlib behaviour, and the bundle says
-so (`run.json#renderer.available`, `coverage.json#extractor_disagreements`).
+Every one is imported behind a guard at a single call site; `tools/validate.py`
+refuses an unguarded import of any of them. What a run actually used is written
+to `run.json#extras`, so the report can say "dates parsed by dateparser 1.4".
+A sandbox with none of them gets exactly the stdlib behaviour, and the bundle
+says so (`run.json#renderer.available`, `coverage.json#extractor_disagreements`,
+`run.json#extras`). Not adopted: spaCy (model weights, slow; the handout forbids
+weights in the zip), extruct (JSON-LD parsing is fine; microdata/RDFa are rare),
+lxml (marginal over html.parser).
 
 - Read-only: `GET` and `HEAD` only. Never authenticates, never submits a form.
 - Respects `robots.txt`, including for its own crawl.

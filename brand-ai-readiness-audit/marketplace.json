@@ -23,7 +23,14 @@
       "owner": "aryan",
       "optional_dependencies": [
         "playwright",
-        "beautifulsoup4"
+        "beautifulsoup4",
+        "brotli",
+        "zstandard",
+        "trafilatura",
+        "protego",
+        "pysbd",
+        "dateparser",
+        "json5"
       ]
     },
     {
@@ -32,7 +39,10 @@
       "concern": "reach",
       "summary": "Can a machine get in at all? robots.txt per AI user-agent, CDN bot-blocking, sitemaps, indexability directives, canonicals, redirects, reachability.",
       "status": "complete",
-      "owner": "aryan"
+      "owner": "aryan",
+      "optional_dependencies": [
+        "tldextract"
+      ]
     },
     {
       "id": "render-extractability-audit",
@@ -40,7 +50,11 @@
       "concern": "read",
       "summary": "Can a machine read what is there? JS-dependent content, facts locked in images or PDFs, content behind interaction or consent walls, semantic structure.",
       "status": "complete",
-      "owner": "lakshay"
+      "owner": "lakshay",
+      "optional_dependencies": [
+        "ftfy",
+        "langdetect"
+      ]
     },
     {
       "id": "structured-data-audit",
@@ -48,7 +62,10 @@
       "concern": "parse",
       "summary": "Can a machine parse specific facts out? schema.org coverage and validity, required properties by type, entity graph, and markup that contradicts the visible page.",
       "status": "complete",
-      "owner": "lakshay"
+      "owner": "lakshay",
+      "optional_dependencies": [
+        "rapidfuzz"
+      ]
     },
     {
       "id": "answerability-audit",
@@ -56,7 +73,10 @@
       "concern": "quote",
       "summary": "Can a machine lift a clear, self-contained fact? Chunk-level retrieval simulation, explicit identity and key-fact statements, and coverage of the questions buyers actually ask.",
       "status": "complete",
-      "owner": "mayank"
+      "owner": "mayank",
+      "optional_dependencies": [
+        "rapidfuzz"
+      ]
     },
     {
       "id": "freshness-corroboration-audit",
@@ -64,7 +84,11 @@
       "concern": "trust",
       "summary": "Will a machine believe and repeat the fact? Content recency and date honesty, off-site corroboration of key claims, brand entity ambiguity, and identity anchors.",
       "status": "complete",
-      "owner": "mayank"
+      "owner": "mayank",
+      "optional_dependencies": [
+        "phonenumbers",
+        "pysbd"
+      ]
     },
     {
       "id": "engagement-audit",

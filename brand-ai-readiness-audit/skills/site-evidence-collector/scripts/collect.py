@@ -276,6 +276,49 @@ class _Redirects(request.HTTPRedirectHandler):
 
 
 UNDECODABLE_ENCODINGS = ("br", "zstd")
+# "[17]", "[a]", "[note 3]", "[citation needed]" -- Wikipedia-style footnote markers
+CITATION_MARKER_RE = re.compile(r"\[\s*(?:\d+|[a-z]|note \d+|citation needed)\s*\]", re.I)
+# Page types whose main text is prose, where a boilerplate extractor's reading
+# is the better chunk source. Product, category, pricing and home pages carry
+# their facts in grids and boxes that such extractors discard.
+PROSE_PAGE_TYPES = {"article", "docs", "about", "faq", "legal", "other", "contact"}
+
+# Optional libraries (requirements-optional.txt). Each is imported behind a
+# guard at its single call site; what was actually used is recorded here and
+# written to run.json#extras so the report can say so. A bare install takes
+# the stdlib branch everywhere.
+_EXTRAS_USED: dict = {}
+
+
+def _optional(name: str):
+    """The module, or None. Cached per process; never raises."""
+    if name not in _EXTRAS_USED:
+        try:
+            import importlib
+            _EXTRAS_USED[name] = importlib.import_module(name)
+        except Exception:
+            _EXTRAS_USED[name] = None
+    return _EXTRAS_USED[name]
+
+
+_EXTRAS_NOTED: dict = {}
+
+
+def _note_extra(name: str, used_for: str) -> None:
+    _EXTRAS_NOTED.setdefault((name, used_for), True)
+
+
+def _extras_report() -> list:
+    out = []
+    for (name, used_for) in sorted(_EXTRAS_NOTED):
+        ver = None
+        try:
+            from importlib import metadata
+            ver = metadata.version({"brotli": "Brotli", "protego": "Protego"}.get(name, name))
+        except Exception:
+            pass
+        out.append({"name": name, "version": ver, "used_for": used_for})
+    return out
 
 
 def fetch(url: str, ua: str = AUDIT_UA, timeout: float = 10.0,
@@ -299,7 +342,8 @@ def fetch(url: str, ua: str = AUDIT_UA, timeout: float = 10.0,
             # eighty kilobytes of mojibake that every analyzer then read as
             # text. Ask once more for an identity body; if the server insists,
             # the fetch is an error, never a page.
-            if any(e in enc for e in UNDECODABLE_ENCODINGS):
+            if any(e in enc for e in UNDECODABLE_ENCODINGS) and not (
+                    ("br" in enc and _optional("brotli")) or ("zstd" in enc and _optional("zstandard"))):
                 if accept_encoding != "identity":
                     return fetch(url, ua, timeout, max_bytes, method, "identity")
                 return Fetched(url=url, final_url=resp.geturl(), status=resp.status,
@@ -344,6 +388,15 @@ def _decode_body(raw: bytes, headers) -> str:
             raw = gzip.decompress(raw)
         elif "deflate" in enc:
             raw = zlib.decompress(raw, -zlib.MAX_WBITS)
+        elif "br" in enc and _optional("brotli"):
+            # berkshirehathaway.com insists on Brotli whatever we accept; with
+            # the optional decoder it is a page, without it an error, never
+            # eighty kilobytes of mojibake analysed as text.
+            raw = _optional("brotli").decompress(raw)
+            _note_extra("brotli", "decoded a Brotli-encoded response body")
+        elif "zstd" in enc and _optional("zstandard"):
+            raw = _optional("zstandard").ZstdDecompressor().decompressobj().decompress(raw)
+            _note_extra("zstandard", "decoded a zstd-encoded response body")
     except Exception:
         pass  # truncated compressed body; fall through with what we have
     charset = None
@@ -722,11 +775,38 @@ def extract_page(page_id: str, url: str, html: str, origin: str) -> dict:
             entry["parsed_ok"] = True
         except json.JSONDecodeError as exc:
             entry["parse_error"] = str(exc)
+            # A trailing comma (boat-lifestyle.com) fails the strict parser
+            # every consumer uses; PARSE-002 reports that. With json5 present
+            # the block is also recovered so the property checks can still
+            # read what the site meant. parsed_ok stays False.
+            if _optional("json5"):
+                try:
+                    entry["value"] = _optional("json5").loads(raw)
+                    entry["parsed_with"] = "json5"
+                    _note_extra("json5", "recovered a JSON-LD block the strict parser rejected")
+                except Exception:
+                    pass
         jsonld.append(entry)
 
     full_text = parser.full_text
     main_text = parser.main_text
     markup_len = max(len(html), 1)
+    # A boilerplate-free reading of the page, when trafilatura is installed:
+    # no navboxes, filter panels, citation markers or authoring tokens. The
+    # chunker prefers it when it agrees with our main text on scale.
+    main_clean = None
+    if _optional("trafilatura"):
+        try:
+            main_clean = _optional("trafilatura").extract(
+                html, url=url, include_tables=True, include_links=False,
+                include_comments=False, favor_recall=True, output_format="txt") or None
+            if main_clean:
+                # footnote markers survive extraction; a retriever's chunk
+                # should not carry "[17]" between sentences
+                main_clean = _collapse(CITATION_MARKER_RE.sub(" ", main_clean))
+                _note_extra("trafilatura", "boilerplate-free main text (text.main_clean)")
+        except Exception:
+            main_clean = None
 
     dates = []
     for dt in parser.time_datetimes:
@@ -748,6 +828,27 @@ def extract_page(page_id: str, url: str, html: str, origin: str) -> dict:
     for m in COPYRIGHT_RE.finditer(full_text):
         dates.append({"value": m.group(0), "iso": f"{m.group(1)}-01-01",
                       "source": "copyright", "field": None})
+    # DATE_RE knows three English shapes. "7th September, 2026 11:59 PM" on
+    # nike.in's offer terms was not one of them, so the expiry was invisible
+    # to TRUST-005. With dateparser present, every date phrase in the first
+    # 20 KB is found and normalised; each carries the phrase it came from.
+    if _optional("dateparser"):
+        try:
+            from dateparser.search import search_dates
+            lang = (parser.lang or "en").split("-")[0].lower()
+            found = search_dates(full_text[:20000], languages=[lang] if len(lang) == 2 else ["en"],
+                                 settings={"STRICT_PARSING": True, "RETURN_AS_TIMEZONE_AWARE": False}) or []
+            seen_iso = {d["iso"] for d in dates if d.get("iso")}
+            for phrase, dt in found:
+                iso = dt.strftime("%Y-%m-%d")
+                if iso in seen_iso or len(phrase.strip()) < 6 or not re.search(r"\d{4}", phrase):
+                    continue
+                seen_iso.add(iso)
+                dates.append({"value": phrase.strip(), "iso": iso,
+                              "source": "visible-text-parsed", "field": None})
+            _note_extra("dateparser", "date phrases in visible text (dates[].source visible-text-parsed)")
+        except Exception:
+            pass
 
     hydration = None
     for marker in ("__NEXT_DATA__", "__NUXT__", "__remixContext", "__sveltekit"):
@@ -783,6 +884,8 @@ def extract_page(page_id: str, url: str, html: str, origin: str) -> dict:
             "word_count": len(full_text.split()),
             "main_word_count": len(main_text.split()),
             "text_to_markup_ratio": round(len(full_text) / markup_len, 4),
+            "main_clean": (main_clean or "")[:200000] if main_clean else None,
+            "main_clean_word_count": len(main_clean.split()) if main_clean else None,
         },
         "noscript": parser.noscript,
         "render_signals": {
@@ -903,6 +1006,19 @@ def chunk_page(extracted: dict, target_words: int = CHUNK_TARGET_WORDS,
     with a target window. Attach the deterministic signals answerability-audit
     reasons over. The script counts; the model judges."""
     text = extracted["text"]["main"] or extracted["text"]["full"]
+    chunk_source = "stdlib"
+    clean = (extracted.get("text") or {}).get("main_clean")
+    ptype = classify_page_type(extracted.get("url") or "", extracted)
+    if (clean and ptype in PROSE_PAGE_TYPES
+            and len(clean.split()) >= 0.6 * max(1, len(text.split()))):
+        # trafilatura's reading, on prose pages, when it kept at least 60% of
+        # what our extractor called main text: the passages a retriever
+        # would see, without the chrome. It is tuned for articles; on a
+        # product or category page it drops the price, the seller block and
+        # the product grid -- the facts the QUOTE and TRUST checks need -- so
+        # those keep our text. Below the ratio it dropped real content.
+        text = clean
+        chunk_source = "trafilatura"
     headings = [h["text"] for h in extracted.get("headings", []) if h.get("text")]
 
     segments: list[tuple[list[str], str]] = []
@@ -946,7 +1062,24 @@ def chunk_page(extracted: dict, target_words: int = CHUNK_TARGET_WORDS,
         pieces = []
         if len(words) <= max_words:
             pieces.append(words)
-        else:
+        elif _optional("pysbd"):
+            # A rule-based segmenter knows "U.S.", "Inc." and "e.g." are not
+            # sentence ends; pack whole sentences up to the target.
+            try:
+                seg = _optional("pysbd").Segmenter(language="en", clean=False)
+                cur: list = []
+                for sent in seg.segment(body):
+                    sw = sent.split()
+                    if cur and len(cur) + len(sw) > target_words:
+                        pieces.append(cur)
+                        cur = []
+                    cur.extend(sw)
+                if cur:
+                    pieces.append(cur)
+                _note_extra("pysbd", "sentence boundaries for chunk cuts")
+            except Exception:
+                pieces = []
+        if not pieces:
             start = 0
             while start < len(words):
                 end = min(start + target_words, len(words))
@@ -971,6 +1104,7 @@ def chunk_page(extracted: dict, target_words: int = CHUNK_TARGET_WORDS,
             })
 
     return {
+        "chunk_source": chunk_source,
         "page_id": extracted["page_id"],
         "strategy": f"heading-boundary, target {target_words} words, max {max_words}, no overlap",
         "chunks": chunks,
@@ -1209,6 +1343,8 @@ class Collector:
         self.skipped: list[dict] = []
         self.seen_final: dict[str, str] = {}
         self.seen_canonical: dict[str, str] = {}   # canonical URL -> page_id already sampled
+        self.protego = None
+        self.robots_disagreements: list[str] = []
         self.pages: list[dict] = []
         self.robots_groups: list[RobotsGroup] = []
         self.our_group = None
@@ -1329,6 +1465,26 @@ class Collector:
             _, self.our_group = match_group(groups, "BrandAIReadinessAudit")
             if self.our_group and self.our_group.crawl_delay:
                 self.delay = max(self.delay, self.our_group.crawl_delay)
+            # Second opinion on the guardrail. Protego implements Google's
+            # robots.txt specification; where it and our parser disagree on a
+            # URL the stricter answer wins (see allowed()), and the
+            # per-agent matrix records both readings of the root.
+            self.protego = None
+            if _optional("protego"):
+                try:
+                    self.protego = _optional("protego").Protego.parse(r.body)
+                    _note_extra("protego", "second opinion on every robots.txt decision; stricter answer wins")
+                    for token, entry in info["agent_matrix"].items():
+                        other = self.protego.can_fetch(origin + "/", token)
+                        if other != entry["root_allowed"]:
+                            entry["root_allowed_protego"] = other
+                            entry["root_allowed"] = entry["root_allowed"] and other
+                            info["crosscheck"] = info.get("crosscheck") or {"disagreements": 0, "examples": []}
+                            info["crosscheck"]["disagreements"] += 1
+                            if len(info["crosscheck"]["examples"]) < 5:
+                                info["crosscheck"]["examples"].append(f"root for {token}: ours={not other}, protego={other}")
+                except Exception:
+                    self.protego = None
         elif r.status is not None and 500 <= r.status < 600:
             # A 5xx robots.txt means "unknown", not "allowed". Back off.
             info["parse_errors"].append(
@@ -1347,7 +1503,16 @@ class Collector:
         # this crawler fetch 21 URLs nike.in had explicitly disallowed.
         u = urlparse(url)
         target = (u.path or "/") + (("?" + u.query) if u.query else "")
-        return robots_allows(self.our_group, target)
+        ours = robots_allows(self.our_group, target)
+        if getattr(self, "protego", None) is not None:
+            try:
+                theirs = self.protego.can_fetch(url, "BrandAIReadinessAudit")
+            except Exception:
+                return ours
+            if theirs != ours:
+                self.robots_disagreements.append(f"{target}: ours={ours}, protego={theirs}")
+                return ours and theirs   # the stricter reading wins on the guardrail
+        return ours
 
     # -- sitemaps ----------------------------------------------------------
     def load_sitemaps(self, origin: str, declared: list[str]) -> list[dict]:
@@ -1743,6 +1908,11 @@ class Collector:
 
         run_doc["renderer"]["pages_rendered"] = len(self.rendered)
         run_doc["renderer"]["pages_attempted"] = self.render_attempted
+        run_doc["extras"] = _extras_report()
+        if self.robots_disagreements:
+            cc = robots_info.setdefault("crosscheck", {"disagreements": 0, "examples": []})
+            cc["disagreements"] += len(self.robots_disagreements)
+            cc["examples"] = (cc["examples"] + self.robots_disagreements)[:5]
         run_doc["finished_at"] = now_iso()
         _write_json(os.path.join(self.out, "run.json"), run_doc)
         _write_json(os.path.join(self.out, "ua_probe.json"), probe)

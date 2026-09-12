@@ -308,3 +308,11 @@ def test_trust_015_treats_footnotes_and_a_reference_apparatus_as_attribution():
     assert mod.CITATION_MARK_RE.search("plant-based. [12]")
     assert not mod.CITATION_MARK_RE.match("The stadiums served 40% plant-based food.")
 
+
+
+def test_trust_010_compares_each_pages_first_number_only():
+    """nike.in's terms page lists customer care (1800-210-0202) and then a
+    grievance officer (1800 266 3333): two roles, not two versions of one
+    fact. Only a page's first number is its contact."""
+    src = open(CHECK_TRUST, encoding="utf-8").read()
+    assert "for m in found[:1]:" in src

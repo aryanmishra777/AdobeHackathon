@@ -35,6 +35,20 @@ import time
 from urllib.parse import urlparse
 
 MECHANISM = "reach"
+
+# Optional libraries (requirements-optional.txt at the marketplace root):
+# imported behind a guard at the call site, cached here, never required.
+_OPTIONAL: dict = {}
+
+
+def _optional(name: str):
+    if name not in _OPTIONAL:
+        try:
+            import importlib
+            _OPTIONAL[name] = importlib.import_module(name)
+        except Exception:
+            _OPTIONAL[name] = None
+    return _OPTIONAL[name]
 CATEGORY = "discoverability"
 
 RETRIEVAL_PURPOSES = {"retrieval", "search-index"}
@@ -683,6 +697,25 @@ def check_reach_009(b: Bundle) -> list[dict]:
                    owner="engineering"))]
 
 
+def _same_site(host_a: str, host_b: str) -> bool:
+    """Whether two hosts belong to one site. With tldextract installed this
+    is the registrable domain (crunchyroll.com and www.crunchyroll.com are one
+    site; nykaa.com is not nike.in); without it, the hosts minus a leading
+    www. -- which is right for those two and wrong for shop.example.co.uk."""
+    a, b_ = (host_a or "").lower(), (host_b or "").lower()
+    if not a or not b_:
+        return a == b_
+    ext = _optional("tldextract")
+    if ext is not None:
+        try:
+            ea, eb = ext.extract(a), ext.extract(b_)
+            return (ea.domain, ea.suffix) == (eb.domain, eb.suffix)
+        except Exception:
+            pass
+    strip = lambda h: h.split(":")[0][4:] if h.startswith("www.") else h.split(":")[0]
+    return strip(a) == strip(b_)
+
+
 def check_reach_010(b: Bundle) -> list[dict]:
     """Canonical problems."""
     out = []
@@ -698,7 +731,7 @@ def check_reach_010(b: Bundle) -> list[dict]:
             missing.append(page)
             continue
         host = urlparse(canonical).netloc.lower()
-        if host and host != origin_host:
+        if host and not _same_site(host, origin_host):
             cross.append((page, canonical))
         elif canonical.rstrip("/") != (page.get("final_url") or page["url"]).rstrip("/"):
             mismatched.append((page, canonical))

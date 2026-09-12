@@ -14,6 +14,7 @@ capture date. Third-party content, kept only as test input.
 | `adobe-acrobat-pro.html` | merch placeholders and fragment URLs where the price belongs; no `lang` |
 | `adobe-offices.html` | an office directory is many locations, not inconsistent contact details |
 | `adidas-block-page.html` | Akamai's failover 403 must register as a challenge |
+| `boat-product-trailing-comma.html` | a JSON-LD `@graph` with a trailing comma: strict parse fails (PARSE-002), json5 recovers it when installed |
 
 Refresh one with, for example:
 

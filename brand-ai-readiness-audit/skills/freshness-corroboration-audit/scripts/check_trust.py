@@ -46,6 +46,20 @@ from urllib.parse import urlparse
 MECHANISM = "trust"
 CATEGORY = "discoverability"
 
+# Optional libraries (requirements-optional.txt at the marketplace root):
+# imported behind a guard at the call site, cached here, never required.
+_OPTIONAL: dict = {}
+
+
+def _optional(name: str):
+    if name not in _OPTIONAL:
+        try:
+            import importlib
+            _OPTIONAL[name] = importlib.import_module(name)
+        except Exception:
+            _OPTIONAL[name] = None
+    return _OPTIONAL[name]
+
 # Checks that cannot run without a web search / fetch tool. This script has none,
 # so they are always skipped and recorded (checks.yaml, SKILL.md step 3).
 OFFSITE_CHECKS = {
@@ -516,7 +530,7 @@ def _page_any_dates(ex: dict) -> list:
     foundingDate, which say nothing about when the content was written."""
     out = list(_page_structured_dates(ex))
     for d in ex.get("dates") or []:
-        if d.get("source") == "visible-text":
+        if d.get("source") in ("visible-text", "visible-text-parsed"):
             iso = d.get("iso") or _iso(d.get("value"))
             if iso:
                 out.append(iso)
@@ -529,6 +543,12 @@ def _copyright_years(ex: dict) -> list:
 
 
 def _sentences(text: str) -> list:
+    pysbd = _optional("pysbd")
+    if pysbd is not None and text:
+        try:
+            return [s.strip() for s in pysbd.Segmenter(language="en", clean=False).segment(text) if s.strip()]
+        except Exception:
+            pass
     return [s.strip() for s in re.split(r"(?<=[.!?])\s+", text or "") if s.strip()]
 
 
@@ -792,6 +812,37 @@ def check_trust_004(b: Bundle) -> list:
             owner="content"))]
 
 
+VALIDITY_RE = re.compile(
+    r"\b(?:valid|available|offer (?:is )?valid|expires?|ends?|until|through)\s+"
+    r"(?:till|until|through|to|on|by)?\s*(?:the\s+)?(?P<date>[A-Za-z0-9,.' ]{6,40}?)"
+    r"(?=\s*(?:\d{1,2}:\d{2}|[.;!]|\bat\b|$))", re.I)
+
+
+def _expired_validity(ex: dict, text: str, today) -> tuple:
+    """(phrase, iso) when the page states a validity end date that is before
+    the crawl date, else (). Matches the phrase to a parsed date on the page
+    by containment, so it never guesses a date the collector did not find."""
+    if not today:
+        return ()
+    parsed = [(d.get("value") or "", d.get("iso") or "") for d in ex.get("dates") or []
+              if d.get("source") in ("visible-text", "visible-text-parsed") and d.get("iso")]
+    if not parsed:
+        return ()
+    for m in VALIDITY_RE.finditer(text or ""):
+        phrase = m.group(0).strip()
+        for value, iso in parsed:
+            toks = [tk.strip(",.") for tk in value.split()[:3] if tk.strip(",.")]
+            if value and toks and sum(1 for tk in toks if tk in phrase) >= min(2, len(toks)):
+                try:
+                    y, mo, d = (int(x) for x in iso.split("-"))
+                    end = datetime.date(y, mo, d)
+                except Exception:
+                    continue
+                if end < today:
+                    return (phrase, iso)
+    return ()
+
+
 def check_trust_005(b: Bundle) -> list:
     """Page content states facts that are no longer true. Model-judged: the
     script flags an internal date/claim contradiction; the agent confirms it.
@@ -839,6 +890,15 @@ def check_trust_005(b: Bundle) -> list:
         if cm and ref_year and int(cm.group(1)) < ref_year:
             reasons.append('"{}" refers to a year that has already passed'.format(
                 cm.group(0).strip()))
+        # An offer or notice with its own end date, already past on the day of
+        # the crawl: "The offer is valid till 7th September, 2026" fetched on
+        # 12 September. Needs a parsed date phrase, which the collector adds
+        # with dateparser installed (source visible-text-parsed) and the
+        # three-shape regex finds for ISO and "12 September 2026" forms.
+        expired = _expired_validity(ex, text, b.now_date)
+        if expired:
+            reasons.append('"{}" names an end date ({}) before the crawl date {}'.format(
+                expired[0], expired[1], b.now_date.isoformat()))
         if not reasons:
             continue
         excerpt = ""
@@ -980,6 +1040,36 @@ def _looks_like_phone(candidate: str) -> bool:
     return 8 <= len(digits) <= 15
 
 
+def _region_hint(site: str):
+    """A default region for phone matching from the site's country suffix."""
+    host = (site or "").lower()
+    for suffix, region in ((".co.in", "IN"), (".in", "IN"), (".co.uk", "GB"), (".uk", "GB"),
+                           (".de", "DE"), (".fr", "FR"), (".au", "AU"), (".ca", "CA"),
+                           (".nz", "NZ"), (".ie", "IE"), (".sg", "SG"), (".jp", "JP"),
+                           (".co.za", "ZA"), (".br", "BR"), (".es", "ES"), (".it", "IT"), (".nl", "NL")):
+        if host.endswith(suffix):
+            return region
+    return None
+
+
+def _phone_candidates(text: str, b) -> list:
+    """Phone-number strings in a page's text. With phonenumbers installed,
+    Google's libphonenumber decides -- a trouser size run or a year range
+    never parses as a number; without it the digit regex plus
+    _looks_like_phone."""
+    pn = _optional("phonenumbers")
+    if pn is not None:
+        try:
+            region = _region_hint(getattr(b, "site", ""))
+            out = []
+            for m in pn.PhoneNumberMatcher(text or "", region, leniency=pn.Leniency.VALID):
+                out.append(m.raw_string)
+            return out
+        except Exception:
+            pass
+    return [m for m in re.findall(r"\+?\d[\d()\-\s]{7,}\d", text or "") if _looks_like_phone(m)]
+
+
 def _is_directory_page(page: dict) -> bool:
     """An offices, stores, locations or branches page lists many contacts on
     purpose."""
@@ -1007,10 +1097,14 @@ def check_trust_010(b: Bundle) -> list:
         # Only the numbers a page presents as *the* contact count here, so a
         # directory page contributes nothing and a page with several numbers
         # is itself treated as a directory.
-        found = [m for m in re.findall(r"\+?\d[\d()\-\s]{7,}\d", text) if _looks_like_phone(m)]
+        found = _phone_candidates(text, b)
         if _is_directory_page(p) or len({re.sub(r"\D", "", m)[-10:] for m in found}) > 2:
             continue
-        for m in found:
+        # Only a page's first number is "its" contact. A terms page that lists
+        # customer care and then a grievance officer (nike.in) states two
+        # roles, not two versions of one fact; the inconsistency this check
+        # exists for is two pages giving different numbers for the business.
+        for m in found[:1]:
             key = re.sub(r"\D", "", m)[-10:]
             phones.setdefault(key, set()).add(_page_url(p))
         for m in re.findall(r"\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b", text):
