@@ -346,6 +346,49 @@ def check_reach_004(b: Bundle) -> list[dict]:
                    owner="infrastructure"))]
 
 
+def _control_verdict(b: Bundle) -> tuple:
+    """What the two control user-agents say a refusal keys on.
+
+    Returns (kind, sentence). kind is one of:
+      "name-rule"   -- an unknown name is served while Bytespider (an AI
+                       crawler no edge can verify by IP) is refused: the rule
+                       keys on crawler names, i.e. an AI-bot block;
+      "all-bots"    -- the unknown name is refused too: every non-browser
+                       client is refused;
+      "impersonation" -- named agents never answered or were refused while
+                       both controls were served: impersonation defence on
+                       verified-bot names, which genuine agents pass by IP;
+      None          -- no controls in this bundle (older collector).
+    """
+    controls = (b.probe.get("controls") or {})
+    unknown = controls.get("BrandAIReadinessAudit-Control") or {}
+    byte = controls.get("Bytespider") or {}
+    if not unknown and not byte:
+        return None, ""
+
+    def refused(r):
+        st = r.get("status")
+        return bool(r.get("challenge_detected")) or st in (401, 403, 429) or (st is None and r.get("error"))
+
+    if unknown and not refused(unknown) and byte and refused(byte):
+        return "name-rule", (
+            "Two control requests settle what the rule keys on: an unknown user-agent "
+            "name is served the page, while Bytespider -- an AI crawler no edge can verify "
+            "by IP address -- is refused. The block keys on crawler names, which is how a "
+            "CDN's AI-bot setting behaves, rather than on impersonation of a verified bot.")
+    if unknown and refused(unknown):
+        return "all-bots", (
+            "A control request under an unknown user-agent name is refused as well, so "
+            "every non-browser client is turned away, not only the named AI agents.")
+    if unknown and not refused(unknown) and byte and not refused(byte):
+        return "impersonation", (
+            "Both control names -- an unknown one and Bytespider, which cannot be verified "
+            "by IP -- are served, so the refusal applies only to names the edge can verify "
+            "by IP range: impersonation defence, which genuine agents pass from their "
+            "published addresses and this probe cannot.")
+    return None, ""
+
+
 def check_reach_005(b: Bundle) -> list[dict]:
     """CDN/WAF blocking bot UAs regardless of robots.txt.
 
@@ -375,6 +418,13 @@ def check_reach_005(b: Bundle) -> list[dict]:
                 soft.append((token, res.get("bytes"), round(ratio * 100)))
 
     out = []
+    kind, control_sentence = _control_verdict(b)
+    if hard and kind == "impersonation":
+        # Guard: named agents refused while an unknown name and Bytespider are
+        # both served is impersonation defence on verified-bot names. Genuine
+        # ChatGPT-User or Googlebot traffic passes it by IP; this probe cannot.
+        # Not a defect that can be shown from here.
+        hard = []
     if hard:
         eligible = [t for t in agents if matrix.get(t, {}).get("root_allowed") is not False]
         severity = "critical" if len(hard) == len(eligible) else "high"
@@ -388,10 +438,13 @@ def check_reach_005(b: Bundle) -> list[dict]:
             f"({base_bytes} bytes) with a browser user-agent, but "
             + "; ".join(f"{t} receives {d}" for t, _, d in hard)
             + ". robots.txt permits these agents, so the block is being applied "
-              "by a CDN, WAF or bot-management rule.",
+              "by a CDN, WAF or bot-management rule."
+            + (f" {control_sentence}" if control_sentence else
+               " Whether the operator exempted verified agents by IP range cannot be "
+               "seen from outside those ranges."),
             ["ua_probe.json"],
             counts={"blocked_agents": len(hard)},
-            confidence="medium" if only_rate_limited else "high",
+            confidence="medium" if (only_rate_limited or kind is None) else "high",
             verification=f"curl -s -o /dev/null -w '%{{http_code}}' "
                          f"-A 'ChatGPT-User' {b.origin}/ "
                          f"and compare with a browser user-agent",
@@ -1381,6 +1434,21 @@ def engine_reachability(b: Bundle) -> list[dict]:
 
         blocked_training = [a for a in training
                             if (matrix.get(a) or {}).get("root_allowed") is False]
+        note = None
+        if blocked_training:
+            note = ("Training crawlers are blocked for this engine. That is a "
+                    "content-licensing choice and does not affect whether a "
+                    "user asking about you right now gets an answer.")
+        if state in ("blocked", "partial") and (edge_blocked or stalled):
+            kind, sentence = _control_verdict(b)
+            if kind == "impersonation":
+                state = "partial"
+                detail = (f"unverified: the edge refused {(edge_blocked + stalled)[0]} but "
+                          f"served both control names, so this is impersonation defence "
+                          f"on verified-bot names that genuine agents pass by IP range; "
+                          f"robots.txt permits it")
+            if sentence:
+                note = (note + " " if note else "") + sentence
         rows.append({
             "engine": engine,
             "state": state,
@@ -1388,10 +1456,7 @@ def engine_reachability(b: Bundle) -> list[dict]:
             "retrieval_agents": known,
             "agents_probed": [a for a in known if a in probe_agents],
             "training_agents_blocked": blocked_training,
-            "note": ("Training crawlers are blocked for this engine. That is a "
-                     "content-licensing choice and does not affect whether a "
-                     "user asking about you right now gets an answer."
-                     if blocked_training else None),
+            "note": note,
         })
     return rows
 

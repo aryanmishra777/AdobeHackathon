@@ -286,6 +286,14 @@ def _is_client_rendered(page: dict, ext: dict) -> bool:
     return _render_signals(page, ext) is not None
 
 
+def _visible_words(html: str) -> int:
+    """Word count of a document's text with scripts and styles removed --
+    the same measure for rendered.html as the collector uses for raw HTML."""
+    text = re.sub(r"<script\b.*?</script>|<style\b.*?</style>", " ", html or "", flags=re.S | re.I)
+    text = re.sub(r"<[^>]+>", " ", text)
+    return len(text.split())
+
+
 def _describe_signals(sigs: list[dict]) -> str:
     """Phrase only the signals that actually fired, in the order they matter.
 
@@ -382,6 +390,7 @@ def check_read_001(b: Bundle) -> list[dict]:
 
     affected = []
     fired = []
+    measured = []      # (page, raw_words, rendered_words) where a renderer ran
     max_payload = 0
 
     for page in valid_pages:
@@ -399,13 +408,15 @@ def check_read_001(b: Bundle) -> list[dict]:
             ext = dict(ext, render_signals=rs)
 
         if renderer_available and b.exists(f"pages/{pid}/rendered.html"):
-            # Ground truth measurement when rendered.html is captured
-            rendered_text = b.rendered_html(pid)
-            raw_text = (ext.get("text") or {}).get("main") or ""
-            rendered_words = len(rendered_text.split())
-            raw_words = len(raw_text.split())
-            if rendered_words >= 100 and raw_words < THIN_WORDS:
+            # Ground truth when rendered.html was captured: the words the
+            # browser produced against the words the HTML carried. A shell is
+            # not "under 50 words" -- crunchyroll's carried 99 words of header
+            # and footer chrome and rendered 927 -- so the rule is the delta.
+            rendered_words = _visible_words(b.rendered_html(pid))
+            raw_words = (ext.get("text") or {}).get("main_word_count") or 0
+            if rendered_words >= max(100, 3 * raw_words):
                 affected.append(page)
+                measured.append((page, raw_words, rendered_words))
         else:
             # Inference from the strict combined signals
             sigs = _render_signals(page, ext)
@@ -434,12 +445,20 @@ def check_read_001(b: Bundle) -> list[dict]:
 
     thinnest = max((s["words"] for s in fired), default=THIN_WORDS)
 
-    if renderer_available:
+    if measured:
+        # Some or all of the affected pages were measured; the rest inferred.
         confidence = "high"
+        worst = max(measured, key=lambda t: t[2] - t[1])
+        wurl = worst[0].get("final_url") or worst[0]["url"]
         evidence = (
-            f"{n} of {m} sampled pages return under {THIN_WORDS} words of body text in "
-            f"raw HTML while runtime rendering measured complete content in rendered.html."
+            f"{n} of {m} sampled pages carry their content only after JavaScript runs. "
+            f"Measured on {len(measured)} page(s) with a browser: {wurl} carries "
+            f"{worst[1]} words of body text in its HTML and {worst[2]:,} after rendering."
         )
+        inferred = [s for s in fired]
+        if inferred:
+            evidence += (f" The other {len(inferred)} page(s) are inferred from raw-HTML "
+                         f"signals: {_describe_signals(inferred)}.")
     else:
         confidence = "medium"
         detail = _describe_signals(fired)

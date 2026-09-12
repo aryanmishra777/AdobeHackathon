@@ -42,7 +42,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.8,
+      "seconds": 2.0,
       "findings": [
         {
           "check_id": "READ-001",
@@ -187,7 +187,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.0,
+      "seconds": 1.1,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -287,7 +287,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.4,
+      "seconds": 1.5,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -402,7 +402,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.9,
+      "seconds": 1.0,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -527,7 +527,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.0,
+      "seconds": 3.3,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -641,7 +641,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.4,
+      "seconds": 1.5,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -721,7 +721,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.6,
+      "seconds": 1.8,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -866,7 +866,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.4,
+      "seconds": 2.6,
       "findings": [
         {
           "check_id": "PARSE-010",
@@ -989,7 +989,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.2,
+      "seconds": 2.4,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -1119,7 +1119,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.3,
+      "seconds": 2.5,
       "findings": [
         {
           "check_id": "READ-013",
@@ -1244,7 +1244,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.1,
+      "seconds": 3.4,
       "findings": [
         {
           "check_id": "PARSE-004",
@@ -1383,7 +1383,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.7,
+      "seconds": 4.1,
       "findings": [
         {
           "check_id": "REACH-008",
@@ -1508,7 +1508,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.4,
+      "seconds": 2.6,
       "findings": [
         {
           "check_id": "READ-013",
@@ -1663,7 +1663,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.8,
+      "seconds": 6.5,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -1773,7 +1773,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.3,
+      "seconds": 1.5,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -1891,7 +1891,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.1,
+      "seconds": 3.5,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -2006,7 +2006,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.0,
+      "seconds": 2.1,
       "findings": [
         {
           "check_id": "PARSE-004",
@@ -2156,7 +2156,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.9,
+      "seconds": 3.2,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -2304,7 +2304,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.1,
+      "seconds": 2.3,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -2403,7 +2403,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.0,
+      "seconds": 1.1,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -2608,7 +2608,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.8,
+      "seconds": 4.3,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -2718,7 +2718,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.8,
+      "seconds": 0.9,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -2944,7 +2944,7 @@
       "engagement": "high",
       "site_type": "media-publisher",
       "pages": 20,
-      "discoverability": 47,
+      "discoverability": 48,
       "disc_grade": "D",
       "engagement_score": 79,
       "eng_grade": "B",
@@ -2978,7 +2978,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.5,
+      "seconds": 2.8,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -3117,7 +3117,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.4,
+      "seconds": 1.5,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -3233,7 +3233,7 @@
       "engagement": "high",
       "site_type": "media-publisher",
       "pages": 20,
-      "discoverability": 38,
+      "discoverability": 39,
       "disc_grade": "D",
       "engagement_score": 99,
       "eng_grade": "A",
@@ -3267,7 +3267,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.5,
+      "seconds": 1.6,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -3383,7 +3383,7 @@
       "engagement": "high",
       "site_type": "docs",
       "pages": 20,
-      "discoverability": 60,
+      "discoverability": 63,
       "disc_grade": "C",
       "engagement_score": 99,
       "eng_grade": "A",
@@ -3471,7 +3471,7 @@
       "engagement": "high",
       "site_type": "docs",
       "pages": 20,
-      "discoverability": 25,
+      "discoverability": 28,
       "disc_grade": "F",
       "engagement_score": 73,
       "eng_grade": "C",
@@ -3655,7 +3655,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.4,
+      "seconds": 1.6,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -3741,7 +3741,7 @@
       "engagement": "high",
       "site_type": "saas",
       "pages": 20,
-      "discoverability": 67,
+      "discoverability": 70,
       "disc_grade": "C",
       "engagement_score": 100,
       "eng_grade": "A",
@@ -3774,7 +3774,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.7,
+      "seconds": 1.9,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -3874,7 +3874,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.5,
+      "seconds": 1.7,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -4030,7 +4030,7 @@
       "engagement": "moderate",
       "site_type": "marketplace",
       "pages": 0,
-      "discoverability": 79,
+      "discoverability": 80,
       "disc_grade": "B",
       "engagement_score": null,
       "eng_grade": "not assessed",
@@ -4059,7 +4059,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.6,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -4119,7 +4119,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.6,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -4174,7 +4174,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.3,
+      "seconds": 1.4,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -4324,7 +4324,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.1,
+      "seconds": 2.4,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -4469,7 +4469,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.6,
+      "seconds": 1.7,
       "findings": [
         {
           "check_id": "PARSE-004",
@@ -4664,7 +4664,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.4,
+      "seconds": 1.5,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -4759,7 +4759,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.8,
+      "seconds": 0.9,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -5188,7 +5188,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.5,
+      "seconds": 1.6,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -5843,7 +5843,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.1,
+      "seconds": 1.0,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -5998,7 +5998,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.1,
+      "seconds": 1.2,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -6533,7 +6533,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.0,
+      "seconds": 1.1,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6942,7 +6942,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.3,
+      "seconds": 1.4,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -7063,7 +7063,7 @@
       "engagement": "moderate",
       "site_type": "docs",
       "pages": 20,
-      "discoverability": 17,
+      "discoverability": 20,
       "disc_grade": "F",
       "engagement_score": 54,
       "eng_grade": "D",
@@ -7097,7 +7097,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.0,
+      "seconds": 1.1,
       "findings": [
         {
           "check_id": "REACH-014",
@@ -7240,7 +7240,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.6,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-007",
@@ -7291,7 +7291,7 @@
       "engagement": "high",
       "site_type": "media-publisher",
       "pages": 20,
-      "discoverability": 45,
+      "discoverability": 48,
       "disc_grade": "D",
       "engagement_score": 86,
       "eng_grade": "B",
@@ -7325,7 +7325,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.3,
+      "seconds": 3.1,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -7454,7 +7454,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.9,
+      "seconds": 1.1,
       "findings": [
         {
           "check_id": "REACH-011",
@@ -7550,7 +7550,7 @@
       "engagement": "high",
       "site_type": "docs",
       "pages": 20,
-      "discoverability": 30,
+      "discoverability": 33,
       "disc_grade": "F",
       "engagement_score": 94,
       "eng_grade": "A",
@@ -7908,7 +7908,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.6,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-007",

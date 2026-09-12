@@ -1,0 +1,20 @@
+# Optional extras. NOTHING here is required: every script runs on a bare
+# Python 3.9+ install and every check degrades to the documented inference
+# path when these are absent. Install them to turn two inferences into
+# measurements:
+#
+#   playwright      site-evidence-collector renders a sample of pages after
+#                   the crawl (--renderer auto, --render-pages 6), so READ-001
+#                   reports a measured raw-versus-rendered delta instead of an
+#                   inference from raw-HTML signals.
+#                   Needs a browser build too:  python -m playwright install chromium
+#                   (downloads ~150 MB; a sandbox without network cannot, and
+#                   falls back cleanly).
+#   beautifulsoup4  the collector cross-checks its own extraction (title,
+#                   links, robots meta, h1 count) and writes
+#                   pages/<id>/extract_diff.json only where the two disagree.
+#                   The stdlib parser remains the record.
+#
+#   pip install -r requirements-optional.txt && python -m playwright install chromium
+playwright>=1.45
+beautifulsoup4>=4.12

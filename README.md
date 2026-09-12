@@ -20,7 +20,7 @@ this repo is the harness that proves it works.
 |---|---|
 | **`brand-ai-readiness-audit/`** | **THE SUBMISSION.** `marketplace.json` + 8 skills. This is the only directory that gets zipped. |
 | `bench/` | 85 real-site candidates → 64 measured corpus entries across the SEO×GEO quadrants, plus the live/replay runner. |
-| `tests/` | 7 local fixture sites, the bundles built from them, and 339 pytest assertions. |
+| `tests/` | 7 local fixture sites, the bundles built from them, and 356 pytest assertions. |
 | `tools/` | `validate.py`, `package.py`, `check_coverage.py`, `run_audit.py`, `install_local.py`. |
 | `docs/` | `EVIDENCE.md` (what the literature supports, and what it doesn't), `ADOBE-BRAND-VISIBILITY.md` (how our checks map to Adobe's own product), `ROLES.md`, `CONTRIBUTING.md`, `todo/`. |
 | `TODO.md` | Who builds what, in what order. Index into `docs/todo/`. |
@@ -46,8 +46,13 @@ crawl produces a cached evidence bundle on disk, and the six analysis skills are
 pure functions over that bundle. That gives determinism, no re-fetching a site
 six times, and every safety guardrail auditable in a single folder.
 
-Everything inside the zip is **stdlib-only Python** — no `requests`, no `bs4`,
-no model weights. A check that always runs beats a stronger check that can't.
+Everything inside the zip runs on **stdlib-only Python** — no `requests`, no
+model weights. A check that always runs beats a stronger check that can't. Two
+*optional* extras (`brand-ai-readiness-audit/requirements-optional.txt`) are
+auto-detected and never required: Playwright renders a six-page sample so the
+JS-rendering check becomes a measurement, and BeautifulSoup cross-checks the
+extractor and records disagreements. Without them the behaviour is exactly the
+stdlib path, which is what the bench and the fixture bundles measure.
 
 ## Status
 
@@ -79,7 +84,7 @@ pip install -r tools/requirements-dev.txt   # dev tooling only, never shipped
 python tests/make_fixtures.py               # build the local test websites
 python tests/make_bundles.py                # crawl them into evidence bundles
 
-python -m pytest tests/ -q                  # expect: 339 passed
+python -m pytest tests/ -q                  # expect: 356 passed
 python tools/validate.py                    # expect: PASS (0 TODOs)
 python tools/package.py                     # builds dist/ and checks the 50 MB ceiling
 python tools/check_coverage.py              # find checks that never fire anywhere
@@ -99,12 +104,12 @@ SEO from technical hygiene. The result:
 ```
                         n   disc   eng
 SEO good / GEO good    24     66     92    control — healthy on both axes
-SEO good / GEO poor    14     50     90    the money quadrant
+SEO good / GEO poor    14     51     90    the money quadrant
 SEO poor / GEO good    17     57     76    great content, weak technical SEO
-SEO poor / GEO poor     9     43     82    both, and we name the mechanism
+SEO poor / GEO poor     9     44     82    both, and we name the mechanism
 ```
 
-Good-SEO/poor-GEO scores 17 points below good-SEO/good-GEO. Those fourteen sites are
+Good-SEO/poor-GEO scores 16 points below good-SEO/good-GEO. Those fourteen sites are
 ones a conventional SEO linter passes clean: perfect sitemaps and canonicals,
 while the edge returns 429 to `ClaudeBot` or robots.txt disallows the retrieval
 crawlers outright.

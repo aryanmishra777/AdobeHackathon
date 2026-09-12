@@ -175,10 +175,24 @@ Normally you do none of this by hand — the entrypoint skill drives it.
 
 ## Requirements and guardrails
 
-**Python 3.9+, standard library only.** No `pip install`, no Node, no browser.
-A check that always runs beats a stronger check that cannot. Where the host agent
-provides a renderer, `collect.py --renderer` captures rendered HTML too and the
-READ stage reports a measured delta instead of an inference — and says which.
+**Python 3.9+, standard library only, with optional extras.** No `pip install`,
+no Node, no browser is *required*: a check that always runs beats a stronger check
+that cannot, so every script runs on a bare install and every check has a
+documented fallback. Two extras, declared in `requirements-optional.txt`, turn
+inferences into measurements when they happen to be present:
+
+- **Playwright** — the collector auto-detects it (`--renderer auto`, the
+  default) and renders a sample of pages after the crawl (`--render-pages 6`:
+  the seed page plus the thinnest ones). The READ stage then reports a measured
+  raw-versus-rendered delta for those pages and says which pages were inferred.
+  `--renderer none` disables it; any other value is a command that prints
+  rendered HTML for a URL.
+- **BeautifulSoup** — the collector cross-checks its own extraction against a
+  tree parser and writes `pages/<id>/extract_diff.json` only where they
+  disagree. The stdlib parser stays the record.
+
+A sandbox without either gets exactly the stdlib behaviour, and the bundle says
+so (`run.json#renderer.available`, `coverage.json#extractor_disagreements`).
 
 - Read-only: `GET` and `HEAD` only. Never authenticates, never submits a form.
 - Respects `robots.txt`, including for its own crawl.

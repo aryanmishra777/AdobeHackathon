@@ -82,6 +82,19 @@ a browser user-agent and again with each bot token, then compare status codes,
 body sizes, and challenge signatures. A `200` that returns a challenge page is a
 block in every way that matters.
 
+The probe also sends two **control** names after the agents, recorded under
+`ua_probe.json#controls`, so an analyzer can say what a refusal keys on without
+anyone re-testing by hand:
+
+- `BrandAIReadinessAudit-Control` — a name no rule lists. Served while the AI
+  agents are refused means the rule keys on crawler names.
+- `Bytespider` — an AI crawler no edge can verify by IP address. Refused while
+  the unknown name is served means an AI-bot block by name (crunchyroll.com);
+  served, with every *known* name refused or stalled, means impersonation
+  defence on verified-bot names, which genuine agents pass from their published
+  ranges and this probe cannot (adobe.com). `crawl-access-audit` withholds
+  REACH-005 in that second case.
+
 Challenge signatures worth matching in the body: `cf-browser-verification`,
 `Just a moment...`, `Checking your browser`, `Attention Required! | Cloudflare`,
 `__cf_chl`, `Access Denied`, `Request unsuccessful. Incapsula`, `Pardon Our

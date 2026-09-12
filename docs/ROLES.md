@@ -142,7 +142,7 @@ Not implementing the five skills. The job:
   cannot express, that is a contract change and it is yours. Change it once,
   regenerate bundles, tell both.
 - **Grow the corpus.** 85 candidates crawled, **64 usable**, every quadrant at or
-  above the 10-site target, and the thesis passing: good-SEO/poor-GEO scores 17
+  above the 10-site target, and the thesis passing: good-SEO/poor-GEO scores 16
   points below good-SEO/good-GEO. Both axes are *measured*, never asserted — GEO
   from the blocking mechanisms, SEO from technical hygiene. To extend it, add
   URLs to `bench/candidates.yaml` and re-run `python bench/build_corpus.py`.
@@ -150,7 +150,7 @@ Not implementing the five skills. The job:
 
   ```
   SEO good / GEO good   24    disc 66
-  SEO good / GEO poor   14    disc 50   <-- the money quadrant
+  SEO good / GEO poor   14    disc 51   <-- the money quadrant
   SEO poor / GEO good   17    disc 57
   SEO poor / GEO poor    9    disc 43
   ```
@@ -172,6 +172,20 @@ Not implementing the five skills. The job:
   its own `checks.yaml` entry is a bug in one of the two; decide which.
 
 ---
+
+## A silent check the coverage guard cannot see
+
+`tools/check_coverage.py` catches a check that never *fires*. It cannot catch a
+branch that runs and never *matches*: `check_answerability.py` shipped for a
+week with three regexes whose `\b` had become a literal 0x08 byte (a shell
+heredoc did it), so the commerce gate for QUOTE-005/006 and the question-heading
+test silently matched nothing while every gate stayed green. Two rules follow.
+Regex edits go through an editor or a Python script, never a shell heredoc, and
+are verified with `repr()` on the bytes. And a heuristic is only known to work
+once a *real* page has exercised it: `tests/fixtures/real/` holds trimmed
+snapshots of the pages that broke the extractor, `tests/test_real_pages.py`
+asserts what was wrong on each, and `tests/make_real_fixtures.py` adds the next
+one from an evidence bundle in one line.
 
 ## What you may not change
 

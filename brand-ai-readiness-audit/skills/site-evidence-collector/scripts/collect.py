@@ -71,12 +71,24 @@ AI_AGENTS = {
 # Agents worth probing live. Keep short: each is an extra request.
 PROBE_AGENTS = ["GPTBot", "ChatGPT-User", "ClaudeBot", "Claude-User",
                 "PerplexityBot", "Googlebot"]
+# Two control names probed after the agents, so an analyzer can tell what a
+# refusal keys on without a person re-testing with curl. An unknown name that
+# is served while the AI agents are refused means the rule keys on crawler
+# names; Bytespider is an AI crawler no edge can verify by IP, so refusing it
+# while serving the unknown name is an AI-bot block, not impersonation defence
+# (crunchyroll.com). Every known name stalled while the unknown one is served
+# instantly is impersonation defence (adobe.com).
+PROBE_CONTROLS = ["BrandAIReadinessAudit-Control", "Bytespider"]
 
 CHALLENGE_SIGNATURES = [
     "cf-browser-verification", "just a moment...", "checking your browser",
     "attention required! | cloudflare", "__cf_chl", "access denied",
     "request unsuccessful. incapsula", "pardon our interruption",
     "perimeterx", "datadome", "enable javascript and cookies to continue",
+    # Akamai Bot Manager's failover page (adidas.co.in): a 403 whose body
+    # explains that "extra security" keeps bots out and quotes a reference id.
+    "unable to give you access to our site", "reference error:", "waffailoverassets",
+    "security issue was automatically identified",
 ]
 
 # Paths that are never content: transactional and authenticated areas the
@@ -1131,6 +1143,32 @@ class Collector:
         self.robots_groups: list[RobotsGroup] = []
         self.our_group = None
         self.delay = max(args.delay, 0.0)
+        self.renderer_cmd, self.renderer_name = self._resolve_renderer(getattr(args, "renderer", "auto"))
+        self.rendered: dict[str, bool] = {}   # page_id -> rendered.html written
+        self.render_attempted = 0
+        self.extractor_disagreements = 0
+
+    @staticmethod
+    def _resolve_renderer(spec):
+        """`auto` uses the bundled Playwright renderer when Playwright and a
+        Chromium build are installed, `none` disables rendering, and anything
+        else is a command that receives a URL and prints rendered HTML. A
+        missing renderer is the documented common case: every check that
+        reads rendered.html falls back to inference from the raw HTML."""
+        spec = (spec or "auto").strip()
+        if spec.lower() == "none":
+            return None, None
+        if spec.lower() != "auto":
+            return spec.split(), spec
+        script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "render_playwright.py")
+        try:
+            proc = subprocess.run([sys.executable, script, "--check"], capture_output=True,
+                                  text=True, encoding="utf-8", timeout=60)
+        except Exception:
+            return None, None
+        if proc.returncode != 0:
+            return None, None
+        return [sys.executable, script], (proc.stdout.strip() or "playwright-chromium")
 
     # -- budget ------------------------------------------------------------
     def time_left(self) -> float:
@@ -1294,6 +1332,14 @@ class Collector:
             r = fetch(url, ua=f"Mozilla/5.0 (compatible; {token}/1.0)",
                       timeout=self.timeout_within_budget())
             result["agents"][token] = _probe_result(r, token)
+        result["controls"] = {}
+        for token in PROBE_CONTROLS:
+            if self.time_left() <= 5:
+                break
+            time.sleep(self.delay)
+            r = fetch(url, ua=f"Mozilla/5.0 (compatible; {token}/1.0)",
+                      timeout=self.timeout_within_budget())
+            result["controls"][token] = _probe_result(r, token)
         return result
 
     # -- pages -------------------------------------------------------------
@@ -1498,10 +1544,12 @@ class Collector:
         extracted["timing"] = {"ttfb_ms": r.ttfb_ms, "total_ms": r.total_ms,
                                "transfer_bytes": len(r.body or "")}
 
-        if self.args.renderer:
-            rendered = self.render(url)
-            if rendered:
-                _write(os.path.join(pdir, "rendered.html"), rendered)
+        diff = _crosscheck_with_bs4(r.body or "", extracted, r.final_url or url)
+        if diff:
+            # A second opinion on the extraction, never the record: bs4 is
+            # optional and the disagreement file exists only when it disagrees.
+            self.extractor_disagreements += 1
+            _write_json(os.path.join(pdir, "extract_diff.json"), diff)
 
         _write_json(os.path.join(pdir, "extracted.json"), extracted)
         _write_json(os.path.join(pdir, "chunks.json"), chunk_page(extracted))
@@ -1514,13 +1562,53 @@ class Collector:
         return {**record, "_links": [l["href"] for l in extracted["links"] if l["internal"]]}
 
     def render(self, url: str):
+        if not self.renderer_cmd:
+            return None
         try:
-            proc = subprocess.run(self.args.renderer.split() + [url],
+            proc = subprocess.run(self.renderer_cmd + [url],
                                   capture_output=True, text=True, encoding="utf-8",
                                   timeout=self.timeout_within_budget(self.args.timeout * 3))
-            return proc.stdout if proc.returncode == 0 else None
+            return proc.stdout if proc.returncode == 0 and proc.stdout.strip() else None
         except Exception:
             return None
+
+    def render_sample(self, start: str) -> None:
+        """Render the pages where inference is weakest, after the crawl and
+        inside what is left of the budget: the seed page plus the fetched
+        pages with the least body text per byte of markup. Only URLs already
+        fetched -- and therefore robots-allowed -- are rendered, one at a
+        time with the politeness delay, so a render costs the site one more
+        document (assets are not requested). At 3-9 s a page, rendering all
+        25 would blow the audit's cap; six is the default."""
+        if not self.renderer_cmd or getattr(self.args, "render_pages", 6) <= 0:
+            return
+        ok = [p for p in self.pages if p.get("status") == 200]
+        if not ok:
+            return
+
+        def thinness(p):
+            try:
+                ex = _read_json(os.path.join(self.out, "pages", p["page_id"], "extracted.json"))
+                text = ex.get("text") or {}
+                return (text.get("main_word_count") or 0, text.get("text_to_markup_ratio") or 0.0)
+            except Exception:
+                return (0, 0.0)
+
+        seed = normalize_url(start)
+        chosen = [p for p in ok if normalize_url(p.get("final_url") or p["url"]) == seed][:1]
+        rest = sorted((p for p in ok if p not in chosen), key=thinness)
+        chosen += rest[: max(0, getattr(self.args, "render_pages", 6) - len(chosen))]
+        for p in chosen:
+            if self.time_left() <= 10:
+                break
+            self.render_attempted += 1
+            html = self.render(p.get("final_url") or p["url"])
+            if html:
+                _write(os.path.join(self.out, "pages", p["page_id"], "rendered.html"), html)
+                self.rendered[p["page_id"]] = True
+            time.sleep(self.delay)
+        for p in self.pages:
+            p["rendered"] = bool(self.rendered.get(p["page_id"]))
 
     # -- driver ------------------------------------------------------------
     def run(self) -> int:
@@ -1536,8 +1624,9 @@ class Collector:
             "origin_variants": variants,
             "started_at": now_iso(), "finished_at": None,
             "collector_version": COLLECTOR_VERSION,
-            "renderer": {"available": bool(self.args.renderer),
-                         "name": self.args.renderer or None},
+            "renderer": {"available": bool(self.renderer_cmd),
+                         "name": self.renderer_name,
+                         "pages_rendered": 0, "pages_attempted": 0},
             "budget": {
                 "max_pages": self.args.max_pages,
                 "max_concurrency": self.args.concurrency,
@@ -1561,10 +1650,13 @@ class Collector:
             probe = {} if self.args.no_probe else self.ua_probe(start)
             if self.allowed(start):
                 self.select_and_fetch(origin, sitemaps)
+                self.render_sample(start)
             else:
                 self.stopped = "site-blocked"
                 self.skip(start, "robots-disallow")
 
+        run_doc["renderer"]["pages_rendered"] = len(self.rendered)
+        run_doc["renderer"]["pages_attempted"] = self.render_attempted
         run_doc["finished_at"] = now_iso()
         _write_json(os.path.join(self.out, "run.json"), run_doc)
         _write_json(os.path.join(self.out, "ua_probe.json"), probe)
@@ -1575,6 +1667,7 @@ class Collector:
             "complete": self.stopped in ("completed",),
             "stopped_reason": self.stopped,
             "skipped": self.skipped,
+            "extractor_disagreements": self.extractor_disagreements,
         }
         _write_json(os.path.join(self.out, "coverage.json"), coverage)
 
@@ -1597,6 +1690,58 @@ class Collector:
         return 0
 
 
+def _crosscheck_with_bs4(html: str, extracted: dict, url: str):
+    """A second opinion on title, links, robots meta and h1 count from
+    BeautifulSoup, when it is installed. Returns the disagreements, or None.
+
+    Never the record: extracted.json is what the analyzers read, and it is
+    produced by the single-pass parser on every machine. This exists because
+    the parser's defects were only ever found by reading real pages by hand
+    -- an <svg><title> overriding the document title, an <h3> inside every
+    product <a> dropping the link -- and a tree parser sees both at once.
+    """
+    if not html:
+        return None
+    try:
+        from bs4 import BeautifulSoup
+    except Exception:
+        return None
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+    except Exception:
+        return None
+
+    diff = {}
+    title = next((t for t in soup.find_all("title") if not t.find_parent("svg")), None)
+    soup_title = _collapse(title.get_text()) if title else None
+    if (soup_title or None) != (extracted.get("title") or None):
+        diff["title"] = {"parser": extracted.get("title"), "bs4": soup_title}
+
+    soup_links = set()
+    for a in soup.find_all("a", href=True):
+        href = a["href"].strip()
+        if href and not href.startswith(("mailto:", "tel:", "javascript:", "#")):
+            soup_links.add(urljoin(url, href))
+    parser_links = {l["href"] for l in extracted.get("links") or []}
+    missing = sorted(soup_links - parser_links)
+    if missing:
+        diff["links_missing_from_parser"] = missing[:25]
+        diff["links_missing_count"] = len(missing)
+
+    robots = ", ".join(m.get("content", "").strip() for m in soup.find_all("meta")
+                       if (m.get("name") or "").lower() == "robots" and m.get("content"))
+    parser_robots = (extracted.get("meta") or {}).get("robots") or ""
+    if set(x.strip().lower() for x in robots.split(",") if x.strip()) != \
+            set(x.strip().lower() for x in parser_robots.split(",") if x.strip()):
+        diff["robots_meta"] = {"parser": parser_robots or None, "bs4": robots or None}
+
+    soup_h1 = len(soup.find_all("h1"))
+    parser_h1 = sum(1 for h in extracted.get("headings") or [] if h.get("level") == 1)
+    if soup_h1 != parser_h1:
+        diff["h1_count"] = {"parser": parser_h1, "bs4": soup_h1}
+    return diff or None
+
+
 def _probe_result(r: Fetched, ua: str) -> dict:
     body = (r.body or "").lower()
     return {
@@ -1613,6 +1758,11 @@ def _write(path: str, text: str) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with io.open(path, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(text)
+
+
+def _read_json(path: str):
+    with io.open(path, encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 def _write_json(path: str, obj) -> None:
@@ -1639,8 +1789,11 @@ def main(argv=None) -> int:
     ap.add_argument("--max-bytes", type=int, default=3_000_000)
     ap.add_argument("--include", action="append", default=[])
     ap.add_argument("--exclude", action="append", default=[])
-    ap.add_argument("--renderer", default=None,
-                    help="command receiving a URL and printing rendered HTML")
+    ap.add_argument("--renderer", default="auto",
+                    help="'auto' (bundled Playwright renderer when installed), 'none', "
+                         "or a command receiving a URL and printing rendered HTML")
+    ap.add_argument("--render-pages", type=int, default=6,
+                    help="how many fetched pages to render after the crawl")
     ap.add_argument("--no-probe", action="store_true")
     args = ap.parse_args(argv)
 

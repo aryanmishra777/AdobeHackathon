@@ -1030,3 +1030,139 @@ def test_engine_row_survives_a_probe_that_never_answered(tmp_path):
     rows = {r["engine"]: r for r in json.loads(proc.stdout)["engine_reachability"]}
     assert rows["ChatGPT"]["state"] == "blocked"      # baseline was served, the agent was not
     assert "never answers" in rows["ChatGPT"]["detail"]
+
+
+# --------------------------------------------------------------------------
+# Optional extras: the stdlib path must be untouched when they are absent
+# --------------------------------------------------------------------------
+
+def test_renderer_auto_degrades_to_none_when_the_check_fails(monkeypatch):
+    """`--renderer auto` on a bare install must resolve to no renderer, not
+    an error: the documented common case is no browser at all."""
+    import subprocess as sp
+    mod = _collect_module()
+
+    class Fail:
+        returncode = 2
+        stdout = ""
+        stderr = "playwright unavailable"
+
+    monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: Fail())
+    assert mod.Collector._resolve_renderer("auto") == (None, None)
+    assert mod.Collector._resolve_renderer("none") == (None, None)
+    assert mod.Collector._resolve_renderer("node render.js") == (["node", "render.js"], "node render.js")
+
+    class Ok:
+        returncode = 0
+        stdout = "playwright-chromium 151\n"
+        stderr = ""
+
+    monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: Ok())
+    cmd, name = mod.Collector._resolve_renderer("auto")
+    assert cmd and cmd[-1].endswith("render_playwright.py") and name == "playwright-chromium 151"
+
+
+def test_render_sample_picks_the_seed_and_the_thinnest_pages(tmp_path):
+    """Six renders of twenty-five pages have to go where inference is weakest:
+    the seed page and the pages with the least text per byte of markup."""
+    import argparse
+    mod = _collect_module()
+    out = tmp_path / "b"
+    (out / "pages").mkdir(parents=True)
+    args = argparse.Namespace(target="https://x.test/", out=str(out), max_pages=25, timeout=10.0,
+                              budget=120.0, concurrency=8, delay=0.0, include=[], exclude=[],
+                              renderer="none", render_pages=3, no_probe=True)
+    c = mod.Collector(args)
+    words = {"p000": 500, "p001": 20, "p002": 900, "p003": 5, "p004": 300}
+    for pid, w in words.items():
+        (out / "pages" / pid).mkdir()
+        (out / "pages" / pid / "extracted.json").write_text(json.dumps(
+            {"text": {"main_word_count": w, "text_to_markup_ratio": w / 10000.0}}), encoding="utf-8")
+        c.pages.append({"page_id": pid, "url": f"https://x.test/{pid}", "final_url": f"https://x.test/{pid}", "status": 200})
+    c.pages[0]["url"] = c.pages[0]["final_url"] = "https://x.test/"
+    rendered = []
+    c.renderer_cmd = ["fake"]
+    c.render = lambda url: rendered.append(url) or "<html><body>rendered</body></html>"
+    c.render_sample("https://x.test/")
+    assert rendered == ["https://x.test/", "https://x.test/p003", "https://x.test/p001"]
+    assert (out / "pages" / "p003" / "rendered.html").exists()
+    assert [p["rendered"] for p in c.pages] == [True, True, False, True, False]
+
+
+def test_probe_controls_settle_what_a_refusal_keys_on(tmp_path):
+    """crunchyroll.com: unknown name served, Bytespider refused -> an AI-bot
+    rule by name, confidence high. adobe.com: named agents refused or stalled
+    while both controls are served -> impersonation defence, and REACH-005 is
+    withheld because genuine agents pass it by IP range."""
+    import shutil
+    src = bundle("clean")
+    for scenario, byte_status, expect_finding, expect_state in (
+            ("name-rule", 403, True, "blocked"), ("impersonation", 200, False, "partial")):
+        dst = tmp_path / scenario
+        shutil.copytree(src, dst)
+        probe = json.loads((dst / "ua_probe.json").read_text(encoding="utf-8"))
+        for a in probe["agents"].values():
+            a.update({"status": 403, "challenge_detected": True, "bytes": 5602, "text_bytes": 900})
+        probe["controls"] = {
+            "BrandAIReadinessAudit-Control": {"user_agent": "x", "status": 200, "bytes": 8687,
+                                               "text_bytes": 2000, "challenge_detected": False, "error": None},
+            "Bytespider": {"user_agent": "x", "status": byte_status, "bytes": 5602, "text_bytes": 900,
+                           "challenge_detected": byte_status == 403, "error": None},
+        }
+        (dst / "ua_probe.json").write_text(json.dumps(probe), encoding="utf-8")
+        man_path = dst / "MANIFEST.json"
+        man = json.loads(man_path.read_text(encoding="utf-8"))
+        man["ua_probe"] = probe
+        man_path.write_text(json.dumps(man), encoding="utf-8")
+        proc = run(CHECK_ACCESS, str(dst), "--stdout")
+        assert proc.returncode == 0, proc.stderr
+        doc = json.loads(proc.stdout)
+        hits = [f for f in doc["findings"] if f["check_id"] == "REACH-005"]
+        assert bool(hits) == expect_finding, scenario
+        if hits:
+            assert hits[0]["confidence"] == "high" and "keys on crawler names" in hits[0]["evidence"]
+        rows = {r["engine"]: r for r in doc["engine_reachability"]}
+        assert rows["ChatGPT"]["state"] == expect_state, (scenario, rows["ChatGPT"])
+
+
+def test_read_001_measures_the_delta_when_rendered_html_exists(tmp_path):
+    """A shell that carries 99 words of chrome and renders 900 is a measured
+    finding at high confidence; the old rule needed raw < 50 words."""
+    import shutil
+    src = bundle("clean")
+    dst = tmp_path / "b"
+    shutil.copytree(src, dst)
+    run_path = dst / "run.json"
+    run_doc = json.loads(run_path.read_text(encoding="utf-8"))
+    run_doc["renderer"] = {"available": True, "name": "test", "pages_rendered": 1, "pages_attempted": 1}
+    run_path.write_text(json.dumps(run_doc), encoding="utf-8")
+    man_path = dst / "MANIFEST.json"
+    man = json.loads(man_path.read_text(encoding="utf-8"))
+    man["run"] = run_doc
+    man_path.write_text(json.dumps(man), encoding="utf-8")
+    page = next(p for p in man["pages"] if p.get("status") == 200)
+    pdir = dst / "pages" / page["page_id"]
+    ex = json.loads((pdir / "extracted.json").read_text(encoding="utf-8"))
+    ex["text"]["main_word_count"] = 99
+    (pdir / "extracted.json").write_text(json.dumps(ex), encoding="utf-8")
+    (pdir / "rendered.html").write_text("<html><body>" + "word " * 900 + "</body></html>", encoding="utf-8")
+    proc = run(CHECK_RENDER, str(dst), "--stdout")
+    assert proc.returncode == 0, proc.stderr
+    f = next((f for f in json.loads(proc.stdout)["findings"] if f["check_id"] == "READ-001"), None)
+    assert f is not None and f["confidence"] == "high"
+    assert "99 words of body text in its HTML and 900 after rendering" in f["evidence"]
+    assert any(r.endswith("rendered.html") for r in f["evidence_detail"]["artifact_refs"])
+
+
+def test_validator_allows_declared_extras_only_behind_a_guard(tmp_path):
+    """playwright and bs4 may be imported inside the zip only where a bare
+    install survives their absence."""
+    import importlib
+    sys.path.insert(0, os.path.join(REPO, "tools"))
+    v = importlib.import_module("validate")
+    import ast
+    ok = ast.parse("try:\n    import bs4\nexcept ImportError:\n    bs4 = None\n")
+    bad = ast.parse("import bs4\n")
+    assert v._guarded_import_lines(ok) == {2}
+    assert v._guarded_import_lines(bad) == set()
+    assert "bs4" in v.OPTIONAL_OK and "playwright" in v.OPTIONAL_OK

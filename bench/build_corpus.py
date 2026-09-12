@@ -72,7 +72,8 @@ def collect(url: str, out: str, pages: int, budget: int) -> bool:
     proc = subprocess.run(
         [sys.executable, COLLECT, url, "--out", fresh,
          "--max-pages", str(pages), "--budget", str(budget),
-         "--delay", "0.5", "--timeout", "12"],
+         "--delay", "0.5", "--timeout", "12",
+         "--renderer", "none"],   # snapshots are the stdlib path of record
         capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0 or not os.path.isfile(os.path.join(fresh, "MANIFEST.json")):
         shutil.rmtree(fresh, ignore_errors=True)

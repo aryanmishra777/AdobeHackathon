@@ -235,9 +235,9 @@ Assumptions: `license: MIT` on every skill; `compatibility:` declared where netw
 ```
                         n    disc
 SEO good / GEO good    24     66
-SEO good / GEO poor    14     50   <- the money quadrant
+SEO good / GEO poor    14     51   <- the money quadrant
 SEO poor / GEO good    17     57
-SEO poor / GEO poor     9     43
+SEO poor / GEO poor     9     44
 ```
 
 The change that matters: **both axes are measured, never asserted.** GEO comes from the blocking mechanism actually observed (robots disallow, edge 403/429/challenge, soft-block serving crawlers a stripped page, content absent from raw HTML, no structured data, passages failing standalone comprehension); SEO from technical hygiene (sitemap, canonicals, titles, descriptions, h1, internal linking). Hand-editing a label makes it stop being evidence. Entries carry the score and the derivation:
@@ -287,7 +287,7 @@ Snapshot each site's evidence bundle once (gzipped, ≤8 pages/site, gitignored,
 | 5 | `audit-orchestrator` complete — site-type detection, subskill registry, merge/dedupe/severity/FP-suppression, `report.json` + `report.md` | Aryan | End-to-end run with one analysis skill | done |
 | 6 | `crawl-access-audit` — **the worked reference implementation** | Aryan | The pattern teammates copy; 13 of 18 checks | done |
 | 7 | Fixture suite + golden reports + clean-site tripwire | Aryan | 7 fixtures, 57 assertions, `pytest` green | done |
-| 8 | `bench/` corpus, runner, snapshot/replay, scoreboard | Aryan | 85 candidates → 64 measured entries; quadrant chart PASS (17-point gap) | done |
+| 8 | `bench/` corpus, runner, snapshot/replay, scoreboard | Aryan | 85 candidates → 64 measured entries; quadrant chart PASS (16-point gap) | done |
 | 9 | TODO packets — 5 remaining skills, each with contract refs, exact check IDs, acceptance criteria, target fixture, and a paste-ready agent prompt | Aryan | `docs/todo/*.md` + `TODO.md` index | done |
 | 10 | Lakshay: `render-extractability` + `structured-data` · Mayank: `answerability` + `freshness-corroboration` + `engagement` | Teammates | 5 check scripts + their fix templates | **open** |
 
@@ -335,13 +335,13 @@ a fresh agent session.
 3. **Fixtures** — `python -m pytest tests/ -q`. Defect fixtures produce their expected check IDs; **the clean fixture produces zero critical/high**. → `57 passed`.
 4. **Determinism** — run the same fixture twice, `diff` the reports; must be byte-identical. Asserted in `test_analysis_is_deterministic`.
 5. **Replay bench** — `python bench/run.py --replay`, review scoreboard for misses and FP candidates against `expect_findings` / `expect_absent`.
-6. **Live bench** — `python bench/run.py --live` (pinned 8-site smoke subset, 2 per quadrant) during development; `--replay` across the full 64 before submission. Confirm every site completes under 5 minutes and the good-SEO/poor-GEO quadrant scores poorly on discoverability. → latest full run: **64/64 audited, 0 false positives, 0 misses**, slowest site 118s, money quadrant 17 points below the control.
+6. **Live bench** — `python bench/run.py --live` (pinned 8-site smoke subset, 2 per quadrant) during development; `--replay` across the full 64 before submission. Confirm every site completes under 5 minutes and the good-SEO/poor-GEO quadrant scores poorly on discoverability. → latest full run: **64/64 audited, 0 false positives, 0 misses**, slowest site 118s, money quadrant 16 points below the control.
 7. **Real agent end-to-end** — `python tools/install_local.py` to drop the skills into `.claude/skills/`, start a fresh Claude Code session, ask *"audit example.com"*, and confirm the **orchestrator alone** activates (not a sub-skill), dispatches the others, and emits a schema-valid `report.json` + readable `report.md`. **Re-run this after task 10 lands** — activation hygiene is the one property no script can check.
 8. **Package** — `python tools/package.py`, confirm the zip contains only the marketplace root and is well under 50 MB. → `39 files, 0.14 MB, manifest matches. OK: ready to submit.`
 
 ### The one result that matters
 
-The good-SEO/poor-GEO quadrant scores **50** against the control's **66**. Those
+The good-SEO/poor-GEO quadrant scores **51** against the control's **66**. Those
 fourteen sites are ones a conventional SEO linter passes clean — perfect sitemaps
 and canonicals while the edge returns 429 to `ClaudeBot` or robots.txt disallows
 the retrieval crawlers outright. That gap is the evidence

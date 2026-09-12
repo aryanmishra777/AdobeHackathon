@@ -20,7 +20,11 @@
       "concern": "acquire",
       "summary": "The only skill that touches the network. Performs one polite, robots-respecting, budget-bounded crawl and writes a normalized evidence bundle to disk for every other skill to analyze.",
       "status": "complete",
-      "owner": "aryan"
+      "owner": "aryan",
+      "optional_dependencies": [
+        "playwright",
+        "beautifulsoup4"
+      ]
     },
     {
       "id": "crawl-access-audit",

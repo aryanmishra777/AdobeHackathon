@@ -97,7 +97,8 @@ def collect_live(site: dict, out_dir: str, max_pages: int, budget: int) -> bool:
     proc = subprocess.run(
         [sys.executable, COLLECT, site["url"], "--out", out_dir,
          "--max-pages", str(max_pages), "--budget", str(budget),
-         "--delay", "0.5", "--timeout", "10"],
+         "--delay", "0.5", "--timeout", "10",
+         "--renderer", "none"],   # the bench measures the stdlib path graders will hit
         capture_output=True, text=True, encoding="utf-8")
     if proc.returncode != 0:
         print(f"    collect failed: {proc.stderr.strip()[:200]}", file=sys.stderr)

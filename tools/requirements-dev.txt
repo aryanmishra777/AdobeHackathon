@@ -1,2 +1,6 @@
 PyYAML>=6.0
 pytest>=8.0
+# Optional extras the marketplace uses when present (see
+# brand-ai-readiness-audit/requirements-optional.txt); the tests exercise both paths.
+playwright>=1.45
+beautifulsoup4>=4.12

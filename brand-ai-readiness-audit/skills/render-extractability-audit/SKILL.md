@@ -69,6 +69,10 @@ the script does not have are applied by you, here.
 
 When `run.renderer.available` is `true`, `rendered.html` is ground truth and a raw-versus-rendered delta is a measurement. Report it as such.
 
+The collector renders a sample of pages on its own when Playwright is installed
+(`--renderer auto`); `run.renderer.pages_rendered` says how many, and the finding
+names which pages were measured and which inferred.
+
 When no renderer was available — the common case, and the one a grader's machine will hit — READ-001 is an **inference** from raw-HTML signals. In that case:
 
 - cap `confidence` at `medium`

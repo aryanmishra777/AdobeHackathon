@@ -231,8 +231,39 @@ def check_registry(skill_dir, entry, r, seen_ids):
             r.error(f"{rel}/checks.yaml", f"invalid proactive id {pid!r}")
 
 
+# Optional extras declared in brand-ai-readiness-audit/requirements-optional.txt.
+# They may be imported only inside a try/except that survives their absence, so
+# a bare Python install still runs every script; the validator checks that.
+OPTIONAL_OK = {"playwright", "bs4"}
+
+
+def _guarded_import_lines(tree) -> set:
+    """Line numbers of import statements inside a `try:` whose handlers catch
+    ImportError, Exception or everything -- the shape an optional import must
+    take."""
+    lines = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Try):
+            continue
+        catches = False
+        for h in node.handlers:
+            if h.type is None:
+                catches = True
+            else:
+                names = [h.type.id] if isinstance(h.type, ast.Name) else                         [e.id for e in getattr(h.type, "elts", []) if isinstance(e, ast.Name)]
+                if any(n in ("ImportError", "ModuleNotFoundError", "Exception") for n in names):
+                    catches = True
+        if not catches:
+            continue
+        for inner in ast.walk(ast.Module(body=node.body, type_ignores=[])):
+            if isinstance(inner, (ast.Import, ast.ImportFrom)):
+                lines.add(inner.lineno)
+    return lines
+
+
 def check_stdlib_only(r):
-    """Nothing inside the zip may import a third-party package."""
+    """Nothing inside the zip may import a third-party package, except the
+    declared optional extras, and those only behind a try/except."""
     for dirpath, _dirs, files in os.walk(MARKET):
         for fn in files:
             if not fn.endswith(".py"):
@@ -244,6 +275,7 @@ def check_stdlib_only(r):
             except SyntaxError as exc:
                 r.error(rel, f"syntax error: {exc}")
                 continue
+            guarded = _guarded_import_lines(tree)
             for node in ast.walk(tree):
                 mods = []
                 if isinstance(node, ast.Import):
@@ -252,10 +284,17 @@ def check_stdlib_only(r):
                     mods = [node.module]
                 for m in mods:
                     top = m.split(".")[0]
-                    if top not in STDLIB_OK:
-                        r.error(rel, f"line {node.lineno}: imports {top!r}, which is "
-                                     f"not in the standard library -- the submission "
-                                     f"must run on a bare Python install")
+                    if top in STDLIB_OK:
+                        continue
+                    if top in OPTIONAL_OK:
+                        if node.lineno not in guarded:
+                            r.error(rel, f"line {node.lineno}: optional extra {top!r} is "
+                                         f"imported outside a try/except -- a bare Python "
+                                         f"install would fail here")
+                        continue
+                    r.error(rel, f"line {node.lineno}: imports {top!r}, which is "
+                                 f"not in the standard library -- the submission "
+                                 f"must run on a bare Python install")
 
 
 def check_determinism(r):

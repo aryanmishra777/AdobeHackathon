@@ -14,8 +14,10 @@ description: >-
 license: MIT
 compatibility: >-
   Requires Python 3.9+ (standard library only) and outbound HTTPS access to the
-  audited site. No browser or rendering engine is required; when the host agent
-  provides one, pass --renderer to capture rendered HTML alongside raw HTML.
+  audited site. No browser or rendering engine is required. Optional extras,
+  never required: Playwright (auto-detected; renders a sample of pages so
+  READ-001 becomes a measurement) and BeautifulSoup (cross-checks the extractor).
+  See requirements-optional.txt at the marketplace root.
 allowed-tools: Bash Read Write
 metadata:
   marketplace: brand-ai-readiness-audit
@@ -78,8 +80,13 @@ These are hard constraints, not defaults:
 | `--concurrency` | 8 | Max parallel requests (hard cap 8) |
 | `--delay` | 0.5 | Politeness delay in seconds |
 | `--include` / `--exclude` | none | Path prefix filters |
-| `--renderer` | none | Command receiving a URL and printing rendered HTML |
+| `--renderer` | `auto` | `auto` uses the bundled `render_playwright.py` when Playwright and Chromium are installed; `none` disables; anything else is a command receiving a URL and printing rendered HTML |
+| `--render-pages` | 6 | Pages to render after the crawl: the seed page plus the thinnest fetched pages. Only already-fetched (robots-allowed) URLs; assets are not requested |
 | `--no-probe` | off | Skip the user-agent probe |
+
+Git Bash on Windows rewrites arguments that look like POSIX paths, so
+`--include /in/` arrives as `C:/Program Files/Git/in/`. Run with
+`MSYS_NO_PATHCONV=1` there.
 
 ## Procedure
 
@@ -143,7 +150,8 @@ A bundle conforming to `references/evidence-bundle.schema.json`:
   sitemaps/*.xml  ua_probe.json  coverage.json
   pages/<page-id>/
     request.json  response.headers.json  raw.html
-    rendered.html   (only when --renderer was supplied)
+    rendered.html      (only for the rendered sample, when a renderer exists)
+    extract_diff.json  (only when BeautifulSoup is installed and disagrees)
     extracted.json  chunks.json
 ```
 
