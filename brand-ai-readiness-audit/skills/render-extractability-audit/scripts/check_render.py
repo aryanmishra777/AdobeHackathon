@@ -435,6 +435,17 @@ def check_read_001(b: Bundle) -> list[dict]:
             if rendered_words >= max(100, 3 * raw_words):
                 affected.append(page)
                 measured.append((page, raw_words, rendered_words))
+            elif rendered_words < 100:
+                # The render is inconclusive: the browser produced no more
+                # than the raw HTML had. nike.in's help centre rendered 43
+                # words because its FAQ loads after networkidle, and reading
+                # that as "not JavaScript-dependent" cleared a real finding.
+                # An empty render proves nothing; fall back to inference.
+                sigs = _render_signals(page, ext)
+                if sigs:
+                    affected.append(page)
+                    fired.append(sigs)
+                    max_payload = max(max_payload, sigs["payload"])
         else:
             # Inference from the strict combined signals
             sigs = _render_signals(page, ext)
@@ -484,8 +495,11 @@ def check_read_001(b: Bundle) -> list[dict]:
             f"{n} of {m} sampled pages return at most {thinnest} words of body text in "
             f"the raw HTML"
             + (f", while carrying {detail}" if detail else "")
-            + ". (Inferred from raw-HTML signals; no browser renderer was "
-              "available to measure the runtime DOM.)"
+            + (". (Inferred from raw-HTML signals; the renderer's copy of these pages "
+               "carried no more text than the HTML, which proves nothing either way.)"
+               if renderer_available else
+               ". (Inferred from raw-HTML signals; no browser renderer was "
+               "available to measure the runtime DOM.)")
         )
         b.coverage.setdefault("limitations", []).append(
             "No renderer available; JS-dependency inferred from raw HTML rather than measured."

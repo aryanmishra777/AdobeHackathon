@@ -1167,3 +1167,31 @@ def test_validator_allows_declared_extras_only_behind_a_guard(tmp_path):
     assert v._guarded_import_lines(ok) == {2}
     assert v._guarded_import_lines(bad) == set()
     assert "bs4" in v.OPTIONAL_OK and "playwright" in v.OPTIONAL_OK
+
+
+def test_read_001_falls_back_to_inference_when_the_render_is_inconclusive(tmp_path):
+    """nike.in's help centre rendered 43 words because its FAQ loads after
+    networkidle; reading that as 'not JavaScript-dependent' cleared a real
+    finding. An empty render proves nothing; the signals decide."""
+    import shutil
+    src = bundle("js-shell")
+    dst = tmp_path / "b"
+    shutil.copytree(src, dst)
+    run_path = dst / "run.json"
+    run_doc = json.loads(run_path.read_text(encoding="utf-8"))
+    run_doc["renderer"] = {"available": True, "name": "test", "pages_rendered": 1, "pages_attempted": 1}
+    run_path.write_text(json.dumps(run_doc), encoding="utf-8")
+    man_path = dst / "MANIFEST.json"
+    man = json.loads(man_path.read_text(encoding="utf-8"))
+    man["run"] = run_doc
+    man_path.write_text(json.dumps(man), encoding="utf-8")
+    before = json.loads(run(CHECK_RENDER, str(dst), "--stdout").stdout)["findings"]
+    hit = next((f for f in before if f["check_id"] == "READ-001"), None)
+    assert hit is not None, "js-shell fixture must trip READ-001 by inference"
+    for p in man["pages"]:
+        if p.get("status") == 200:
+            (dst / "pages" / p["page_id"] / "rendered.html").write_text(
+                "<html><body><div id='root'></div></body></html>", encoding="utf-8")
+    after = json.loads(run(CHECK_RENDER, str(dst), "--stdout").stdout)["findings"]
+    hit2 = next((f for f in after if f["check_id"] == "READ-001"), None)
+    assert hit2 is not None and "proves nothing" in hit2["evidence"]
