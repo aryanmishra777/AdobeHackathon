@@ -36,6 +36,7 @@ import json
 import os
 import re
 import sys
+import time
 from collections import Counter
 from urllib.parse import urlparse
 
@@ -239,37 +240,55 @@ class Bundle:
         are not."""
         if self._brand_phrases is not None:
             return self._brand_phrases
-        authoritative: list = []
+        # Count every candidate by the number of PAGES that carry it. A name
+        # the site declares (Organization JSON-LD, og:site_name) is weighted
+        # above a title segment, but it still has to recur: one page's
+        # og:site_name must never outvote seventeen consistent titles. That
+        # exact failure named curl.se's brand "GitHub" from a single bug-tracker
+        # page that redirected there.
+        declared: Counter = Counter()
+        titled: Counter = Counter()
         for p in self.ok_pages:
             ex = self.extracted(p["page_id"])
+            page_names: set = set()
             for block in ex.get("jsonld") or []:
                 if block.get("parsed_ok"):
-                    authoritative.extend(_jsonld_org_names(block.get("value")))
+                    page_names |= {n.strip() for n in _jsonld_org_names(block.get("value")) if n}
             meta = ex.get("meta") or {}
             for key in ("og:site_name", "application-name", "apple-mobile-web-app-title"):
                 if meta.get(key):
-                    authoritative.append(meta[key])
+                    page_names.add(str(meta[key]).strip())
+            for n in page_names:
+                declared[n] += 1
+            for seg in TITLE_SPLIT_RE.split(ex.get("title") or ""):
+                seg = seg.strip()
+                if len(seg) >= 3:
+                    titled[seg] += 1
 
-        fallback: list = []
-        if not authoritative:
-            seg_counter: Counter = Counter()
-            for p in self.ok_pages:
-                title = self.extracted(p["page_id"]).get("title") or ""
-                for seg in TITLE_SPLIT_RE.split(title):
-                    seg = seg.strip()
-                    if len(seg) >= 3:
-                        seg_counter[seg] += 1
-            for seg, count in seg_counter.most_common():
-                if count >= max(2, len(self.ok_pages) // 3):
-                    fallback.append(seg)
-                    break
+        # "Stripe logo" is what 18 of stripe.com's <title>s literally say --
+        # the logo's alt text leaking into the title. Strip that class of
+        # suffix so the candidate merges with the declared name.
+        def _clean(name: str) -> str:
+            return re.sub(r"\s+(logo|icon|homepage|home page|home|official site)$",
+                          "", name.strip(), flags=re.I).strip() or name.strip()
+        declared = Counter({_clean(k): v for k, v in declared.items()})
+        titled = Counter({_clean(k): v for k, v in titled.items()})
+
+        n_pages = max(1, len(self.ok_pages))
+        scored: dict = {}
+        for name, c in declared.items():
+            scored[name] = scored.get(name, 0.0) + c * 2.0   # self-declared: weight 2
+        for name, c in titled.items():
+            if c >= max(2, n_pages // 3):
+                scored[name] = scored.get(name, 0.0) + c * 1.0
+        ranked = sorted(scored.items(), key=lambda kv: (-kv[1], kv[0]))
 
         seen, res = set(), []
-        for name in authoritative + fallback:
+        for name, _score in ranked:
             key = _norm_name(name)
             if key and key not in seen:
                 seen.add(key)
-                res.append(name.strip())
+                res.append(name)
         self._brand_phrases = res
         return res
 
@@ -775,11 +794,51 @@ def check_quote_004(b: Bundle) -> list:
     return out
 
 
+
+def _looks_commercial(b) -> bool:
+    """Does the sample show a site that sells or serves, rather than publishes?
+
+    QUOTE-005 and QUOTE-006 are gated to ecommerce, saas, local-business and
+    marketplace by references/site-profiles.md, and the bundle carries no site
+    profile. Without this inference they fired on 62 of 85 corpus sites --
+    Wikipedia, curl, CTAN, a personal blog -- for lacking a pricing page. The
+    agent applies gate 1 properly; this is the script's conservative half.
+    """
+    types = {p.get("page_type") for p in b.ok_pages}
+    if types & {"product", "category", "pricing"}:
+        return True
+    hints = re.compile(r"/(shop|store|products?|collections?|pricing|plans|"
+                       r"checkout|cart|basket|book|booking|services?|menu|locations?|"
+                       r"dp|b|p|sku|item)(/|$)", re.I)
+    urls = [_page_url(p) for p in b.ok_pages] + b.sitemap_locs()
+    if sum(1 for u in urls if hints.search(u)) >= 2:
+        return True
+    # A cart or checkout link anywhere in the sampled navigation settles it:
+    # chewy.com's twenty sampled pages were all customer-care and membership,
+    # never a product, but every one of them links to the cart.
+    cart = re.compile(r"/(cart|checkout|basket|bag)(/|$|\?)", re.I)
+    for p in b.ok_pages[:10]:
+        for l in (b.extracted(p["page_id"]).get("links") or []):
+            if l.get("internal") and cart.search(l.get("href") or ""):
+                return True
+    # A site that is mostly articles or docs is a publisher, whatever else it does.
+    n = max(1, len(b.ok_pages))
+    editorial = sum(1 for p in b.ok_pages if p.get("page_type") in ("article", "docs"))
+    return editorial / n < 0.5 and any(
+        re.search(r"(buy|order|subscribe|sign up|get started|free trial|shop now|"
+                  r"free shipping|in stock|request a (demo|quote)|add to (cart|basket)|"
+                  r"book now)",
+                  (b.extracted(p["page_id"]).get("text") or {}).get("main") or "", re.I)
+        for p in b.ok_pages[:10])
+
+
 def check_quote_005(b: Bundle) -> list:
     """The site has none of the page types assistants cite most. Deterministic
     over the sampled page types plus the sitemap."""
     # Guard (agent): applies_when ecommerce/saas/local-business/marketplace only,
     # and never to docs or portfolio-brochure sites -- gate 1 is the agent's.
+    if not _looks_commercial(b):
+        return []  # gate 1: a publisher or docs site is not expected to sell
     wanted_types = {"faq", "pricing"}
     have_types = {p.get("page_type") for p in b.ok_pages}
     if wanted_types & have_types:
@@ -827,6 +886,8 @@ def check_quote_006(b: Bundle) -> list:
     emitted when there is no FAQ and no pricing page at all -- enumerating
     hypothetical questions is the padding the rubric penalises, so the concrete
     question set is derived by the agent from the site's own category."""
+    if not _looks_commercial(b):
+        return []  # gate 1: "buyer questions" presuppose something to buy
     have_types = {p.get("page_type") for p in b.ok_pages}
     if {"faq", "pricing"} & have_types:
         return []
@@ -1588,6 +1649,11 @@ def main(argv=None) -> int:
     ap.add_argument("bundle")
     ap.add_argument("--out", help="write candidates here (default stdout)")
     ap.add_argument("--stdout", action="store_true")
+    ap.add_argument("--deadline", type=float, default=None,
+                    help="Unix time by which this script must have returned. The "
+                         "orchestrator sets it from the audit's hard 270s cap. Checks "
+                         "not reached are recorded in checks_cut_by_deadline, never "
+                         "silently omitted.")
     args = ap.parse_args(argv)
 
     if not os.path.isdir(args.bundle):
@@ -1600,7 +1666,14 @@ def main(argv=None) -> int:
         return 2
 
     findings: list = []
+    cut_by_deadline: list = []
     for check in CHECKS:
+        # The audit has a hard wall-clock cap. A check that has not started by
+        # the deadline is skipped and NAMED, so the report says what it did not
+        # look at rather than implying a clean result.
+        if args.deadline is not None and time.time() >= args.deadline:
+            cut_by_deadline.append(check.__name__.replace("check_", "").replace("_", "-").upper())
+            continue
         try:
             findings.extend(check(b) or [])
         except Exception as exc:
@@ -1640,6 +1713,10 @@ def main(argv=None) -> int:
               "checks_skipped": b.checks_skipped,
               "checks_not_implemented": NOT_YET_IMPLEMENTED}
 
+    if cut_by_deadline:
+        result["checks_cut_by_deadline"] = cut_by_deadline
+        print(f"warning: deadline reached; {len(cut_by_deadline)} check(s) not run: "
+              f"{', '.join(cut_by_deadline)}", file=sys.stderr)
     text = json.dumps(result, indent=2, ensure_ascii=False)
     if args.out and not args.stdout:
         with open(args.out, "w", encoding="utf-8", newline="\n") as fh:

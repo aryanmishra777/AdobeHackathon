@@ -39,6 +39,7 @@ import json
 import os
 import re
 import sys
+import time
 from collections import Counter
 from urllib.parse import urlparse
 
@@ -133,6 +134,7 @@ STAT_CLAIM_RE = re.compile(
     r"clients|organisations|organizations|members|subscribers)\b)", re.I)
 ATTRIBUTION_RE = re.compile(
     r"(source:|sources:|according to|\[\d+\]|\(\d{4}\)|study by|report by|"
+    r"\((?:ap|reuters|afp|bloomberg|pti|ani|dpa|efe|upi)\)|"
     r"published in|cite|citation|methodology|our research|our survey|our data|"
     r"we surveyed|we analysed|we analyzed|we measured)", re.I)
 OWN_OPS_SUBJECT_RE = re.compile(r"\b(we|our|us)\b", re.I)
@@ -796,13 +798,27 @@ def check_trust_005(b: Bundle) -> list:
                 for d in (ex.get("dates") or [])):
             continue
         if ref_year and CURRENCY_LANGUAGE_RE.search(text):
-            yrs = [_year(d.get("value")) for d in ex.get("dates") or []
-                   if d.get("source") in ("time-element", "visible-text")]
-            yrs = [y for y in yrs if y]
-            if yrs and ref_year - min(yrs) >= 2:
+            # The page's date is when it was last published or modified, which
+            # is the MOST RECENT structured date it declares -- not the oldest
+            # year its prose happens to mention. Taking min() dated Wikipedia's
+            # About page to 2001 and a blog's about-me to 2004 off "founded in"
+            # sentences, then called both stale. Prefer structured sources;
+            # fall back to visible text only when there is nothing better, and
+            # even then take the latest.
+            structured = [_year(d.get("value")) for d in ex.get("dates") or []
+                          if d.get("source") in ("jsonld", "time-element", "meta")]
+            structured = [y for y in structured if y]
+            if structured:
+                page_year = max(structured)
+            else:
+                visible = [_year(d.get("value")) for d in ex.get("dates") or []
+                           if d.get("source") == "visible-text"]
+                visible = [y for y in visible if y]
+                page_year = max(visible) if visible else None
+            if page_year and ref_year - page_year >= 2:
                 m = CURRENCY_LANGUAGE_RE.search(text)
                 reasons.append('the page is dated {} but presents "{}" as current'.format(
-                    min(yrs), m.group(0).strip()))
+                    page_year, m.group(0).strip()))
         cm = COMING_YEAR_RE.search(text)
         if cm and ref_year and int(cm.group(1)) < ref_year:
             reasons.append('"{}" refers to a year that has already passed'.format(
@@ -1094,8 +1110,19 @@ def check_trust_015(b: Bundle) -> list:
         return []
     out = []
     for p in b.content_pages:
+        # Guard: an index page lists titles; it does not make claims. danluu.com's
+        # home page was reported for "95%-ile isn't that good" -- a post title in
+        # its archive list. Claims live on the pages themselves.
+        if p.get("page_type") in ("home", "category"):
+            continue
         flagged = []
         for sent in _sentences((b.extracted(p["page_id"]).get("text") or {}).get("main") or ""):
+            # Guard: a "sentence" of 60+ words with no terminator is a nav list,
+            # a table or a post index, not a claim. Wikipedia's front page and
+            # danluu.com's post list each arrived as one such run containing a
+            # percentage somewhere, and the excerpt showed its unrelated start.
+            if len(sent.split()) > 60:
+                continue
             if not STAT_CLAIM_RE.search(sent):
                 continue
             if ATTRIBUTION_RE.search(sent):
@@ -1255,6 +1282,11 @@ def main(argv=None) -> int:
     ap.add_argument("bundle")
     ap.add_argument("--out", help="write candidates here (default stdout)")
     ap.add_argument("--stdout", action="store_true")
+    ap.add_argument("--deadline", type=float, default=None,
+                    help="Unix time by which this script must have returned. The "
+                         "orchestrator sets it from the audit's hard 270s cap. Checks "
+                         "not reached are recorded in checks_cut_by_deadline, never "
+                         "silently omitted.")
     ap.add_argument("--skip-offsite", action="store_true",
                     help="explicitly skip the off-site corroboration checks "
                          "(they are skipped anyway when no lookup tool is present)")
@@ -1270,7 +1302,14 @@ def main(argv=None) -> int:
         return 2
 
     findings: list = []
+    cut_by_deadline: list = []
     for check in CHECKS:
+        # The audit has a hard wall-clock cap. A check that has not started by
+        # the deadline is skipped and NAMED, so the report says what it did not
+        # look at rather than implying a clean result.
+        if args.deadline is not None and time.time() >= args.deadline:
+            cut_by_deadline.append(check.__name__.replace("check_", "").replace("_", "-").upper())
+            continue
         try:
             findings.extend(check(b) or [])
         except Exception as exc:
@@ -1301,6 +1340,10 @@ def main(argv=None) -> int:
               "checks_skipped": b.checks_skipped,
               "checks_not_implemented": NOT_YET_IMPLEMENTED}
 
+    if cut_by_deadline:
+        result["checks_cut_by_deadline"] = cut_by_deadline
+        print(f"warning: deadline reached; {len(cut_by_deadline)} check(s) not run: "
+              f"{', '.join(cut_by_deadline)}", file=sys.stderr)
     text = json.dumps(result, indent=2, ensure_ascii=False)
     if args.out and not args.stdout:
         with open(args.out, "w", encoding="utf-8", newline="\n") as fh:

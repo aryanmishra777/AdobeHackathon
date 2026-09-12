@@ -29,6 +29,7 @@ import json
 import os
 import re
 import sys
+import time
 import unicodedata
 from urllib.parse import urlparse
 
@@ -1284,7 +1285,18 @@ def check_parse_012(b: Bundle) -> list[dict]:
         question_headings = [h.get("text", "") for h in headings if question_regex.search(h.get("text", ""))]
 
         pt = page.get("page_type")
-        if pt == "faq" or len(question_headings) >= 3:
+        # A page is Q&A-shaped when it says so (page_type faq, or /faq in the
+        # URL) or when questions dominate its structure. Three question-shaped
+        # headings on an ordinary page is editorial style -- curl.se's home and
+        # a dozen news explainers fired on that -- and FAQPage markup on an
+        # article would be wrong. asana.com/research/faq with twelve is the
+        # real case, and it still fires.
+        url_says_faq = bool(re.search(r"/faqs?(/|$|\?)|/help/|/support/|/questions",
+                                      page.get("final_url") or page.get("url") or "", re.I))
+        total_heads = max(1, len(ext.get("headings") or []))
+        dominated = (len(question_headings) >= 6
+                     and len(question_headings) / total_heads >= 0.5)
+        if pt == "faq" or url_says_faq or dominated:
             qa_candidates.append((page, len(question_headings), question_headings))
 
     if not qa_candidates:
@@ -1581,6 +1593,11 @@ def main(argv=None) -> int:
     ap.add_argument("bundle")
     ap.add_argument("--out", help="write candidates here (default stdout)")
     ap.add_argument("--stdout", action="store_true")
+    ap.add_argument("--deadline", type=float, default=None,
+                    help="Unix time by which this script must have returned. The "
+                         "orchestrator sets it from the audit's hard 270s cap. Checks "
+                         "not reached are recorded in checks_cut_by_deadline, never "
+                         "silently omitted.")
     args = ap.parse_args(argv)
 
     if not os.path.isdir(args.bundle):
@@ -1593,7 +1610,14 @@ def main(argv=None) -> int:
         return 2
 
     findings: list[dict] = []
+    cut_by_deadline: list = []
     for check in CHECKS:
+        # The audit has a hard wall-clock cap. A check that has not started by
+        # the deadline is skipped and NAMED, so the report says what it did not
+        # look at rather than implying a clean result.
+        if args.deadline is not None and time.time() >= args.deadline:
+            cut_by_deadline.append(check.__name__.replace("check_", "").replace("_", "-").upper())
+            continue
         try:
             findings.extend(check(b) or [])
         except Exception as exc:
@@ -1621,6 +1645,10 @@ def main(argv=None) -> int:
         "checks_not_implemented": NOT_YET_IMPLEMENTED
     }
 
+    if cut_by_deadline:
+        result["checks_cut_by_deadline"] = cut_by_deadline
+        print(f"warning: deadline reached; {len(cut_by_deadline)} check(s) not run: "
+              f"{', '.join(cut_by_deadline)}", file=sys.stderr)
     text = json.dumps(result, indent=2, ensure_ascii=False)
     if args.out and not args.stdout:
         with open(args.out, "w", encoding="utf-8", newline="\n") as fh:

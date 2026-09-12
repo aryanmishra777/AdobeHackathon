@@ -31,6 +31,7 @@ import os
 import re
 import statistics
 import sys
+import time
 from urllib.parse import urlparse
 
 MECHANISM = "reach"
@@ -763,7 +764,10 @@ def check_reach_012(b: Bundle) -> list[dict]:
         pages=[p["url"] for p in broken],
         counts={"broken": len(broken), "in_navigation": len(set(nav_broken))},
         verification=f"curl -sI {broken[0]['url']}",
-        scope="section", checked=len(b.ok_pages),
+        # Every attempted page was examined, including the ones that errored:
+        # on a site whose only page 404s, pages_checked=0 with pages_affected=1
+        # fails the report's own schema.
+        scope="section", checked=len(b.pages),
         action=act("Fix or remove the broken internal links", severity,
                    ["Update the links to their current destinations",
                     "301-redirect removed URLs that still receive traffic",
@@ -1424,6 +1428,11 @@ def main(argv=None) -> int:
     ap.add_argument("bundle")
     ap.add_argument("--out", help="write candidates here (default stdout)")
     ap.add_argument("--stdout", action="store_true")
+    ap.add_argument("--deadline", type=float, default=None,
+                    help="Unix time by which this script must have returned. The "
+                         "orchestrator sets it from the audit's hard 270s cap. Checks "
+                         "not reached are recorded in checks_cut_by_deadline, never "
+                         "silently omitted.")
     args = ap.parse_args(argv)
 
     if not os.path.isdir(args.bundle):
@@ -1436,7 +1445,14 @@ def main(argv=None) -> int:
         return 2
 
     findings: list[dict] = []
+    cut_by_deadline: list = []
     for check in CHECKS:
+        # The audit has a hard wall-clock cap. A check that has not started by
+        # the deadline is skipped and NAMED, so the report says what it did not
+        # look at rather than implying a clean result.
+        if args.deadline is not None and time.time() >= args.deadline:
+            cut_by_deadline.append(check.__name__.replace("check_", "").replace("_", "-").upper())
+            continue
         try:
             findings.extend(check(b) or [])
         except Exception as exc:
@@ -1462,6 +1478,10 @@ def main(argv=None) -> int:
               "engine_reachability": engine_reachability(b),
               "checks_not_implemented": NOT_YET_IMPLEMENTED}
 
+    if cut_by_deadline:
+        result["checks_cut_by_deadline"] = cut_by_deadline
+        print(f"warning: deadline reached; {len(cut_by_deadline)} check(s) not run: "
+              f"{', '.join(cut_by_deadline)}", file=sys.stderr)
     text = json.dumps(result, indent=2, ensure_ascii=False)
     if args.out and not args.stdout:
         with open(args.out, "w", encoding="utf-8", newline="\n") as fh:

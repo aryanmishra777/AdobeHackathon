@@ -40,14 +40,25 @@ emits a single report.
   two-request user-agent probe in `site-evidence-collector`, which re-fetches a
   single already-allowed URL.
 - **Never touch authenticated areas**, even when credentials are offered.
-- **Stay inside the budget.** Default ceiling is 25 pages and 120 seconds of
-  fetching, with a mandatory politeness delay and never more than 8 concurrent
-  requests. Every network request the collector makes is capped by the time
-  actually remaining, so the wall-clock ceiling is the budget plus at most one
-  in-flight request -- measured at 129s against a 120s budget on a site that
-  refused every fetch. That is the
-  worst case, and it leaves better than a 2x margin against the five-minute
-  limit. A healthy site completes in 12-36s.
+- **Hard cap: 270 seconds per site, no exceptions.** The handout's limit is
+  five minutes. We stop at 270s so that a slow last request or a slow disk can
+  never push a run over it. Enforce it, do not estimate it: take the wall-clock
+  time when the audit starts, compute `deadline = start + 270`, and pass
+  `--deadline <deadline>` to **every** script you run -- `collect.py` (which
+  shrinks its fetch budget to fit) and all six `check_*.py` (which skip any check
+  not started by the deadline and list it in `checks_cut_by_deadline`). Give
+  collection at most 55% of the cap. Do not start an analysis stage with under
+  8 seconds left; record it in `coverage.limitations` as not run instead. A
+  mechanism whose analyzer did not run is **not assessed** -- never graded as
+  clean.
+
+  Typical runs finish in 12-40s. The cap exists for the site that refuses every
+  request and the machine that is slower than ours.
+- **Stay inside the fetch budget.** Default ceiling is 25 pages and 120 seconds
+  of fetching, with a mandatory politeness delay and never more than 8
+  concurrent requests. Every network request the collector makes is capped by
+  the time actually remaining, so the wall-clock ceiling is the budget plus at
+  most one in-flight request.
 - **Report honestly.** If coverage was cut short, say so in `coverage` rather
   than issuing a clean bill of health from a partial crawl.
 - **State the boundary of the audit.** Several factors that decide whether an

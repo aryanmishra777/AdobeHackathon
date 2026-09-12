@@ -40,6 +40,14 @@ MERGE = os.path.join(SKILLS, "audit-orchestrator", "scripts", "merge_findings.py
 VALIDATE = os.path.join(SKILLS, "audit-orchestrator", "scripts", "validate_report.py")
 SUBSKILLS = os.path.join(SKILLS, "audit-orchestrator", "references", "subskills.json")
 
+# The hard ceiling from the handout is five minutes per site. We stop at 270s
+# so that a slow last request or a slow disk can never push a run over it.
+AUDIT_CAP_SECONDS = 270.0
+# Collection may use up to this share of the cap; the rest is for analysis.
+COLLECT_SHARE = 0.55
+# Kept back for merge, scoring and rendering, which are fast but not free.
+MERGE_RESERVE_SECONDS = 8.0
+
 ANALYZERS = [
     ("reach", "crawl-access-audit", "check_access.py"),
     ("read", "render-extractability-audit", "check_render.py"),
@@ -199,7 +207,19 @@ def main(argv=None) -> int:
     ap.add_argument("--budget", type=int, default=120)
     ap.add_argument("--bundle", default=None,
                     help="reuse an existing bundle instead of crawling")
+    ap.add_argument("--cap", type=float, default=AUDIT_CAP_SECONDS,
+                    help="hard wall-clock cap for the whole audit, in seconds")
     args = ap.parse_args(argv)
+
+    # The whole audit -- collect, six analyzers, merge, render -- must finish
+    # inside one hard cap, regardless of the site. Every script takes the same
+    # absolute deadline and stops on its own; this harness also refuses to start
+    # a stage that cannot finish. Whatever was cut is named in coverage.
+    t0 = time.time()
+    deadline = t0 + args.cap
+
+    def remaining():
+        return deadline - time.time()
 
     out_dir = args.out or os.path.join(REPO, ".audit", "run")
     os.makedirs(out_dir, exist_ok=True)
@@ -208,8 +228,11 @@ def main(argv=None) -> int:
     if not args.bundle:
         print(f"collecting {args.target} ...", file=sys.stderr)
         started = time.time()
+        # Collection may use at most COLLECT_SHARE of the cap so the analyzers
+        # and the merge always have room; the collector shrinks to fit.
         proc = run(COLLECT, args.target, "--out", bundle,
-                   "--max-pages", str(args.max_pages), "--budget", str(args.budget))
+                   "--max-pages", str(args.max_pages), "--budget", str(args.budget),
+                   "--deadline", str(t0 + args.cap * COLLECT_SHARE))
         if proc.returncode != 0:
             print(proc.stderr[-2000:], file=sys.stderr)
             return 2
@@ -219,9 +242,16 @@ def main(argv=None) -> int:
     pages = sum(1 for p in manifest.get("pages", []) if p.get("status") == 200)
 
     candidates, ran, skipped, engine_rows, proactive = [], [], [], [], []
+    cut_stages, cut_checks = [], []
     for mech, skill, script in ANALYZERS:
         path = os.path.join(SKILLS, skill, "scripts", script)
-        proc = run(path, bundle, "--stdout")
+        if remaining() < MERGE_RESERVE_SECONDS:
+            cut_stages.append(mech)
+            print(f"  {skill:<32} NOT RUN: {remaining():.0f}s left of the "
+                  f"{args.cap:.0f}s cap", file=sys.stderr)
+            continue
+        proc = run(path, bundle, "--stdout",
+                   "--deadline", str(deadline - MERGE_RESERVE_SECONDS))
         if proc.returncode != 0:
             print(f"  {skill} FAILED: {proc.stderr.strip()[:200]}", file=sys.stderr)
             continue
@@ -230,6 +260,7 @@ def main(argv=None) -> int:
         proactive.extend(doc.get("proactive_recommendations") or [])
         skipped.extend(doc.get("checks_skipped") or [])
         engine_rows.extend(doc.get("engine_reachability") or [])
+        cut_checks.extend(doc.get("checks_cut_by_deadline") or [])
         ran.append(mech)
         print(f"  {skill:<32} {len(doc.get('findings') or [])} findings", file=sys.stderr)
 
@@ -285,6 +316,12 @@ def main(argv=None) -> int:
             "limitations": [
                 "No browser renderer was available, so JavaScript dependency is "
                 "inferred from raw HTML rather than measured.",
+            ] + ([f"The audit's {args.cap:.0f}s wall-clock cap was reached: "
+                  f"{len(cut_stages)} analysis stage(s) did not run ({', '.join(cut_stages)}) "
+                  f"and {len(cut_checks)} check(s) were cut short "
+                  f"({', '.join(cut_checks[:12])}{'...' if len(cut_checks) > 12 else ''}). "
+                  f"Their mechanisms are not graded as clean; they were not examined."]
+                 if (cut_stages or cut_checks) else []) + [
                 "Model-judged checks were not completed: this run was scripts "
                 "only, with no agent to finish them.",
                 "The engagement axis grades usability proxies. Engagement is "
@@ -292,7 +329,10 @@ def main(argv=None) -> int:
                 "scroll, clicks -- and a site audit has no visitor to observe.",
             ],
         },
-        "run": {"tool": "tools/run_audit.py", "mechanisms_analyzed": ran},
+        "run": {"tool": "tools/run_audit.py", "mechanisms_analyzed": ran,
+                "wall_clock_seconds": round(time.time() - t0, 1),
+                "cap_seconds": args.cap,
+                "stages_cut_by_cap": cut_stages, "checks_cut_by_cap": cut_checks},
     }
     io.open(os.path.join(out_dir, "report.json"), "w", encoding="utf-8", newline="\n").write(
         json.dumps(report, indent=2, ensure_ascii=False) + "\n")

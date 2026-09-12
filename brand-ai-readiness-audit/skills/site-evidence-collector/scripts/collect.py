@@ -570,6 +570,16 @@ class PageParser(HTMLParser):
                     break
 
     def handle_data(self, data):
+        # Text directly inside a non-text element is never content, even when a
+        # capture is active. Emotion and styled-components inject <style> tags
+        # INSIDE headings and links; with the capture check first, asana.com's
+        # <h1>The OS for <style>.css-5fsjej{...}</style> work</h1> produced a
+        # heading and a main text containing CSS, and TRUST-015 then reported
+        # the "0%" in a gradient stop as an unattributed statistic. The only
+        # captures allowed to read a non-text tag are the ones that opened it.
+        if (self._stack and self._stack[-1] in NON_TEXT
+                and self._capture_tag not in ("ld+json", "script", "noscript")):
+            return
         if self._capture is not None:
             self._capture.append(data)
             return
@@ -948,6 +958,13 @@ def _is_float(s):
 # URL helpers
 # --------------------------------------------------------------------------
 
+def _bare_host(netloc: str) -> str:
+    """Hostname with port and a leading www. removed, lowercased, so that
+    www.example.com and example.com compare equal and github.com does not."""
+    host = (netloc or "").lower().split("@")[-1].split(":")[0]
+    return host[4:] if host.startswith("www.") else host
+
+
 def normalize_url(url: str) -> str:
     url, _ = urldefrag(url)
     parsed = urlparse(url)
@@ -1004,6 +1021,18 @@ def classify_page_type(url: str, extracted: dict | None) -> str:
             return "article"
         if "faqpage" in types:
             return "faq"
+        # A long, dated page with a heading is an article whatever its URL
+        # says. Personal and research sites (danluu.com/exercise-7,
+        # cr.yp.to/papers.html) publish articles at flat URLs with no JSON-LD,
+        # and calling every one of them "other" starved STAY-002 and TRUST-001
+        # of the page type they key on. Shape is evidence too.
+        text = extracted.get("text") or {}
+        words = text.get("main_word_count") or 0
+        dated = any(d.get("source") in ("jsonld", "time-element", "meta")
+                    for d in (extracted.get("dates") or []))
+        has_heading = any(h.get("level") == 1 for h in (extracted.get("headings") or []))
+        if words >= 300 and dated and has_heading:
+            return "article"
     return "other"
 
 
@@ -1303,6 +1332,17 @@ class Collector:
         if ctype and "html" not in ctype and "xml" not in ctype:
             self.skip(url, "non-html")
             return None
+        # A page that redirected to another host is that host's page, not this
+        # site's. curl.se/bug?i=... lands on GitHub Issues; storing the GitHub
+        # page as curl's gave the answerability skill og:site_name=GitHub, and
+        # it then reported that curl.se never says what "GitHub" is. Record the
+        # redirect as a skip so REACH can still see it; never analyse the body.
+        if r.final_url:
+            here = _bare_host(urlparse(origin).netloc)
+            there = _bare_host(urlparse(r.final_url).netloc)
+            if there and there != here:
+                self.skip(url, f"redirected off-origin to {there}")
+                return None
 
         page_id = f"p{len(self.pages):03d}"
         pdir = os.path.join(self.out, "pages", page_id)
@@ -1453,6 +1493,10 @@ def main(argv=None) -> int:
     ap.add_argument("--max-pages", type=int, default=25)
     ap.add_argument("--timeout", type=float, default=10.0)
     ap.add_argument("--budget", type=float, default=120.0)
+    ap.add_argument("--deadline", type=float, default=None,
+                    help="Unix time by which the bundle must be written. The "
+                         "orchestrator derives it from the audit's hard 270s cap; "
+                         "the fetch budget is shrunk to fit inside it.")
     ap.add_argument("--concurrency", type=int, default=8)
     ap.add_argument("--delay", type=float, default=0.5)
     ap.add_argument("--max-bytes", type=int, default=3_000_000)
@@ -1464,6 +1508,13 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     args.concurrency = max(1, min(args.concurrency, 8))  # hard cap, not a default
+    if args.deadline is not None:
+        # Leave a few seconds to write the bundle after the last fetch returns.
+        remaining = args.deadline - time.time() - 5.0
+        if remaining < args.budget:
+            print(f"budget shrunk from {args.budget:.0f}s to {max(0.0, remaining):.0f}s "
+                  f"to respect the audit deadline", file=sys.stderr)
+            args.budget = max(0.0, remaining)
     if not args.out:
         host = urlparse(args.target if "://" in args.target
                         else "https://" + args.target).netloc or args.target

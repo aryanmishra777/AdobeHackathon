@@ -269,9 +269,18 @@ def check_determinism(r):
             if "site-evidence-collector" in rel:
                 continue
             text = io.open(path, encoding="utf-8").read()
+            lines = text.split("\n")
             for pattern, label in NONDETERMINISM[:2]:
                 for m in pattern.finditer(text):
                     line = text[:m.start()].count("\n") + 1
+                    # The deadline gate reads the clock to decide whether a check
+                    # STARTS, never to compute what a finding SAYS. Without
+                    # --deadline the path is untouched and output is byte-stable;
+                    # with it, whatever was cut is named in the output. That is
+                    # the one wall-clock read an analysis script may make.
+                    src = lines[line - 1]
+                    if "deadline" in src:
+                        continue
                     r.warn(rel, f"line {line}: {label} in an analysis script "
                                 f"makes findings unreproducible")
 

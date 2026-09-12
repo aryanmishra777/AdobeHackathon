@@ -416,7 +416,10 @@
       ],
       "properties": {
         "score": {
-          "type": "integer",
+          "type": [
+            "integer",
+            "null"
+          ],
           "minimum": 0,
           "maximum": 100
         },
@@ -426,15 +429,21 @@
             "B",
             "C",
             "D",
-            "F"
+            "F",
+            "not assessed"
           ]
         },
         "headline": {
           "type": "string",
           "minLength": 10,
           "maxLength": 200
+        },
+        "reason": {
+          "type": "string",
+          "description": "Required when grade is \"not assessed\": why nothing was measured."
         }
-      }
+      },
+      "description": "A graded axis, or one that was not assessed. An axis whose analyzers did not run -- no analyzer available, or the audit's wall-clock cap cut them -- carries score null and grade \"not assessed\", never a number. A grade for something nobody measured is a false claim."
     }
   }
 }

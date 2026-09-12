@@ -269,6 +269,16 @@ def validate_report(doc, bundle_files, rep) -> None:
         for axis in ("discoverability", "engagement"):
             ax = _req(scorecard, axis, "$.scorecard", rep, types=dict)
             if isinstance(ax, dict):
+                if ax.get("grade") == "not assessed":
+                    # An axis nobody measured: null score, a reason, and no
+                    # critical-cap logic -- there is nothing to cap.
+                    if ax.get("score") is not None:
+                        rep.error(f"$.scorecard.{axis}.score",
+                                  "a 'not assessed' axis must carry score null, "
+                                  f"got {ax.get('score')!r}")
+                    _req(ax, "reason", f"$.scorecard.{axis}", rep, types=str, minlen=10)
+                    _req(ax, "headline", f"$.scorecard.{axis}", rep, types=str, minlen=10)
+                    continue
                 score = _req(ax, "score", f"$.scorecard.{axis}", rep,
                              types=int, minimum=0, maximum=100)
                 _req(ax, "grade", f"$.scorecard.{axis}", rep, enum=GRADES)

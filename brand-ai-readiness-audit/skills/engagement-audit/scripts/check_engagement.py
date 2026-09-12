@@ -39,10 +39,29 @@ import json
 import os
 import re
 import sys
+import time
 from urllib.parse import urlparse
 
 MECHANISM = "stay"
 CATEGORY = "engagement"
+
+# Nouns that, in a first heading or opening sentence, tell a visitor what kind
+# of thing they have landed on. STAY-001 used a nine-word list grown from the
+# coffee-roaster fixture and reported ctan.org -- "The Comprehensive TeX Archive
+# Network" -- as never saying what it is.
+ORIENTATION_NOUN_RE = re.compile(
+    r"\b(coffee|software|platform|services?|tools?|shop|store|agency|studio|"
+    r"consultanc\w*|roaster|products?|subscription|courses?|clinic|firm|app|"
+    r"marketplace|solutions?|company|brand|network|archive|library|project|"
+    r"foundation|institute|university|school|magazine|newspaper|news|journal|"
+    r"blog|publication|publisher|outlet|organi[sz]ation|nonprofit|charity|"
+    r"developer|engineer|designer|writer|author|researcher|scientist|"
+    r"photographer|artist|band|team|lab|laboratory|community|forum|wiki|"
+    r"encyclopedia|dictionary|database|registry|repository|hosting|"
+    r"documentation|docs|guide|handbook|manual|tutorial|api|framework|language|"
+    r"compiler|editor|browser|server|client|toolkit|sdk|restaurant|cafe|bakery|"
+    r"hotel|gym|salon|dealer|insurance|bank|health|hospital|government|council|"
+    r"ministry|department|museum|gallery|theatre|theater)\b", re.I)
 
 # A page is a client-render shell (READ-001 territory, not a STAY gap) only when
 # the render signals are unambiguous: an empty framework mount, a large
@@ -323,25 +342,38 @@ def check_stay_001(b: Bundle) -> list:
     flags a home/landing page whose first screen names no offering; the agent
     confirms. The fold is approximated from document order."""
     out = []
+    # A landing page is where a visitor ARRIVES: the home page, a category or
+    # product page, or a top-level page. A deep page classified "other" is
+    # usually an article on a site whose URLs the classifier does not
+    # recognise (danluu.com), and it is not a landing page. Treating every
+    # "other" page as one made this check fire 55 times across the corpus.
+    # "other" is deliberately excluded, at any depth: on a flat-URL blog every
+    # post is top-level (danluu.com/exercise-7) and counting those fired this
+    # sixteen times per site. The pages a visitor arrives on cold are the home
+    # page and the catalogue; everything else is reached with context.
     landing = [p for p in b.content_pages
-               if p.get("page_type") in ("home", "category", "product", "other")]
+               if p.get("page_type") in ("home", "category", "product")]
     for p in landing:
         ex = b.extracted(p["page_id"])
         # Guard: do not fire where the content is missing from OUR view rather
         # than the visitor's -- a shell is already excluded by content_pages.
         heads = [h.get("text", "") for h in ex.get("headings") or []]
-        first = " ".join(heads[:1]) + " " + " ".join(
+        first_head = (heads[0] if heads else "").strip()
+        first = first_head + " " + " ".join(
             re.split(r"(?<=[.!?])\s+", (ex.get("text") or {}).get("main") or "")[:2])
         first_l = first.lower()
-        # "says what is offered" ~ mentions the brand or a concrete offering noun
-        # alongside a verb of provision, OR names a product category.
-        names_offering = bool(re.search(
+        # "says what is offered": a provision verb with a category noun, OR a
+        # self-describing heading. "The Comprehensive TeX Archive Network" and
+        # "Julia Evans -- software developer" orient a visitor with no verb at
+        # all. The noun list grew from the coffee fixture; it now covers what
+        # mastheads and About pages actually say.
+        has_verb = bool(re.search(
             r"\b(is|are|offers?|provides?|sells?|makes?|builds?|helps?|serves?|"
-            r"specialis|specializ)\b", first_l)) and bool(re.search(
-            r"\b(coffee|software|platform|service|tool|shop|store|agency|studio|"
-            r"consultanc|roaster|product|subscription|course|clinic|firm|app|"
-            r"marketplace|solution|company|brand)\b", first_l))
-        if names_offering:
+            r"specialis|specializ|publish|publishes|home of|welcome to)\b", first_l))
+        has_noun = bool(ORIENTATION_NOUN_RE.search(first_l))
+        self_describing_head = (len(first_head.split()) >= 3
+                                and bool(ORIENTATION_NOUN_RE.search(first_head.lower())))
+        if (has_verb and has_noun) or self_describing_head:
             continue
         excerpt = _first_screen(ex)
         severity = "high" if p.get("page_type") == "home" else "medium"
@@ -561,7 +593,10 @@ def check_stay_005(b: Bundle) -> list:
         raw = b.raw_html(page["page_id"]).lower()
         return "breadcrumb" in raw or 'aria-label="breadcrumb"' in raw
     missing = [p for p in deep if not has_orientation(p)]
-    if not missing:
+    # Guard: "visitors cannot tell where they are in the site" is a claim about
+    # the site. One deep page without breadcrumbs in a sample of nine is a
+    # stray template, not a wayfinding problem. Require a real share.
+    if not missing or (len(missing) < 3 and len(missing) < 0.3 * len(deep)):
         return []
     depth = min(_url_depth(_url(p)) for p in missing)
     # Guard (agent): overlaps PARSE-013 (the markup). This reports the
@@ -817,8 +852,15 @@ def check_stay_010(b: Bundle) -> list:
             if "user-scalable=no" in vp or "maximum-scale=1" in vp.replace(" ", ""):
                 no_scale.append(p)
     out = []
-    if no_vp:
-        checked = len(b.content_pages)
+    # Guard: the title is about THE SITE. One page without a viewport tag in a
+    # sample of twenty is a stray template -- seven corpus sites fired "not
+    # usable on mobile" over a single page, usually a utility page. Require a
+    # real share before making a site-level claim; a single stray page is a
+    # low, page-scoped note.
+    checked = len(b.content_pages)
+    home_missing = any(p.get("page_type") == "home" for p in no_vp)
+    if no_vp and (home_missing or len(no_vp) >= 3
+                  or len(no_vp) >= 0.3 * max(1, checked)):
         out.append(finding(
             "STAY-010",
             "The site is not usable on mobile",
@@ -1304,6 +1346,11 @@ def main(argv=None) -> int:
     ap.add_argument("bundle")
     ap.add_argument("--out", help="write candidates here (default stdout)")
     ap.add_argument("--stdout", action="store_true")
+    ap.add_argument("--deadline", type=float, default=None,
+                    help="Unix time by which this script must have returned. The "
+                         "orchestrator sets it from the audit's hard 270s cap. Checks "
+                         "not reached are recorded in checks_cut_by_deadline, never "
+                         "silently omitted.")
     args = ap.parse_args(argv)
 
     if not os.path.isdir(args.bundle):
@@ -1316,7 +1363,14 @@ def main(argv=None) -> int:
         return 2
 
     findings: list = []
+    cut_by_deadline: list = []
     for check in CHECKS:
+        # The audit has a hard wall-clock cap. A check that has not started by
+        # the deadline is skipped and NAMED, so the report says what it did not
+        # look at rather than implying a clean result.
+        if args.deadline is not None and time.time() >= args.deadline:
+            cut_by_deadline.append(check.__name__.replace("check_", "").replace("_", "-").upper())
+            continue
         try:
             findings.extend(check(b) or [])
         except Exception as exc:
@@ -1354,6 +1408,10 @@ def main(argv=None) -> int:
               "checks_skipped": b.checks_skipped,
               "checks_not_implemented": NOT_YET_IMPLEMENTED}
 
+    if cut_by_deadline:
+        result["checks_cut_by_deadline"] = cut_by_deadline
+        print(f"warning: deadline reached; {len(cut_by_deadline)} check(s) not run: "
+              f"{', '.join(cut_by_deadline)}", file=sys.stderr)
     text = json.dumps(result, indent=2, ensure_ascii=False)
     if args.out and not args.stdout:
         with open(args.out, "w", encoding="utf-8", newline="\n") as fh:
