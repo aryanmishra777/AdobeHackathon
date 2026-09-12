@@ -24,6 +24,8 @@ Primary sources, by arXiv/SSRN id:
 | `2509.08919` | Chen et al., *GEO: How to Dominate AI Search* |
 | `ssrn-6815500` | Kargaev, *SEEN Framework* |
 | `2307.03172` | Liu et al., *Lost in the Middle* (cited by GEO-SFE, not in our corpus) |
+| `1711.00304` | *From Attention to Participation: Reviewing and Modelling Engagement with Computers* |
+| `2433396.2433418` | Dupret & Lalmas, *Absence Time and User Engagement* |
 
 ---
 
@@ -143,7 +145,62 @@ whole marketplace asserts:
   ~7-8 repetitions are needed for a stable estimate. This is why `bench/` entries
   are drift-tolerant smoke signals and hard assertions live in `tests/`.
 
-## Engagement: what happens after a citation
+## Engagement: what the literature can and cannot give us
+
+Reviewed 12 September 2026 against the 13 papers under `7th Sem/SEO/Site
+Engagement/`: a 28-page review of engagement with computers (`1711.00304`),
+Dupret & Lalmas on absence time (`2433396.2433418`), Liikkanen's three metrics
+(`1312.5547`), Arapakis on cursor prediction (`2911451.2911505`), a large
+engagement-prediction dataset (`2302.00431`), and eight others on assistants,
+recommenders and course logs.
+
+**What the corpus establishes.** Engagement has a validated definition:
+O'Brien & Toms (2008) frame it as *"a quality of the user experience"*,
+characterised by challenge, aesthetic and sensory appeal, feedback, novelty,
+interactivity, perceived control, awareness, motivation, interest and affect —
+the basis of the User Engagement Scale. The review also records that engagement
+*"was very influenced by usability"* (Boyle et al. 2012; Karat et al. 2002).
+
+**How the field measures it.** From behaviour, every time: clickthrough, page
+views, time on site, return frequency, absence time between visits (Dupret &
+Lalmas, via survival analysis), cursor movement, scroll, gaze, and self-report
+scales. Eight of thirteen papers use click-through; seven use session or
+return data; five dwell time; four gaze or webcam.
+
+**What it does not contain.** Not one paper links a page-observable property —
+load time, layout shift, mobile readiness, heading structure, content length,
+readability — to a measured engagement outcome. We searched for every one of
+those terms. The three apparent hits were false matches: *"low-latency"* in an
+LLM-agent paper, cursor *viewport coordinates* in a mouse-tracking study, and
+BLEU-score *"readability"* in an NLU paper.
+
+### What this means for `engagement-audit`
+
+We audit a website with no user present. Every measure this literature
+validates requires one. So the STAY axis is, and must be described as, a
+**usability-proxy axis**: sixteen checks drawn from the usability tradition that
+the review says influences engagement, with heuristic thresholds and no measured
+effect sizes of their own.
+
+That is a legitimate thing to build, and it is a different thing from measuring
+engagement. The distinction is stated in three places so it cannot be lost:
+
+- the `engagement-audit` registry header
+- the scorecard headline for the engagement axis
+- `coverage.limitations` on every report
+
+The one STAY check with evidence behind it is `STAY-002` (AI-referral landing),
+grounded in the GEO corpus rather than this one — see below. `STAY-008`
+(page weight) and `STAY-009` (layout shift) are the two most likely to acquire
+measured support, because the load-time-to-abandonment relationship has been
+studied at scale; but that work is industry measurement (Chrome UX Report,
+web.dev) rather than the academic literature, it was not in this corpus, and it
+mostly lacks confound control. Until someone checks it, those two stay heuristic.
+
+**The registry makes no percentage claims** (verified: zero lines), so nothing
+needs retracting. What needed adding was the label.
+
+## Engagement after a citation: what the GEO corpus says
 
 Grounds `engagement-audit`, and `STAY-002` in particular.
 

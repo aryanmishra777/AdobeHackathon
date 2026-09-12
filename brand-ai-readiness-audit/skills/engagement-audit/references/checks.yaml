@@ -1,3 +1,27 @@
+# EVIDENCE STATUS -- read before writing any finding text from this registry.
+#
+# Engagement is measured from behaviour: clickthrough, dwell time, return
+# visits, absence time, scroll, cursor, gaze, and self-report scales. That is
+# how every paper in our engagement corpus measures it, and every one of those
+# needs a user present. We audit a site with no user present.
+#
+# So this registry is a USABILITY-PROXY axis. Its sixteen checks come from the
+# usability tradition that the literature says influences engagement (O'Brien &
+# Toms 2008; Boyle et al. 2012; Karat et al. 2002), and their thresholds are
+# heuristic. Not one has a measured effect on engagement of its own, because
+# not one paper in the corpus links a page-observable property to an engagement
+# outcome. We looked.
+#
+# That is fine to build and worth running: a page that dead-ends, blocks on an
+# interstitial or breaks on mobile is a real defect a reader can verify. What a
+# finding from this registry may NOT say is that fixing it will raise dwell
+# time, lower bounce or lift conversion by any amount. Describe the defect and
+# what it prevents a visitor doing. Never quote an engagement gain.
+#
+# The one exception is STAY-002, grounded in the GEO corpus: visitors arriving
+# from an assistant are mid-funnel and pre-persuaded, and pages that restart the
+# conversation instead of continuing it lose them. See docs/EVIDENCE.md.
+
 # STAY check registry -- engagement-audit
 #
 # Mechanism: does the visitor who ARRIVES actually stay?

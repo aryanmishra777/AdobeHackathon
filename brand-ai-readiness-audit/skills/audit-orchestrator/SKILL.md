@@ -87,6 +87,12 @@ emits a single report.
 
   If you have no search tool, leave them skipped and say so in the report. An
   unrun check is honest; a guessed one is not.
+- **Call the engagement axis what it is.** Engagement is measured from
+  visitor behaviour -- dwell time, return visits, scroll, clicks -- and a site
+  audit has no visitor to observe. `engagement-audit` grades usability proxies
+  for it. Say so in the axis headline and in `coverage.limitations`, and never
+  let a STAY finding claim a dwell-time, bounce or conversion effect. The
+  registry header explains why.
 - **Never grade an axis nothing measured.** If no analyzer ran for a mechanism,
   its axis is `"not assessed"`, not a score. Pass `--mechanisms` to
   `scripts/merge_findings.py` listing the mechanisms whose analyzer actually ran,

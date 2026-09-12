@@ -241,6 +241,15 @@ def main(argv=None) -> int:
         if a.get("score") is None:
             a["headline"] = ("Not assessed -- no analyzer ran for this axis, so "
                              "it is deliberately left ungraded.")
+        elif axis == "engagement":
+            # Engagement is measured from behaviour and we have no user present,
+            # so this axis grades usability proxies for it. Say so in the
+            # headline rather than letting the grade imply a measurement.
+            a["headline"] = (f"{a['grade']} ({a['score']}/100) on usability "
+                             f"proxies for engagement -- orientation, next "
+                             f"steps, mobile readiness, load weight. Engagement "
+                             f"itself is measured from visitor behaviour, which "
+                             f"a site audit cannot see.")
         else:
             a["headline"] = (f"{a['grade']} ({a['score']}/100) for whether people "
                              f"and machines can {question}.")
@@ -268,6 +277,9 @@ def main(argv=None) -> int:
                 "inferred from raw HTML rather than measured.",
                 "Model-judged checks were not completed: this run was scripts "
                 "only, with no agent to finish them.",
+                "The engagement axis grades usability proxies. Engagement is "
+                "measured from visitor behaviour -- dwell time, return visits, "
+                "scroll, clicks -- and a site audit has no visitor to observe.",
             ],
         },
         "run": {"tool": "tools/run_audit.py", "mechanisms_analyzed": ran},
