@@ -380,6 +380,15 @@ def _control_verdict(b: Bundle) -> tuple:
         return "all-bots", (
             "A control request under an unknown user-agent name is refused as well, so "
             "every non-browser client is turned away, not only the named AI agents.")
+    served_named = [t for t, r in (b.probe.get("agents") or {}).items() if not refused(r)]
+    if unknown and not refused(unknown) and byte and not refused(byte) and served_named:
+        # The edge served some verifiable names unverified (Wikipedia serves
+        # GPTBot, ClaudeBot and PerplexityBot from any address) and refused
+        # others: the refusals are per-name decisions, not a blanket rule.
+        return "name-rule", (
+            "Both control names and " + ", ".join(sorted(served_named)) + " are served from "
+            "this address without verification, so the refusals are decisions about the "
+            "refused names themselves rather than a rule against unverified bots.")
     if unknown and not refused(unknown) and byte and not refused(byte):
         return "impersonation", (
             "Both control names -- an unknown one and Bytespider, which cannot be verified "
@@ -508,10 +517,26 @@ def check_reach_006(b: Bundle) -> list[dict]:
     else:
         severity, note = "medium", ""
 
+    refused = [s for s in b.sitemaps if s.get("status") in (401, 403, 429)]
+    if declared and refused:
+        # The site declares a sitemap and the edge refuses to serve it to a
+        # crawler: en.wikipedia.org's robots.txt names
+        # /w/rest.php/site/v1/sitemap/0, which answers 403. That is not a
+        # missing sitemap; say what was measured and keep it to medium,
+        # because a browser or an allow-listed crawler may be served.
+        severity = "medium" if severity == "high" else severity
+        title = "The declared sitemap is refused to crawlers"
+        evidence = (f"robots.txt declares {len(declared)} Sitemap directive(s); "
+                    f"GET {refused[0].get('url')} returned {refused[0].get('status')} to "
+                    f"the audit's crawler and GET {b.origin}/sitemap.xml returned "
+                    f"{statuses}. A sitemap a crawler cannot read does not exist for it.{note}")
+    else:
+        title = "No XML sitemap is published or declared"
+        evidence = (f"robots.txt declares {len(declared)} Sitemap directive(s) and "
+                    f"GET {b.origin}/sitemap.xml returned {statuses}.{note}")
     return [finding(
-        "REACH-006", "No XML sitemap is published or declared", severity,
-        f"robots.txt declares {len(declared)} Sitemap directive(s) and "
-        f"GET {b.origin}/sitemap.xml returned {statuses}.{note}",
+        "REACH-006", title, severity,
+        evidence,
         ["MANIFEST.json", "robots.txt.raw"],
         counts={"declared": len(declared), "pages_discovered": n_pages},
         verification=f"curl -sI {b.origin}/sitemap.xml",

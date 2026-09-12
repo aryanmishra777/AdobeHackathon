@@ -138,6 +138,7 @@ ATTRIBUTION_RE = re.compile(
     r"published in|cite|citation|methodology|our research|our survey|our data|"
     r"we surveyed|we analysed|we analyzed|we measured)", re.I)
 OWN_OPS_SUBJECT_RE = re.compile(r"\b(we|our|us)\b", re.I)
+CITATION_MARK_RE = re.compile(r"(?:\[\s*(?:\d+|[a-z]|note \d+|citation needed)\s*\]\s*)+$|^\s*(?:\[\s*(?:\d+|[a-z]|note \d+|citation needed)\s*\]\s*)+")
 # Sentences the statistic regex matches that are not claims about the world:
 # offers and pricing, material composition, negated idioms, code and config,
 # and anything that already carries a link (a link is a source).
@@ -149,6 +150,8 @@ NOT_A_CLAIM_RE = re.compile(
     r"|\b(?:save|earn|get|receive|enjoy)\s+(?:up\s+to\s+)?\$?\d[\d,.]*\s?%?"
     r"|\b(?:commissions?|affiliate|referrals?|promo(?:tion)?s?|vouchers?)\b"
     r"|https?://|www\.|\bskip to (?:main )?content\b"
+    # a citation is the attribution: reference-list markers and bibliographic phrases
+    r"|\u2191|\^\s|archived from the original|retrieved \d|\bISBN\b|\bdoi:|\bpp?\. ?\d"
     r"|[=*\[\]{}\\|<>]|\(\d\)|%\d)", re.I)
 NON_ENGLISH_LANG_RE = re.compile(r"^(?!en(?:[-_]|$))[a-z]{2,3}(?:[-_]|$)", re.I)
 WORLD_CLAIM_NOUN_RE = re.compile(
@@ -1170,7 +1173,22 @@ def check_trust_015(b: Bundle) -> list:
         if NON_ENGLISH_LANG_RE.match((ex.get("lang") or "").strip()):
             continue
         flagged = []
-        for sent in _sentences((ex.get("text") or {}).get("main") or ""):
+        main_text = (ex.get("text") or {}).get("main") or ""
+        # Guard: a page with a reference apparatus -- ten or more footnote
+        # markers -- sources its claims at sentence or paragraph level. This
+        # check exists for the marketing page that states a statistic with
+        # nothing behind it, not for an encyclopaedia article with 100 notes.
+        if len(re.findall(r"\[\s*\d+\s*\]", main_text)) >= 10:
+            continue
+        sentences = _sentences(main_text)
+        for idx, sent in enumerate(sentences):
+            # Guard: a footnote marker after the sentence, or within the next
+            # two (a paragraph-level citation), is its source. Wikipedia's
+            # "[12]" follows the full stop, so it lands at the start of the
+            # next "sentence" and the claim looked unattributed.
+            following = sentences[idx + 1:idx + 3]
+            if CITATION_MARK_RE.search(sent[-12:]) or any(CITATION_MARK_RE.match(n) for n in following):
+                continue
             # Guard: a "sentence" of 60+ words with no terminator is a nav list,
             # a table or a post index, not a claim. Wikipedia's front page and
             # danluu.com's post list each arrived as one such run containing a

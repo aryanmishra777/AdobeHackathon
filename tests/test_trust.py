@@ -300,3 +300,11 @@ def test_trust_010_does_not_read_year_ranges_as_phone_numbers():
     for s in ("2007-2010", "2019-2020", "2019 - 2020"):
         assert not mod._looks_like_phone(s), s
     assert mod._looks_like_phone("022-6918-1920")
+
+
+def test_trust_015_treats_footnotes_and_a_reference_apparatus_as_attribution():
+    mod = _trust_module()
+    assert mod.CITATION_MARK_RE.match("[100] A prior estimate")
+    assert mod.CITATION_MARK_RE.search("plant-based. [12]")
+    assert not mod.CITATION_MARK_RE.match("The stadiums served 40% plant-based food.")
+

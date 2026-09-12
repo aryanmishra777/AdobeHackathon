@@ -305,3 +305,30 @@ def test_quote_010_treats_a_handle_as_the_same_name():
     src = open(CHECK_QUOTE, encoding="utf-8").read()
     assert "squash(n) in squash(other)" in src
     assert mod._norm_name("boAt Lifestyle") == "boat lifestyle"
+
+
+def test_quote_001_credits_a_passage_that_names_its_own_page_subject():
+    """A Wikipedia passage that names Assassin's Creed and carries three
+    figures is self-contained even though it never says 'Wikimedia'. A
+    pronoun at the opening still fails."""
+    mod = _quote_module()
+    fine = {"word_count": 60, "heading_path": ["Premise"],
+            "signals": {"names_subject": True, "leading_pronoun": False, "bare_numbers": 5, "deictic_terms": []}}
+    assert not mod._chunk_fails_standalone(fine, {"wikimedia"})
+    pronoun = {"word_count": 60, "heading_path": ["Premise"],
+               "signals": {"names_subject": True, "leading_pronoun": True, "bare_numbers": 0, "deictic_terms": []}}
+    assert mod._chunk_fails_standalone(pronoun, {"wikimedia"})
+    bare = {"word_count": 60, "heading_path": ["Premise"],
+            "signals": {"names_subject": False, "leading_pronoun": False, "bare_numbers": 5, "deictic_terms": []}}
+    assert mod._chunk_fails_standalone(bare, {"wikimedia"})
+
+
+def test_quote_org_names_ignore_an_articles_author():
+    """Wikipedia credits every page to 'Contributors to Wikimedia projects' as
+    the Article author; that became the brand and QUOTE-002 asked for a
+    sentence introducing it."""
+    mod = _quote_module()
+    node = {"@type": "Article", "author": {"@type": "Organization", "name": "Contributors to Wikimedia projects"},
+            "publisher": {"@type": "Organization", "name": "Wikimedia Foundation, Inc."}}
+    assert mod._jsonld_org_names(node) == ["Wikimedia Foundation, Inc."]
+

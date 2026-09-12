@@ -275,3 +275,11 @@ def test_stay_007_ignores_hidden_and_drawer_components():
                  '<div class="search-popup-container" style=" display: none;">'):
         m = mod.INTERSTITIAL_RE.search(html)
         assert m and mod.NOT_AN_INTERSTITIAL_RE.search(html[max(0, m.start() - 300):m.end() + 600]), html
+
+
+def test_stay_013_accepts_a_placeholder_as_a_weak_label():
+    """Wikipedia's menu search box carries placeholder="Search Wikipedia" and
+    nothing else; the mechanical check counted it as unlabelled on 25 pages."""
+    mod = _stay_module()
+    src = open(CHECK_STAY, encoding="utf-8").read()
+    assert 'placeholder="[^"]{3,}"' in src

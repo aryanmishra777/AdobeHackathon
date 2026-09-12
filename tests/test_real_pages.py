@@ -157,3 +157,76 @@ def test_linked_heading_keeps_the_heading():
     assert {l["href"] for l in ex["links"]} == {"https://x.test/collections/speakers",
                                                "https://x.test/m", "https://x.test/p"}
     assert ex["text"]["main"].count("Card") == 1   # emitted once, not by heading and link both
+
+
+def test_chunker_cuts_at_headings_in_order_not_at_every_recurrence():
+    """Splitting on every occurrence of every heading string cut Wikipedia's
+    first sentence in half: the h1 'Assassin's Creed' recurs in 'Assassin's
+    Creed is a historical ...' and the chunk began 'is a historical'."""
+    collect = _mod(COLLECT_DIR, "collect")
+    text = ("Assassin's Creed Assassin's Creed is a historical action-adventure video game series. "
+            + "It sold well. " * 20 + "Development history The first game began as a Prince of Persia "
+            "sequel; Assassin's Creed grew from it. " + "More words here. " * 20)
+    ex = {"page_id": "p", "url": "https://x.test/", "title": "Assassin's Creed", "text": {"main": text, "full": text},
+          "headings": [{"level": 1, "text": "Assassin's Creed"}, {"level": 2, "text": "Development history"}]}
+    chunks = collect.chunk_page(ex)["chunks"]
+    starts = [c["text"][:40] for c in chunks]
+    assert any(s.startswith("Assassin's Creed is a historical") for s in starts), starts
+    assert not any(s.startswith("is a historical") for s in starts), starts
+    assert not any(s.startswith("grew from it") for s in starts), starts
+    assert [c["heading_path"] for c in chunks][-1] == ["Development history"]
+
+
+def test_chunker_cuts_long_segments_at_sentence_ends():
+    collect = _mod(COLLECT_DIR, "collect")
+    text = " ".join(f"Sentence number {i} has exactly seven words." for i in range(120))
+    ex = {"page_id": "p", "url": "https://x.test/", "title": "Sentences", "text": {"main": text, "full": text},
+          "headings": [{"level": 2, "text": "Sentence number 0"}]}
+    chunks = collect.chunk_page(ex)["chunks"]
+    assert len(chunks) >= 3
+    for c in chunks:
+        assert c["text"].endswith("."), c["text"][-40:]
+        assert c["text"].startswith(("Sentence", "has exactly")), c["text"][:40]
+
+
+def test_chunk_signals_ignore_years_and_citation_markers_and_credit_the_page_subject():
+    """'released in 2007' and '[17] [18]' are not unlabelled figures, and a
+    title such as '10th century BC' must yield subject tokens."""
+    collect = _mod(COLLECT_DIR, "collect")
+    ex = {"title": "10th century BC - Wikipedia", "headings": [{"level": 1, "text": "10th century BC"}]}
+    sig = collect._chunk_signals("The 10th century BC saw the reign of David. [17] [18] It began in 1000 BC "
+                                 "and ended in 901 BC; some 12 kingdoms rose. As mentioned above it was long.", ex)
+    assert sig["names_subject"] is True
+    assert sig["bare_numbers"] == 1          # "12 kingdoms"; the years and [17] [18] do not count
+    assert sig["deictic_terms"] == []        # "as mentioned above" is not in the first 25 words
+    sig2 = collect._chunk_signals("As mentioned above, the pattern held. " + "Filler text. " * 10, ex)
+    assert "as mentioned" in sig2["deictic_terms"]
+
+
+def test_collector_strips_a_bom_before_robots_comments():
+    collect = _mod(COLLECT_DIR, "collect")
+    groups, sitemaps, errors = collect.parse_robots("﻿# robots.txt for x\nUser-agent: *\nDisallow: /w/\n")
+    assert errors == [] and groups
+
+
+def test_collector_skips_a_page_whose_canonical_names_a_sampled_page(tmp_path):
+    """MediaWiki serves /wiki/1004_BC as 200 with the content and canonical of
+    /wiki/1000s_BC_(decade); seven of twenty-five slots were one article."""
+    import argparse
+    collect = _mod(COLLECT_DIR, "collect")
+    out = tmp_path / "b"
+    (out / "pages").mkdir(parents=True)
+    args = argparse.Namespace(target="https://x.test/", out=str(out), max_pages=25, timeout=10.0,
+                              budget=120.0, concurrency=8, delay=0.0, include=[], exclude=[],
+                              renderer="none", render_pages=0, no_probe=True)
+    c = collect.Collector(args)
+    body = '<html><head><title>1000s BC (decade)</title><link rel="canonical" href="https://x.test/wiki/1000s_BC"></head><body><p>' + "decade text " * 60 + "</p></body></html>"
+    def fetched(url):
+        return collect.Fetched(url=url, final_url=url, status=200, headers={"Content-Type": "text/html"},
+                               body=body, redirects=[], ttfb_ms=1.0, total_ms=2.0, error=None, truncated=False)
+    first = c.save_page(fetched("https://x.test/wiki/1000s_BC"), "https://x.test/wiki/1000s_BC", "home", "https://x.test")
+    second = c.save_page(fetched("https://x.test/wiki/1004_BC"), "https://x.test/wiki/1004_BC", "crawl", "https://x.test")
+    assert first is not None and second is None
+    assert len(c.pages) == 1
+    assert any("by canonical" in s["reason"] for s in c.skipped)
+

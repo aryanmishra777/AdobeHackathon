@@ -23,6 +23,7 @@ import io
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -133,7 +134,7 @@ COPYRIGHT_RE = re.compile(r"(?:©|&copy;|copyright)\s*(?:\d{4}\s*[-–]\s*)?(\d{
 PRONOUN_START_RE = re.compile(r"^\s*(it|they|this|these|those|we|he|she|its|their|our)\b", re.I)
 DEICTIC_RE = re.compile(
     r"\b(above|below|the following|as mentioned|as described|previously|"
-    r"see also|here|this page|the former|the latter)\b", re.I)
+    r"here|this page|the former|the latter)\b", re.I)   # "see also: X" names X
 BARE_NUMBER_RE = re.compile(r"(?<![\w.])(?:[$£€₹]\s?\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?%?)")
 
 
@@ -166,6 +167,8 @@ def parse_robots(text: str):
     expecting_agents = False
 
     for lineno, raw in enumerate(text.splitlines(), 1):
+        if lineno == 1:
+            raw = raw.lstrip("\ufeff")   # a BOM before the first comment is not a broken line
         line = raw.split("#", 1)[0].strip()
         if not line:
             continue
@@ -904,18 +907,28 @@ def chunk_page(extracted: dict, target_words: int = CHUNK_TARGET_WORDS,
 
     segments: list[tuple[list[str], str]] = []
     if headings:
-        pattern = "|".join(re.escape(h) for h in headings[:80])
-        parts = re.split(f"({pattern})", text)
-        path: list[str] = []
-        buffer = parts[0] if parts else text
-        if buffer.strip():
-            segments.append(([], buffer))
-        i = 1
-        while i < len(parts) - 1:
-            heading, body = parts[i], parts[i + 1]
-            path = [heading]
-            segments.append((list(path), body))
-            i += 2
+        # Walk the headings in document order and cut at each one's first
+        # occurrence after the previous cut. Splitting on every occurrence of
+        # every heading string cut the prose wherever a heading's words
+        # recurred: the h1 "Assassin's Creed" split its own first sentence
+        # into a chunk beginning "is a historical action-adventure ...", and
+        # QUOTE-001 reported the cut as unquotable writing.
+        cursor = 0
+        current_heading: list[str] = []
+        for h in headings[:80]:
+            pos = text.find(h, cursor)
+            if pos < 0:
+                continue
+            body = text[cursor:pos]
+            if body.strip():
+                segments.append((list(current_heading), body))
+            current_heading = [h]
+            cursor = pos + len(h)
+        tail = text[cursor:]
+        if tail.strip():
+            segments.append((list(current_heading), tail))
+        if not segments:
+            segments.append(([], text))
     else:
         segments.append(([], text))
 
@@ -924,9 +937,29 @@ def chunk_page(extracted: dict, target_words: int = CHUNK_TARGET_WORDS,
         words = body.split()
         if not words:
             continue
-        step = max_words if len(words) <= max_words else target_words
-        for start in range(0, len(words), step):
-            piece = " ".join(words[start:start + step])
+        # Cut at a sentence end near the target rather than at an exact word
+        # count: a chunk that opens "is a historical action-adventure video
+        # game series" lost its subject to the previous chunk, and QUOTE-001
+        # then reports the cut, not the writing. Look back up to a quarter of
+        # the window for a word ending in . ! or ? (not an initial or a
+        # decimal); fall back to the fixed cut when there is none.
+        pieces = []
+        if len(words) <= max_words:
+            pieces.append(words)
+        else:
+            start = 0
+            while start < len(words):
+                end = min(start + target_words, len(words))
+                if end < len(words):
+                    for back in range(end, max(start + target_words * 3 // 4, start + 1), -1):
+                        w = words[back - 1]
+                        if w[-1:] in ".!?" and not re.fullmatch(r"(?:[A-Z]|\d+|[A-Za-z]{1,2})\.", w):
+                            end = back
+                            break
+                pieces.append(words[start:end])
+                start = end
+        for chunk_words in pieces:
+            piece = " ".join(chunk_words)
             if len(piece.split()) < 15:
                 continue
             chunks.append({
@@ -947,11 +980,16 @@ def chunk_page(extracted: dict, target_words: int = CHUNK_TARGET_WORDS,
 def _chunk_signals(text: str, extracted: dict) -> dict:
     subject_terms = set()
     title = extracted.get("title") or ""
-    for token in re.findall(r"\b[A-Z][A-Za-z0-9&.-]{2,}\b", title):
+    # Subject tokens: capitalised words and numbers of two or more characters.
+    # "10th century BC" and "1000s BC (decade)" had no subject at all under
+    # the old capital-letter-and-three-characters rule, so every passage on
+    # those pages failed to "name its subject".
+    token_re = r"\b(?:[A-Z]|\d)[A-Za-z0-9&.'-]{1,}\b"
+    for token in re.findall(token_re, title):
         if token.lower() not in ("the", "and", "for", "with", "home"):
             subject_terms.add(token.lower())
     for h in extracted.get("headings", [])[:3]:
-        for token in re.findall(r"\b[A-Z][A-Za-z0-9&.-]{2,}\b", h.get("text", "")):
+        for token in re.findall(token_re, h.get("text", "")):
             subject_terms.add(token.lower())
 
     lower = text.lower()
@@ -959,6 +997,19 @@ def _chunk_signals(text: str, extracted: dict) -> dict:
 
     bare = 0
     for m in BARE_NUMBER_RE.finditer(text):
+        # A year is a date, not a figure that needs a label: "released in
+        # 2007" reads fine on its own. Encyclopaedic prose is full of them.
+        if re.fullmatch(r"(?:1[5-9]|20)\d\d", m.group(0)):
+            continue
+        # "[17]" is a citation marker, not a figure: Wikipedia prose carries
+        # a dozen per paragraph and every one counted as a bare number.
+        if text[m.start() - 1:m.start()] == "[" and text[m.end():m.end() + 1] == "]":
+            continue
+        # An ordinal or a unit glued to the digits ("10th", "3D", "4K") and a
+        # year in an era ("1000 BC", "901 BCE", "79 AD") are not bare figures.
+        after = text[m.end():m.end() + 5]
+        if re.match(r"[A-Za-z]", after) or re.match(r"\s?(?:BC|BCE|AD|CE)\b", after):
+            continue
         window = text[max(0, m.start() - 40):m.start()]
         # A number is "bare" when nothing nearby says what it counts.
         if not re.search(r"\b(price|cost|from|starting|plan|per|only|just|save|"
@@ -971,7 +1022,12 @@ def _chunk_signals(text: str, extracted: dict) -> dict:
         "leading_pronoun": bool(PRONOUN_START_RE.match(text)),
         "bare_numbers": bare,
         "has_date": bool(DATE_RE.search(text)),
-        "deictic_terms": sorted({m.group(0).lower() for m in DEICTIC_RE.finditer(text)}),
+        # A reference the reader cannot resolve is one at the OPENING of the
+        # passage -- "As mentioned above, ..." -- not "see also" or "the
+        # following" three paragraphs in, which point within the passage
+        # itself. Test the first 25 words.
+        "deictic_terms": sorted({m.group(0).lower()
+                                 for m in DEICTIC_RE.finditer(" ".join(text.split()[:25]))}),
     }
 
 
@@ -1152,6 +1208,7 @@ class Collector:
         self.started = time.time()
         self.skipped: list[dict] = []
         self.seen_final: dict[str, str] = {}
+        self.seen_canonical: dict[str, str] = {}   # canonical URL -> page_id already sampled
         self.pages: list[dict] = []
         self.robots_groups: list[RobotsGroup] = []
         self.our_group = None
@@ -1556,6 +1613,22 @@ class Collector:
         extracted = extract_page(page_id, r.final_url or url, r.body or "", origin)
         extracted["timing"] = {"ttfb_ms": r.ttfb_ms, "total_ms": r.total_ms,
                                "transfer_bytes": len(r.body or "")}
+
+        # A page whose canonical names a page already in the sample is that
+        # page again. MediaWiki serves /wiki/1004_BC as 200 with the content
+        # of /wiki/1000s_BC_(decade) and a canonical pointing there; seven of
+        # twenty-five sampled pages were one article, and every site-wide
+        # count was inflated by six. Keep the slot for a page we have not seen.
+        canon = extracted.get("canonical")
+        if canon:
+            ckey = _norm_final(urljoin(r.final_url or url, canon))
+            mine = _norm_final(r.final_url or url)
+            if ckey != mine and ckey in self.seen_canonical:
+                shutil.rmtree(pdir, ignore_errors=True)
+                self.skip(url, f"duplicate of {self.seen_canonical[ckey]} by canonical")
+                return None
+            self.seen_canonical.setdefault(ckey, page_id)
+        self.seen_canonical.setdefault(_norm_final(r.final_url or url), page_id)
 
         diff = _crosscheck_with_bs4(r.body or "", extracted, r.final_url or url)
         if diff:

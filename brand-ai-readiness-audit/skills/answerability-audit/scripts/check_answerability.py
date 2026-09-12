@@ -91,6 +91,9 @@ ORG_JSONLD_TYPES = {
 ORG_JSONLD_OTHER_PARTY = {
     "suborganization", "parentorganization", "memberof", "sponsor", "funder",
     "affiliation", "worksfor", "seller", "provider", "manufacturer",
+    # an Article's author is a byline, not the site: Wikipedia credits every
+    # page to "Contributors to Wikimedia projects" and that became the brand
+    "author", "creator", "contributor", "editor",
 }
 
 # Fact classes a buyer asks about (QUOTE-003). Each maps to a detector over the
@@ -513,9 +516,16 @@ def _chunk_fails_standalone(chunk: dict, terms: set) -> bool:
         return False  # guard: only assess chunks with a real heading_path
     if _chunk_resolves_subject(chunk, terms):
         return False  # guard: weigh heading_path before counting a chunk as failing
+    # The collector already tested the chunk against the PAGE's own subject
+    # (its title and first headings). On a multi-topic site the subject of a
+    # page is not the brand: a Wikipedia passage that names Assassin's Creed
+    # and carries three figures is self-contained even though it never says
+    # "Wikimedia". A pronoun or "this one" at the opening still fails: the
+    # subject named later does not rescue the first sentence.
+    numbers_bare = (sig.get("bare_numbers") or 0) >= BARE_NUMBER_TRIGGER and not sig.get("names_subject")
     trigger = (sig.get("leading_pronoun")
                or len(sig.get("deictic_terms") or []) >= 1
-               or (sig.get("bare_numbers") or 0) >= BARE_NUMBER_TRIGGER)
+               or numbers_bare)
     return bool(trigger)
 
 

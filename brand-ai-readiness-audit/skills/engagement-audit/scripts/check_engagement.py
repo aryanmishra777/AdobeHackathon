@@ -1018,7 +1018,10 @@ def check_stay_011(b: Bundle) -> list:
         if words < 600:
             continue
         wph = words / max(1, len(subs))
-        if len(subs) >= 2 and wph <= 350:
+        # Long-form with many sections is structured, not unbroken: a
+        # 26,000-word encyclopaedia article with 71 headings averages 371
+        # words a section and reads fine.
+        if len(subs) >= 2 and (wph <= 350 or (len(subs) >= 5 and wph <= 700)):
             continue
         severity = "medium" if len(subs) <= 1 else "low"
         out.append(finding(
@@ -1118,6 +1121,12 @@ def check_stay_013(b: Bundle) -> list:
                                                     "image", "reset"):
                 continue
             if LABELLED_INPUT_ATTR_RE.search(tag) or re.search(r'\btitle="', tag, re.I):
+                continue
+            # A placeholder is a weak label, but it is one: Wikipedia's menu
+            # search box carries placeholder="Search Wikipedia" and nothing
+            # else, and this is a limited mechanical check, not an audit of
+            # WCAG 3.3.2. Only fields with no name at all count.
+            if re.search(r'\bplaceholder="[^"]{3,}"', tag, re.I):
                 continue
             idm = re.search(r'\bid="([^"]+)"', tag, re.I)
             if idm and re.search(r'<label[^>]+for="%s"' % re.escape(idm.group(1)), raw, re.I):
