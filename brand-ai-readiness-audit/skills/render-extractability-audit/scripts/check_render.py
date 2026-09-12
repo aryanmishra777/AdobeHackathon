@@ -412,8 +412,12 @@ def check_read_001(b: Bundle) -> list[dict]:
             # browser produced against the words the HTML carried. A shell is
             # not "under 50 words" -- crunchyroll's carried 99 words of header
             # and footer chrome and rendered 927 -- so the rule is the delta.
+            # Compare like with like: _visible_words counts the whole document,
+            # so the raw side is word_count (all text), not main_word_count.
+            # Against main text a Shopify blog index measured 171 -> 672 and
+            # "fired" on navigation and footer the raw HTML already carried.
             rendered_words = _visible_words(b.rendered_html(pid))
-            raw_words = (ext.get("text") or {}).get("main_word_count") or 0
+            raw_words = (ext.get("text") or {}).get("word_count") or 0
             if rendered_words >= max(100, 3 * raw_words):
                 affected.append(page)
                 measured.append((page, raw_words, rendered_words))

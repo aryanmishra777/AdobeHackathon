@@ -141,3 +141,19 @@ def test_bs4_crosscheck_agrees_with_the_parser(name):
     ex = extract(name)
     diff = collect._crosscheck_with_bs4(html, ex, SOURCES[name])
     assert diff is None, diff
+
+
+def test_linked_heading_keeps_the_heading():
+    """boat-lifestyle.com wraps collection titles as <h1><a href>...</a></h1>.
+    The <a> replaced the heading capture and the h1 vanished -- found by the
+    bs4 cross-check on its first live run, not by a person."""
+    collect = _mod(COLLECT_DIR, "collect")
+    html = ('<html><body><h1><a href="/collections/speakers">All Speakers</a></h1>'
+            '<h2>Read <a href="/m">more here</a> now</h2>'
+            '<a href="/p"><h3>Card</h3>Rs 99</a></body></html>')
+    ex = collect.extract_page("p", "https://x.test/", html, "https://x.test")
+    assert [(h["level"], h["text"]) for h in ex["headings"]] == \
+        [(1, "All Speakers"), (2, "Read more here now"), (3, "Card")]
+    assert {l["href"] for l in ex["links"]} == {"https://x.test/collections/speakers",
+                                               "https://x.test/m", "https://x.test/p"}
+    assert ex["text"]["main"].count("Card") == 1   # emitted once, not by heading and link both

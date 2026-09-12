@@ -110,10 +110,14 @@ CONSENT_RE = re.compile(r"\b(cookie|consent|gdpr|ccpa|privacy preferences)\b", r
 # Overlay-shaped markup that is not an interstitial: loading states, hidden
 # dialogs, and region/language pickers opened from a footer control.
 NOT_AN_INTERSTITIAL_RE = re.compile(
-    r"(\bloading\b|scroll-block|app-shell|author-hide|\bhidden\b|aria-hidden=\"true\"|"
+    r"(\bloading\b|scroll-block|app-shell|author-hide|\bhidden\b|\bhide\b|is-hidden|"
+    r"\bd-none\b|\binvisible\b|\bclosed\b|\bcollapsed\b|aria-hidden=\"true\"|"
     r"display:\s*none|choose your (?:region|country|language)|language navigation|"
     r"region[- ]selector|locale[- ]selector|<video\b|youtube|vimeo|"
-    r"data-conf-display=\"on(?:hash)?change\"|aria-label=\"[^\"]*\bvideo\b)", re.I)
+    r"data-conf-display=\"on(?:hash)?change\"|aria-label=\"[^\"]*\bvideo\b|"
+    # a cart, mini-cart, search or menu drawer opens on a click, not on arrival
+    r"\b(?:mini-?cart|cart-popup|cart-drawer|cart-modal|search-popup|search-modal|"
+    r"menu-drawer|mobile-menu|nav-drawer|quick-?view|size-?guide)\b)", re.I)
 
 SEARCH_FORM_RE = re.compile(
     r"(<input[^>]+type=\"search\"|role=\"search\"|name=\"(?:q|query|s|search|"

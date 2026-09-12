@@ -1216,8 +1216,15 @@ def check_quote_010(b: Bundle) -> list:
     # Guard: capitalisation, punctuation and legal suffixes already normalised.
     # Guard: a short form alongside a full form is normal usage -- drop any name
     # that is a whitespace-delimited substring of another.
+    # Guard: a handle or slug is the name with its spaces removed and a suffix
+    # -- "boatlifestylein" beside "boAt Lifestyle" -- so compare without
+    # whitespace too.
+    def squash(x):
+        return x.replace(" ", "")
     surviving = [n for n in distinct
-                 if not any(n != other and (n in other or other in n)
+                 if not any(n != other and (n in other or other in n
+                                            or squash(n) in squash(other)
+                                            or squash(other) in squash(n))
                             for other in distinct)]
     if len(surviving) < 2:
         return []

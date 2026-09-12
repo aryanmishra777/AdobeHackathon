@@ -263,3 +263,15 @@ def test_stay_006_does_not_fire_when_links_already_carry_filter_state():
     assert mod.STATE_PARAM_RE.search("https://a.test/list?sort=price&page=2")
     assert not mod.STATE_PARAM_RE.search("https://a.test/about?utm_source=x")
 
+
+
+def test_stay_007_ignores_hidden_and_drawer_components():
+    """boat-lifestyle.com: id="cart-popup" on every page and a
+    'covercase-popup__modal hide' on product pages, neither shown on arrival."""
+    mod = _stay_module()
+    for html in ('<div id="cart-popup" class="popup">',
+                 '<div class="covercase-popup__overlay hide"></div><covercase-modal class="covercase-popup__modal hide">'
+                 '<div class="covercase-popup-container">',
+                 '<div class="search-popup-container" style=" display: none;">'):
+        m = mod.INTERSTITIAL_RE.search(html)
+        assert m and mod.NOT_AN_INTERSTITIAL_RE.search(html[max(0, m.start() - 300):m.end() + 600]), html

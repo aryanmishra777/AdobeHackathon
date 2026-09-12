@@ -296,3 +296,12 @@ def test_quote_002_accepts_a_welcome_to_identity_sentence():
     assert pat("Acme").search("Welcome to Acme, the home of hand-made tools.")
     assert not pat("Crunchyroll").search("Welcome to Crunchyroll. Log in to continue.")
 
+
+
+def test_quote_010_treats_a_handle_as_the_same_name():
+    """'boatlifestylein' beside 'boAt Lifestyle' is the name squashed into a
+    handle, not a second name for the organisation."""
+    mod = _quote_module()
+    src = open(CHECK_QUOTE, encoding="utf-8").read()
+    assert "squash(n) in squash(other)" in src
+    assert mod._norm_name("boAt Lifestyle") == "boat lifestyle"

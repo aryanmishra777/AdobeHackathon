@@ -969,6 +969,10 @@ def _looks_like_phone(candidate: str) -> bool:
     groups = [g for g in groups if g]
     if len(groups) >= 3 and all(len(g) <= 2 for g in groups):
         return False
+    # "2007-2010" and "2019-2020" are year ranges (boat-lifestyle.com's
+    # founder biography), not eight-digit numbers.
+    if all(re.fullmatch(r"(?:19|20)\d\d", g) for g in groups):
+        return False
     digits = re.sub(r"\D", "", candidate)
     return 8 <= len(digits) <= 15
 

@@ -1143,7 +1143,8 @@ def test_read_001_measures_the_delta_when_rendered_html_exists(tmp_path):
     page = next(p for p in man["pages"] if p.get("status") == 200)
     pdir = dst / "pages" / page["page_id"]
     ex = json.loads((pdir / "extracted.json").read_text(encoding="utf-8"))
-    ex["text"]["main_word_count"] = 99
+    ex["text"]["main_word_count"] = 60
+    ex["text"]["word_count"] = 99     # the whole document, which is what rendered.html is compared to
     (pdir / "extracted.json").write_text(json.dumps(ex), encoding="utf-8")
     (pdir / "rendered.html").write_text("<html><body>" + "word " * 900 + "</body></html>", encoding="utf-8")
     proc = run(CHECK_RENDER, str(dst), "--stdout")

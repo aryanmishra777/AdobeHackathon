@@ -291,3 +291,12 @@ def test_trust_010_treats_an_office_directory_as_many_locations_not_an_inconsist
     assert mod._is_directory_page({"url": "https://a.test/locations/"})
     assert not mod._is_directory_page({"url": "https://a.test/contact"})
     assert not mod._is_directory_page({"url": "https://a.test/about"})
+
+
+def test_trust_010_does_not_read_year_ranges_as_phone_numbers():
+    """boat-lifestyle.com's founder biography: '(2007-2010)' and 'through
+    2019-2020' were two inconsistent phone numbers."""
+    mod = _trust_module()
+    for s in ("2007-2010", "2019-2020", "2019 - 2020"):
+        assert not mod._looks_like_phone(s), s
+    assert mod._looks_like_phone("022-6918-1920")

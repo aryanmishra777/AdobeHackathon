@@ -419,6 +419,7 @@ class PageParser(HTMLParser):
         self._current_heading = None
         self._current_link = None
         self._link_capture: list[str] | None = None  # link text paused by a heading
+        self._heading_capture: list[str] | None = None  # heading text paused by a link
         self._current_form = None
         self._mounts: dict[str, int] = {}      # candidate app-shell -> text len at open
         self._mount_stack: list[tuple[str, int]] = []
@@ -522,6 +523,12 @@ class PageParser(HTMLParser):
         elif tag == "a":
             href = self._attr(attrs, "href")
             if href:
+                # The mirror of the heading-inside-anchor case: a linked
+                # heading (<h1><a href>Title</a></h1>, boat-lifestyle.com's
+                # collection titles) must not lose the heading. Pause it and
+                # resume when the link closes.
+                if self._capture_tag == "heading" and self._current_heading is not None:
+                    self._heading_capture = self._capture
                 self._current_link = {
                     "href": href, "text": "",
                     "rel": self._attr(attrs, "rel") or "",
@@ -595,7 +602,8 @@ class PageParser(HTMLParser):
                     self._current_heading["text"] = _collapse(text)
                     if self._current_heading["text"]:
                         self.headings.append(self._current_heading)
-                    self._emit_text(text)
+                    if self._link_capture is None:
+                        self._emit_text(text)   # inside a link, the link emits it
                 self._current_heading = None
                 self._capture = None
                 if self._link_capture is not None and self._current_link is not None:
@@ -606,9 +614,14 @@ class PageParser(HTMLParser):
                 if self._current_link is not None:
                     self._current_link["text"] = _collapse(text)
                     self.links.append(self._current_link)
-                    self._emit_text(text)
+                    if self._heading_capture is None:
+                        self._emit_text(text)   # the heading emits it otherwise
                 self._current_link = None
                 self._capture = None
+                if self._heading_capture is not None and self._current_heading is not None:
+                    self._capture = self._heading_capture + [text]
+                    self._capture_tag = "heading"
+                self._heading_capture = None
 
         if tag == "form" and self._current_form is not None:
             self.forms.append(self._current_form)
@@ -1735,7 +1748,8 @@ def _crosscheck_with_bs4(html: str, extracted: dict, url: str):
             set(x.strip().lower() for x in parser_robots.split(",") if x.strip()):
         diff["robots_meta"] = {"parser": parser_robots or None, "bs4": robots or None}
 
-    soup_h1 = len(soup.find_all("h1"))
+    # the parser records only headings with text; <h1><br></h1> is not a heading
+    soup_h1 = sum(1 for h in soup.find_all("h1") if _collapse(h.get_text()))
     parser_h1 = sum(1 for h in extracted.get("headings") or [] if h.get("level") == 1)
     if soup_h1 != parser_h1:
         diff["h1_count"] = {"parser": parser_h1, "bs4": soup_h1}
