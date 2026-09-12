@@ -91,7 +91,7 @@ sites:
     vertical: programming
     smoke: false
     geo_score: 85
-    seo_score: 100
+    seo_score: 90
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 85/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages.'
@@ -100,7 +100,6 @@ sites:
     expect_absent:
     - REACH-002
     - REACH-005
-    - READ-001
 
   - url: https://jvns.ca
     seo: good
@@ -169,7 +168,7 @@ sites:
     vertical: productivity
     smoke: false
     geo_score: 85
-    seo_score: 94
+    seo_score: 100
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 85/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages.'
@@ -191,7 +190,7 @@ sites:
     seo_score: 97
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (1111 median
+      mechanism found: crawlers permitted, content server-rendered (1217 median
       words), structured data on 2/20 pages.'
     expect_absent:
     - REACH-002
@@ -209,7 +208,7 @@ sites:
     seo_score: 100
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (759 median words),
+      mechanism found: crawlers permitted, content server-rendered (635 median words),
       structured data on 6/20 pages.'
     expect_absent:
     - REACH-002
@@ -259,11 +258,11 @@ sites:
     vertical: productivity
     smoke: false
     geo_score: 100
-    seo_score: 95
+    seo_score: 96
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (743 median words),
-      structured data on 14/20 pages.'
+      mechanism found: crawlers permitted, content server-rendered (577 median words),
+      structured data on 9/20 pages.'
     expect_absent:
     - REACH-002
     - REACH-005
@@ -280,11 +279,12 @@ sites:
     seo_score: 93
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (361 median words),
+      mechanism found: crawlers permitted, content server-rendered (457 median words),
       structured data on 6/20 pages.'
     expect_absent:
     - REACH-002
     - REACH-005
+    - READ-001
 
   - url: https://www.figma.com
     seo: good
@@ -297,7 +297,7 @@ sites:
     seo_score: 100
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (355 median words),
+      mechanism found: crawlers permitted, content server-rendered (382 median words),
       structured data on 14/20 pages. Blocks training crawlers (CCBot, GPTBot, Google-Extended,
       cohere-ai) -- a deliberate opt-out, not a defect.'
     expect_findings:
@@ -313,12 +313,12 @@ sites:
     site_type: nonprofit-gov
     vertical: government
     smoke: false
-    geo_score: 88
+    geo_score: 100
     seo_score: 98
     measurement: measured
-    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 88/100). Mechanisms
-      found: 49/119 passages neither name their subject nor resolve their opening
-      reference.'
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
+      mechanism found: crawlers permitted, content server-rendered (469 median words),
+      structured data on 19/20 pages.'
     expect_absent:
     - REACH-002
     - REACH-005
@@ -335,8 +335,8 @@ sites:
     seo_score: 98
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (978 median words),
-      structured data on 6/20 pages.'
+      mechanism found: crawlers permitted, content server-rendered (1157 median
+      words), structured data on 7/20 pages.'
     expect_absent:
     - REACH-002
     - REACH-005
@@ -371,7 +371,7 @@ sites:
     seo_score: 98
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (620 median words),
+      mechanism found: crawlers permitted, content server-rendered (640 median words),
       structured data on 20/20 pages.'
     expect_absent:
     - PARSE-001
@@ -390,7 +390,7 @@ sites:
     seo_score: 100
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (1406 median
+      mechanism found: crawlers permitted, content server-rendered (1855 median
       words), structured data on 20/20 pages.'
     expect_absent:
     - PARSE-001
@@ -457,18 +457,17 @@ sites:
   - url: https://www.varnish-cache.org
     seo: good
     geo: good
-    engagement: high
+    engagement: moderate
     site_type: docs
     vertical: opensource
     smoke: false
     geo_score: 100
-    seo_score: 90
+    seo_score: 98
     measurement: measured
-    notes: 'Measured 2026-09-12 from a 8-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (1150 median
-      words), structured data on 8/8 pages.'
+    notes: 'Measured 2026-09-12 from a 16-page crawl (GEO score 100/100). No blocking
+      mechanism found: crawlers permitted, content server-rendered (792 median words),
+      structured data on 15/16 pages.'
     expect_absent:
-    - PARSE-001
     - REACH-002
     - REACH-005
     - READ-001
@@ -484,7 +483,7 @@ sites:
     seo_score: 92
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (507 median words),
+      mechanism found: crawlers permitted, content server-rendered (603 median words),
       structured data on 20/20 pages. Blocks training crawlers (CCBot) -- a deliberate
       opt-out, not a defect.'
     expect_findings:
@@ -547,7 +546,7 @@ sites:
     vertical: finance-news
     smoke: false
     geo_score: 20
-    seo_score: 92
+    seo_score: 97
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 20/100). Mechanisms
       found: robots.txt blocks 2 retrieval/search crawler(s) (Perplexity-User, PerplexityBot);
@@ -654,7 +653,7 @@ sites:
     vertical: news
     smoke: false
     geo_score: 60
-    seo_score: 81
+    seo_score: 95
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 60/100). Mechanisms
       found: robots.txt blocks 7 retrieval/search crawler(s) (ChatGPT-User, Claude-SearchBot,
@@ -665,6 +664,28 @@ sites:
     - REACH-003
     expect_absent:
     - REACH-005
+    - READ-001
+
+  - url: https://www.quora.com
+    seo: good
+    geo: poor
+    engagement: moderate
+    site_type: marketplace
+    vertical: community
+    smoke: false
+    geo_score: 0
+    seo_source: prior (site refuses crawlers; nothing to measure)
+    measurement: crawler-refused
+    notes: 'Measured 2026-09-12 from a 0-page crawl (GEO score 0/100). Mechanisms
+      found: the site returns 200 to a browser user-agent but refuses every crawler
+      request (Googlebot:403/challenge), so no page of it can be fetched, read or
+      cited. Blocks training crawlers (Applebot-Extended, Bytespider, GPTBot) --
+      a deliberate opt-out, not a defect.'
+    expect_findings:
+    - REACH-002
+    - REACH-003
+    - REACH-005
+    - REACH-006
 
   - url: https://www.redcross.org
     seo: good
@@ -704,6 +725,7 @@ sites:
     - REACH-002
     - REACH-003
     expect_absent:
+    - PARSE-001
     - REACH-005
     - READ-001
 
@@ -747,7 +769,6 @@ sites:
     - REACH-003
     expect_absent:
     - REACH-005
-    - READ-001
 
   - url: https://www.vox.com
     seo: good
@@ -899,6 +920,28 @@ sites:
     - REACH-005
     - READ-001
 
+  - url: https://norvig.com
+    seo: poor
+    geo: good
+    engagement: moderate
+    site_type: portfolio-brochure
+    vertical: personal
+    smoke: false
+    geo_score: 75
+    seo_score: 36
+    measurement: measured
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 75/100). Mechanisms
+      found: no parseable structured data on any of 20 sampled pages; no reachable
+      XML sitemap; no canonical tags on any sampled page.'
+    expect_findings:
+    - PARSE-001
+    - REACH-006
+    - REACH-010
+    expect_absent:
+    - REACH-002
+    - REACH-005
+    - READ-001
+
   - url: https://suckless.org
     seo: poor
     geo: good
@@ -938,6 +981,27 @@ sites:
     - PARSE-001
     - REACH-006
     - REACH-010
+    expect_absent:
+    - REACH-002
+    - REACH-005
+    - READ-001
+
+  - url: https://www.gutenberg.org
+    seo: poor
+    geo: good
+    engagement: moderate
+    site_type: media-publisher
+    vertical: books
+    smoke: false
+    geo_score: 80
+    seo_score: 47
+    measurement: measured
+    notes: 'Measured 2026-09-12 from a 19-page crawl (GEO score 80/100). Mechanisms
+      found: no parseable structured data on any of 19 sampled pages; no reachable
+      XML sitemap.'
+    expect_findings:
+    - PARSE-001
+    - REACH-006
     expect_absent:
     - REACH-002
     - REACH-005
@@ -995,7 +1059,7 @@ sites:
     vertical: opensource
     smoke: false
     geo_score: 80
-    seo_score: 63
+    seo_score: 58
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 80/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages; no reachable
@@ -1027,6 +1091,7 @@ sites:
     - PARSE-001
     - REACH-002
     - REACH-005
+    - READ-001
 
   - url: https://www.stroustrup.com
     seo: poor
@@ -1082,7 +1147,7 @@ sites:
     seo_score: 50
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 83/100). Mechanisms
-      found: 201/447 passages neither name their subject nor resolve their opening
+      found: 201/443 passages neither name their subject nor resolve their opening
       reference; no reachable XML sitemap.'
     expect_findings:
     - REACH-006
@@ -1099,7 +1164,7 @@ sites:
     vertical: opensource
     smoke: true
     geo_score: 35
-    seo_score: 16
+    seo_score: 36
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 35/100). Mechanisms
       found: bot user-agents are blocked or challenged at the edge (GPTBot:403,
@@ -1147,7 +1212,7 @@ sites:
     measurement: measured
     notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 43/100). Mechanisms
       found: bot user-agents are blocked or challenged at the edge (ChatGPT-User:403,
-      Googlebot:403) despite robots.txt permitting them; 637/1167 passages neither
+      Googlebot:403) despite robots.txt permitting them; 642/1179 passages neither
       name their subject nor resolve their opening reference; no reachable XML sitemap.'
     expect_findings:
     - REACH-005
@@ -1176,30 +1241,6 @@ sites:
     expect_absent:
     - REACH-002
     - REACH-005
-
-  - url: https://norvig.com
-    seo: poor
-    geo: poor
-    engagement: moderate
-    site_type: portfolio-brochure
-    vertical: personal
-    smoke: false
-    geo_score: 35
-    seo_score: 36
-    measurement: measured
-    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 35/100). Mechanisms
-      found: bot user-agents are blocked or challenged at the edge (GPTBot:429)
-      despite robots.txt permitting them; no parseable structured data on any of
-      20 sampled pages; no reachable XML sitemap; no canonical tags on any sampled
-      page.'
-    expect_findings:
-    - PARSE-001
-    - REACH-005
-    - REACH-006
-    - REACH-010
-    expect_absent:
-    - REACH-002
-    - READ-001
 
   - url: https://sqlite.org
     seo: poor
@@ -1274,28 +1315,6 @@ sites:
     expect_absent:
     - REACH-002
 
-  - url: https://www.gutenberg.org
-    seo: poor
-    geo: poor
-    engagement: moderate
-    site_type: media-publisher
-    vertical: books
-    smoke: false
-    geo_score: 68
-    seo_score: 45
-    measurement: measured
-    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 68/100). Mechanisms
-      found: no parseable structured data on any of 20 sampled pages; 207/480 passages
-      neither name their subject nor resolve their opening reference; no reachable
-      XML sitemap.'
-    expect_findings:
-    - PARSE-001
-    - REACH-006
-    expect_absent:
-    - REACH-002
-    - REACH-005
-    - READ-001
-
   - url: https://www.khanacademy.org
     seo: poor
     geo: poor
@@ -1318,31 +1337,6 @@ sites:
     - REACH-006
     expect_absent:
     - REACH-002
-
-  - url: https://www.quora.com
-    seo: poor
-    geo: poor
-    engagement: low
-    site_type: marketplace
-    vertical: community
-    smoke: false
-    geo_score: 10
-    seo_score: 55
-    measurement: measured
-    notes: 'Measured 2026-09-12 from a 1-page crawl (GEO score 10/100). Mechanisms
-      found: robots.txt blocks 5 retrieval/search crawler(s) (ChatGPT-User, Claude-SearchBot,
-      Claude-User); median 11 words of body text in the raw HTML across 1 pages
-      with an app-shell mount on 1 of them; no parseable structured data on any
-      of 1 sampled pages; no reachable XML sitemap. Blocks training crawlers (Applebot-Extended,
-      Bytespider, GPTBot) -- a deliberate opt-out, not a defect.'
-    expect_findings:
-    - PARSE-001
-    - REACH-002
-    - REACH-003
-    - REACH-006
-    - READ-001
-    expect_absent:
-    - REACH-005
 
   - url: https://www.tuhs.org
     seo: poor
@@ -1373,13 +1367,13 @@ sites:
 #   https://www.reuters.com
 #     browser probe refused; cannot separate a site block from our address being filtered
 #   https://www.npr.org
-#     browser probe refused; cannot separate a site block from our address being filtered
+#     no snapshot: collection has never succeeded from our address
 #   https://www.etsy.com
 #     browser probe refused; cannot separate a site block from our address being filtered
 #   https://www.rei.com
 #     browser probe refused; cannot separate a site block from our address being filtered
 #   https://www.jwz.org
-#     browser probe refused; cannot separate a site block from our address being filtered
+#     no snapshot: collection has never succeeded from our address
 #   https://www.economist.com
 #     browser probe refused; cannot separate a site block from our address being filtered
 #   https://www.bloomberg.com

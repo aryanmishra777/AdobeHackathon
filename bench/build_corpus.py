@@ -77,6 +77,14 @@ def collect(url: str, out: str, pages: int, budget: int) -> bool:
     if proc.returncode != 0 or not os.path.isfile(os.path.join(fresh, "MANIFEST.json")):
         shutil.rmtree(fresh, ignore_errors=True)
         return False
+    # A DNS outage on our side produces a "successful" crawl in which every
+    # origin variant errored and nothing was fetched. Swapping that in erased
+    # forty-five good snapshots once. Keep what we had.
+    run_doc = load(os.path.join(fresh, "run.json")) or {}
+    variants = (run_doc.get("origin_variants") or {}).values()
+    if variants and all(v.get("status") is None for v in variants):
+        shutil.rmtree(fresh, ignore_errors=True)
+        return False
     if os.path.isdir(out):
         shutil.rmtree(out)
     os.replace(fresh, out)
@@ -400,6 +408,9 @@ def main(argv=None) -> int:
     ap.add_argument("--limit", type=int)
     ap.add_argument("--reuse", action="store_true",
                     help="re-score existing snapshots without crawling")
+    ap.add_argument("--only", default=None,
+                    help="comma-separated hosts to crawl; every other candidate "
+                         "is re-scored from its existing snapshot")
     ap.add_argument("--pages", type=int, default=6)
     ap.add_argument("--budget", type=int, default=50)
     ap.add_argument("--out", default=os.path.join(HERE, "corpus.yaml"))
@@ -414,10 +425,23 @@ def main(argv=None) -> int:
         name = slug(c["url"])
         bundle = os.path.join(SNAPSHOTS, name)
         print(f"[{i}/{len(cands)}] {c['url']}", flush=True)
-        if not args.reuse:
+        only = {h.strip() for h in args.only.split(",")} if args.only else None
+        crawl = not args.reuse and (only is None or name in only)
+        if crawl:
             if not collect(c["url"], bundle, args.pages, args.budget):
                 print("    collect failed", flush=True)
-                continue
+                if not os.path.isdir(bundle):
+                    excluded.append((c["url"], "collection failed: every origin "
+                                               "variant timed out or errored from "
+                                               "our address, and no earlier "
+                                               "snapshot exists"))
+                    continue
+                print("    keeping the earlier snapshot", flush=True)
+        elif not os.path.isdir(bundle):
+            excluded.append((c["url"], "no snapshot: collection has never "
+                                       "succeeded from our address"))
+            print("    no snapshot", flush=True)
+            continue
         mm = measure(bundle)
         if not mm or mm["outcome"] == "unusable":
             print(f"    unusable (stopped={mm['stopped'] if mm else 'n/a'})", flush=True)

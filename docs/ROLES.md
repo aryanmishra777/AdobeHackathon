@@ -142,20 +142,20 @@ Not implementing the five skills. The job:
   cannot express, that is a contract change and it is yours. Change it once,
   regenerate bundles, tell both.
 - **Grow the corpus.** 85 candidates crawled, **64 usable**, every quadrant at or
-  above the 10-site target, and the thesis passing: good-SEO/poor-GEO scores 15
+  above the 10-site target, and the thesis passing: good-SEO/poor-GEO scores 16
   points below good-SEO/good-GEO. Both axes are *measured*, never asserted — GEO
   from the blocking mechanisms, SEO from technical hygiene. To extend it, add
   URLs to `bench/candidates.yaml` and re-run `python bench/build_corpus.py`.
   **Never hand-edit a label**, or it stops being evidence.
 
   ```
-  SEO good / GEO good   20    disc 97
-  SEO good / GEO poor   10    disc 74   <-- the money quadrant
-  SEO poor / GEO good   14    disc 67
-  SEO poor / GEO poor   13    disc 61
+  SEO good / GEO good   24    disc 65
+  SEO good / GEO poor   14    disc 49   <-- the money quadrant
+  SEO poor / GEO good   17    disc 57
+  SEO poor / GEO poor    9    disc 43
   ```
 
-  Ten sites are excluded as **inconclusive**: they refused our browser probe too,
+  Eight sites are excluded as **inconclusive**: they refused our browser probe too,
   so we cannot separate a site-level block from our own address being filtered.
   Recording that is the point — claiming a defect there would be exactly the
   confident false positive the rubric punishes. Retry them from a different
