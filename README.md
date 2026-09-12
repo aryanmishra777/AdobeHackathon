@@ -19,8 +19,8 @@ this repo is the harness that proves it works.
 | Path | What it is |
 |---|---|
 | **`brand-ai-readiness-audit/`** | **THE SUBMISSION.** `marketplace.json` + 8 skills. This is the only directory that gets zipped. |
-| `bench/` | 76 real-site candidates → 57 measured corpus entries across the SEO×GEO quadrants, plus the live/replay runner. |
-| `tests/` | 7 local fixture sites, the bundles built from them, and 312 pytest assertions. |
+| `bench/` | 85 real-site candidates → 61 measured corpus entries across the SEO×GEO quadrants, plus the live/replay runner. |
+| `tests/` | 7 local fixture sites, the bundles built from them, and 313 pytest assertions. |
 | `tools/` | `validate.py`, `package.py`, `check_coverage.py`, `run_audit.py`, `install_local.py`. |
 | `docs/` | `EVIDENCE.md` (what the literature supports, and what it doesn't), `ADOBE-BRAND-VISIBILITY.md` (how our checks map to Adobe's own product), `ROLES.md`, `CONTRIBUTING.md`, `todo/`. |
 | `TODO.md` | Who builds what, in what order. Index into `docs/todo/`. |
@@ -79,7 +79,7 @@ pip install -r tools/requirements-dev.txt   # dev tooling only, never shipped
 python tests/make_fixtures.py               # build the local test websites
 python tests/make_bundles.py                # crawl them into evidence bundles
 
-python -m pytest tests/ -q                  # expect: 312 passed
+python -m pytest tests/ -q                  # expect: 313 passed
 python tools/validate.py                    # expect: PASS (0 TODOs)
 python tools/package.py                     # builds dist/ and checks the 50 MB ceiling
 python tools/check_coverage.py              # find checks that never fire anywhere
@@ -98,13 +98,13 @@ SEO from technical hygiene. The result:
 
 ```
                         n   disc   eng
-SEO good / GEO good    20     72     90    control — healthy on both axes
-SEO good / GEO poor    10     58     90    the money quadrant
-SEO poor / GEO good    14     57     76    great content, weak technical SEO
-SEO poor / GEO poor    13     53     74    both, and we name the mechanism
+SEO good / GEO good    22     67     89    control — healthy on both axes
+SEO good / GEO poor    12     51     89    the money quadrant
+SEO poor / GEO good    14     54     72    great content, weak technical SEO
+SEO poor / GEO poor    13     52     82    both, and we name the mechanism
 ```
 
-Good-SEO/poor-GEO scores 14 points below good-SEO/good-GEO. Those ten sites are
+Good-SEO/poor-GEO scores 16 points below good-SEO/good-GEO. Those twelve sites are
 ones a conventional SEO linter passes clean: perfect sitemaps and canonicals,
 while the edge returns 429 to `ClaudeBot` or robots.txt disallows the retrieval
 crawlers outright.
@@ -148,8 +148,8 @@ blocking `GPTBot` (a *training* crawler) is a legitimate business choice and is
 reported as informational only — with a test asserting the words "error",
 "defect" and "bug" never appear in that finding.
 
-**Ten corpus sites are excluded as inconclusive**, recorded with reasons rather
-than dropped. They refused our browser probe too, so we cannot separate a
+**Thirteen candidate sites are excluded as inconclusive**, recorded with reasons
+rather than dropped (eleven more were unusable: too few pages to grade). They refused our browser probe too, so we cannot separate a
 site-level block from our own address being filtered. Claiming a defect there
 would be exactly the confident false positive the rubric punishes.
 

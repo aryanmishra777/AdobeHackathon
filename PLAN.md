@@ -230,14 +230,14 @@ Assumptions: `license: MIT` on every skill; `compatibility:` declared where netw
 
 **Layer 1 — local fixtures** — **DONE.** (`tests/fixtures/`, hard assertions + golden reports.) **7** tiny hand-written HTML sites: six with deliberately injected defects, one per mechanism (`js-shell`, `blocked-crawlers`, `contradictory-markup`, `stale-content`, `unquotable-chunks`, `low-engagement`), plus **`clean`, which must produce zero critical and zero high findings** — the false-positive tripwire. Each is served on its own port and crawled by the real collector, so the bundles under test are the same shape as a live run. 57 assertions in `tests/test_marketplace.py`, all passing.
 
-**Layer 2 — corpus replay** — **DONE, and bigger than planned.** (`bench/`.) The original target was 40 hand-labelled sites. What shipped is **76 candidates in `candidates.yaml`, crawled by `build_corpus.py` into 57 measured entries in `corpus.yaml`**, every quadrant at or above the 10-site requirement:
+**Layer 2 — corpus replay** — **DONE, and bigger than planned.** (`bench/`.) The original target was 40 hand-labelled sites. What shipped is **85 candidates in `candidates.yaml`, crawled by `build_corpus.py` into 61 measured entries in `corpus.yaml`**, every quadrant at or above the 10-site requirement:
 
 ```
                         n    disc
-SEO good / GEO good    20     97
-SEO good / GEO poor    10     74   <- the money quadrant
-SEO poor / GEO good    14     67
-SEO poor / GEO poor    13     61
+SEO good / GEO good    22     67
+SEO good / GEO poor    12     51   <- the money quadrant
+SEO poor / GEO good    14     54
+SEO poor / GEO poor    13     52
 ```
 
 The change that matters: **both axes are measured, never asserted.** GEO comes from the blocking mechanism actually observed (robots disallow, edge 403/429/challenge, soft-block serving crawlers a stripped page, content absent from raw HTML, no structured data, passages failing standalone comprehension); SEO from technical hygiene (sitemap, canonicals, titles, descriptions, h1, internal linking). Hand-editing a label makes it stop being evidence. Entries carry the score and the derivation:
@@ -287,7 +287,7 @@ Snapshot each site's evidence bundle once (gzipped, ≤8 pages/site, gitignored,
 | 5 | `audit-orchestrator` complete — site-type detection, subskill registry, merge/dedupe/severity/FP-suppression, `report.json` + `report.md` | Aryan | End-to-end run with one analysis skill | done |
 | 6 | `crawl-access-audit` — **the worked reference implementation** | Aryan | The pattern teammates copy; 13 of 18 checks | done |
 | 7 | Fixture suite + golden reports + clean-site tripwire | Aryan | 7 fixtures, 57 assertions, `pytest` green | done |
-| 8 | `bench/` corpus, runner, snapshot/replay, scoreboard | Aryan | 76 candidates → 57 measured entries; quadrant chart PASS | done |
+| 8 | `bench/` corpus, runner, snapshot/replay, scoreboard | Aryan | 85 candidates → 61 measured entries; quadrant chart PASS (16-point gap) | done |
 | 9 | TODO packets — 5 remaining skills, each with contract refs, exact check IDs, acceptance criteria, target fixture, and a paste-ready agent prompt | Aryan | `docs/todo/*.md` + `TODO.md` index | done |
 | 10 | Lakshay: `render-extractability` + `structured-data` · Mayank: `answerability` + `freshness-corroboration` + `engagement` | Teammates | 5 check scripts + their fix templates | **open** |
 
