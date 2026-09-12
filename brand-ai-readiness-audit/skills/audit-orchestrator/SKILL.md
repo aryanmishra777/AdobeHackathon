@@ -9,7 +9,8 @@ description: >-
   context retention. Produces one report of evidence-backed findings with
   severities plus prioritized, mechanism-sound fixes. Use when asked to audit,
   analyze or review a site or brand for AI discoverability, AI search
-  visibility, GEO, LLM citability, or on-site engagement, or when asked why a
+  visibility, GEO, AEO (answer engine optimization), LLM citability, AI
+  visibility gaps, or on-site engagement, or when asked why a
   brand is missing, misrepresented or ignored by AI assistants. This is the
   entrypoint of the brand-ai-readiness-audit marketplace; it invokes the other
   skills and is the only one that emits the final report.

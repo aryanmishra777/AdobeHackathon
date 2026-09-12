@@ -22,7 +22,7 @@ this repo is the harness that proves it works.
 | `bench/` | 76 real-site candidates → 57 measured corpus entries across the SEO×GEO quadrants, plus the live/replay runner. |
 | `tests/` | 7 local fixture sites, the bundles built from them, and 312 pytest assertions. |
 | `tools/` | `validate.py`, `package.py`, `check_coverage.py`, `run_audit.py`, `install_local.py`. |
-| `docs/` | `EVIDENCE.md` (what the literature supports, and what it doesn't), `ROLES.md`, `CONTRIBUTING.md`, `todo/` (5 work packets). |
+| `docs/` | `EVIDENCE.md` (what the literature supports, and what it doesn't), `ADOBE-BRAND-VISIBILITY.md` (how our checks map to Adobe's own product), `ROLES.md`, `CONTRIBUTING.md`, `todo/`. |
 | `TODO.md` | Who builds what, in what order. Index into `docs/todo/`. |
 | `docs/examples/` | A real report the marketplace produced, kept as a worked example. |
 | `PLAN.md` | The full architecture and build plan. The shared spec. |
@@ -132,6 +132,13 @@ routing, and off-site content placed to steer retrieval. Every report carries
 them in `coverage.limitations`, and an axis with no analyzer is reported as
 **not assessed** rather than graded. See
 [`audit-boundary.md`](brand-ai-readiness-audit/skills/audit-orchestrator/references/audit-boundary.md).
+
+**Adobe's own product agrees with the decomposition.** Adobe Brand Visibility's
+onsite best-practices list — robots.txt and CDN review, a URL Inspector for
+blocked pages, freshness, citations to authoritative sources, structured
+headers, FAQs, EEAT — is a subset of our 91 checks, each with more depth behind
+it. Where it runs prompts against live LLMs and measures traffic, we stop and
+say so. See [`docs/ADOBE-BRAND-VISIBILITY.md`](docs/ADOBE-BRAND-VISIBILITY.md).
 
 **False positives are the thing we defend hardest.** Six layered gates, per-check
 binding guards, and a clean-fixture tripwire that must produce zero critical and

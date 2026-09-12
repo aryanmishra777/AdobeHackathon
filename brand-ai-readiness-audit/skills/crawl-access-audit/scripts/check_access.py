@@ -1242,8 +1242,8 @@ ENGINE_AGENTS = [
     ("ChatGPT",    ["ChatGPT-User", "OAI-SearchBot"], ["GPTBot"]),
     ("Claude",     ["Claude-User", "Claude-SearchBot"], ["ClaudeBot", "anthropic-ai"]),
     ("Perplexity", ["Perplexity-User", "PerplexityBot"], []),
-    ("Google AI",  ["Googlebot"], ["Google-Extended"]),
-    ("Bing / Copilot", ["Bingbot"], []),
+    ("Google AI Overviews / Gemini", ["Googlebot"], ["Google-Extended"]),
+    ("Microsoft Copilot",            ["Bingbot"],   []),
 ]
 
 DEGRADED_RATIO = 0.5
