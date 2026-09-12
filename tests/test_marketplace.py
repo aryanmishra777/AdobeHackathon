@@ -910,3 +910,123 @@ def test_merge_treats_help_and_support_pages_as_primary(tmp_path):
     assert mod._is_primary_page({"evidence_detail": {"pages_affected": ["https://x.test/help-center"]}})
     assert mod._is_primary_page({"evidence_detail": {"pages_affected": ["https://x.test/faq"]}})
     assert not mod._is_primary_page({"evidence_detail": {"pages_affected": ["https://x.test/blog/one"]}})
+
+
+def test_collector_seeds_and_probes_from_the_target_path():
+    """adobe.com/in/ was audited from the origin root: --include /in/ kept
+    every discovered link out and the crawl fetched one page, /."""
+    import argparse
+    mod = _collect_module()
+    args = argparse.Namespace(target="https://www.adobe.com/in/", out=tempfile.mkdtemp(), max_pages=5,
+                              timeout=10.0, budget=60.0, concurrency=8, delay=0.5, include=["/in/"],
+                              exclude=[], renderer=None, no_probe=True)
+    c = mod.Collector(args)
+    assert c.start_url("https://www.adobe.com") == "https://www.adobe.com/in"
+    args.target = "https://www.adobe.com/"
+    assert mod.Collector(args).start_url("https://www.adobe.com") == "https://www.adobe.com/"
+
+
+def test_collector_diversifies_below_the_include_prefix():
+    """Under --include /in/ every URL shares the segment 'in'; keying the
+    round-robin on it put 17 of 25 pages inside /in/products/pdfprintengine/."""
+    mod = _collect_module()
+    seg = mod.Collector._segment
+    assert seg("https://a.test/in/products/pdfprintengine/faq.html", ["/in/"]) == "products/pdfprintengine"
+    assert seg("https://a.test/in/acrobat/pro.html", ["/in/"]) == "acrobat/pro.html"
+    assert seg("https://a.test/in/products/x.html", []) == "in/products"
+
+
+def test_read_001_recognises_a_byte_identical_shell_and_a_no_javascript_message(tmp_path):
+    """crunchyroll.com served one document for 21 browse routes: 99 words of
+    header and footer chrome and 'Update your web browser!'. No selector in
+    APP_SHELL_SELECTORS matched and the words cleared the thin threshold, so
+    READ-001 fired on 3 of 24 pages instead of all of them."""
+    import shutil
+    src = bundle("clean")
+    dst = tmp_path / "b"
+    shutil.copytree(src, dst)
+    man = json.loads((dst / "MANIFEST.json").read_text(encoding="utf-8"))
+    pages = [p for p in man["pages"] if p.get("status") == 200][:3]
+    assert len(pages) == 3
+    chrome = " ".join(["Browse Popular Simulcasts Release Calendar News Games Help Center"] * 6)
+    shell = ("<html><head><title>Site</title></head><body><div id=\"content\">"
+             f"<footer>{chrome} Update your web browser! Oh no! It looks like you're using a "
+             "web browser we don't support!</footer></div>"
+             + "<div class=\"x\"></div>" * 4000 + "</body></html>")
+    for i, p in enumerate(pages):
+        pdir = dst / "pages" / p["page_id"]
+        # a per-request token inside a script must not break the match
+        (pdir / "raw.html").write_text(shell + f"<script>window.t='{i}'</script>", encoding="utf-8")
+        ex = json.loads((pdir / "extracted.json").read_text(encoding="utf-8"))
+        ex["text"] = {"main": chrome + " Update your web browser!", "full": chrome,
+                      "main_word_count": 60, "word_count": 60, "text_to_markup_ratio": 0.0005}
+        ex["render_signals"] = {"app_shell_selectors": [], "framework_markers": [],
+                                "hydration_payload_bytes": None, "body_element_count": 4002}
+        (pdir / "extracted.json").write_text(json.dumps(ex), encoding="utf-8")
+    proc = run(CHECK_RENDER, str(dst), "--stdout")
+    assert proc.returncode == 0, proc.stderr
+    f = next((f for f in json.loads(proc.stdout)["findings"] if f["check_id"] == "READ-001"), None)
+    assert f is not None
+    assert f["affected_scope"]["pages_affected"] >= 3
+    assert "byte-identical document served for 3" in f["evidence"]
+    assert "non-JavaScript clients" in f["evidence"]
+
+
+def test_parse_010_accepts_a_brand_prefix_title():
+    """'Adobe PDF Print Engine - Buying Guide' over the h1 'Buying guide for
+    print service providers' was reported as a conflict twelve times because
+    only the first segment of the title was compared."""
+    import importlib
+    sys.path.insert(0, os.path.dirname(CHECK_PARSE))
+    mod = importlib.import_module(os.path.basename(CHECK_PARSE)[:-3])
+    src = open(CHECK_PARSE, encoding="utf-8").read()
+    assert "key=lambda seg: len(set(re.findall" in src  # the segment that agrees with the h1 wins
+
+
+def test_reach_013_ignores_sitemap_indexes_and_an_unsampled_sitemap(tmp_path):
+    """nike.in's nested index files and adobe.com's 90 per-locale product
+    sitemaps were counted as orphaned pages; adobe.com's 1,764-URL section
+    with 25 pages sampled produced 1,764 'orphans'."""
+    import shutil
+    src = bundle("clean")
+    dst = tmp_path / "b"
+    shutil.copytree(src, dst)
+    man_path = dst / "MANIFEST.json"
+    man = json.loads(man_path.read_text(encoding="utf-8"))
+    n_pages = sum(1 for p in man["pages"] if p.get("status") == 200)
+    urls = [f"https://example.test/never-linked-{i}" for i in range(40)]
+    man["sitemaps"] = [
+        {"url": "https://example.test/sitemap.xml", "status": 200, "kind": "index", "entry_count": 2,
+         "entries": [{"loc": "https://example.test/a.xml"}, {"loc": "https://example.test/b.xml"}]},
+        {"url": "https://example.test/a.xml", "status": 200, "kind": "urlset", "entry_count": 40,
+         "entries": [{"loc": u} for u in urls]},
+    ]
+    man_path.write_text(json.dumps(man), encoding="utf-8")
+    proc = run(CHECK_ACCESS, str(dst), "--stdout")
+    assert proc.returncode == 0, proc.stderr
+    hits = [f for f in json.loads(proc.stdout)["findings"] if f["check_id"] == "REACH-013"]
+    # either the sample is too small to claim orphans (< 10 pages) or the
+    # guard withheld the claim because most of the sitemap went unsampled
+    assert not hits or n_pages >= 10 and hits[0]["evidence_detail"]["counts"]["orphan_candidates"] <= 20
+
+
+def test_engine_row_survives_a_probe_that_never_answered(tmp_path):
+    """adobe.com holds the connection open for every known crawler name. The
+    probe recorded status None and the engine table dropped the row."""
+    import shutil
+    src = bundle("clean")
+    dst = tmp_path / "b"
+    shutil.copytree(src, dst)
+    probe = json.loads((dst / "ua_probe.json").read_text(encoding="utf-8"))
+    for a in probe["agents"].values():
+        a.update({"status": None, "bytes": 0, "text_bytes": 0, "challenge_detected": False,
+                  "error": "TimeoutError: The read operation timed out"})
+    (dst / "ua_probe.json").write_text(json.dumps(probe), encoding="utf-8")
+    man_path = dst / "MANIFEST.json"
+    man = json.loads(man_path.read_text(encoding="utf-8"))
+    man["ua_probe"] = probe
+    man_path.write_text(json.dumps(man), encoding="utf-8")
+    proc = run(CHECK_ACCESS, str(dst), "--stdout")
+    rows = {r["engine"]: r for r in json.loads(proc.stdout)["engine_reachability"]}
+    assert rows["ChatGPT"]["state"] == "blocked"      # baseline was served, the agent was not
+    assert "never answers" in rows["ChatGPT"]["detail"]

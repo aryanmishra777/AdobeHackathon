@@ -107,6 +107,13 @@ INTERSTITIAL_RE = re.compile(
     r"|aria-modal=\"true\""
     r"|data-(?:modal|popup|overlay)=)", re.I)
 CONSENT_RE = re.compile(r"\b(cookie|consent|gdpr|ccpa|privacy preferences)\b", re.I)
+# Overlay-shaped markup that is not an interstitial: loading states, hidden
+# dialogs, and region/language pickers opened from a footer control.
+NOT_AN_INTERSTITIAL_RE = re.compile(
+    r"(\bloading\b|scroll-block|app-shell|author-hide|\bhidden\b|aria-hidden=\"true\"|"
+    r"display:\s*none|choose your (?:region|country|language)|language navigation|"
+    r"region[- ]selector|locale[- ]selector|<video\b|youtube|vimeo|"
+    r"data-conf-display=\"on(?:hash)?change\"|aria-label=\"[^\"]*\bvideo\b)", re.I)
 
 SEARCH_FORM_RE = re.compile(
     r"(<input[^>]+type=\"search\"|role=\"search\"|name=\"(?:q|query|s|search|"
@@ -676,6 +683,20 @@ def check_stay_005(b: Bundle) -> list:
             owner="engineering"))]
 
 
+STATE_PARAM_RE = re.compile(r"[?&](?:q|query|s|search|f|filter[s]?|sort|order|page|p|"
+                            r"[a-z_]*_filter)=", re.I)
+
+
+def _links_carry_state(b: Bundle) -> bool:
+    """True when any sampled page links to a URL whose query string carries a
+    search, filter, sort or page parameter."""
+    for p in b.content_pages:
+        for link in (b.extracted(p["page_id"]).get("links") or []):
+            if link.get("internal") and STATE_PARAM_RE.search(link.get("href") or ""):
+                return True
+    return False
+
+
 def check_stay_006(b: Bundle) -> list:
     """The site discards the context a visitor arrived with. Model-judged /
     inferred (no JS execution). A search or filter whose state is not in the URL
@@ -687,6 +708,13 @@ def check_stay_006(b: Bundle) -> list:
             continue
         # Guard: a form with method=GET already puts state in the URL.
         forms = b.extracted(p["page_id"]).get("forms") or []
+        # Guard: no <form> at all means the control is a script component we
+        # cannot read; and a site whose own links carry filter or search
+        # parameters (nike.in: ?f=gender_filter=..., robots.txt disallows
+        # /*?f=) demonstrably puts that state in the URL. Neither is evidence
+        # of state being discarded.
+        if not forms or _links_carry_state(b):
+            continue
         get_form = any((f.get("method") or "get").lower() == "get" for f in forms)
         post_search = re.search(r"<form[^>]+method=\"post\"[^>]*>.*?(?:type=\"search\"|"
                                 r"role=\"search\"|name=\"(?:q|query|search)\")",
@@ -730,7 +758,18 @@ def check_stay_007(b: Bundle) -> list:
     out = []
     for p in b.content_pages:
         raw = b.raw_html(p["page_id"])
-        m = INTERSTITIAL_RE.search(raw)
+        m = None
+        for cand in INTERSTITIAL_RE.finditer(raw):
+            # Guard: a loading overlay, a hidden region/language picker or an
+            # author-mode-hidden dialog is a component, not something shown on
+            # arrival. crunchyroll.com's app shell wraps every page in
+            # "erc-scroll-block-overlay" while it loads; adobe.com's "modal
+            # dexter-Author-Hide" is the footer's 'Choose your region' dialog.
+            around = raw[max(0, cand.start() - 300):cand.end() + 600]
+            if NOT_AN_INTERSTITIAL_RE.search(around):
+                continue
+            m = cand
+            break
         if not m:
             continue
         is_consent = bool(CONSENT_RE.search(raw[max(0, m.start() - 200):m.start() + 200]))

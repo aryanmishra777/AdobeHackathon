@@ -20,7 +20,7 @@ this repo is the harness that proves it works.
 |---|---|
 | **`brand-ai-readiness-audit/`** | **THE SUBMISSION.** `marketplace.json` + 8 skills. This is the only directory that gets zipped. |
 | `bench/` | 85 real-site candidates → 64 measured corpus entries across the SEO×GEO quadrants, plus the live/replay runner. |
-| `tests/` | 7 local fixture sites, the bundles built from them, and 329 pytest assertions. |
+| `tests/` | 7 local fixture sites, the bundles built from them, and 339 pytest assertions. |
 | `tools/` | `validate.py`, `package.py`, `check_coverage.py`, `run_audit.py`, `install_local.py`. |
 | `docs/` | `EVIDENCE.md` (what the literature supports, and what it doesn't), `ADOBE-BRAND-VISIBILITY.md` (how our checks map to Adobe's own product), `ROLES.md`, `CONTRIBUTING.md`, `todo/`. |
 | `TODO.md` | Who builds what, in what order. Index into `docs/todo/`. |
@@ -79,7 +79,7 @@ pip install -r tools/requirements-dev.txt   # dev tooling only, never shipped
 python tests/make_fixtures.py               # build the local test websites
 python tests/make_bundles.py                # crawl them into evidence bundles
 
-python -m pytest tests/ -q                  # expect: 329 passed
+python -m pytest tests/ -q                  # expect: 339 passed
 python tools/validate.py                    # expect: PASS (0 TODOs)
 python tools/package.py                     # builds dist/ and checks the 50 MB ceiling
 python tools/check_coverage.py              # find checks that never fire anywhere
@@ -98,13 +98,13 @@ SEO from technical hygiene. The result:
 
 ```
                         n   disc   eng
-SEO good / GEO good    24     65     91    control — healthy on both axes
-SEO good / GEO poor    14     49     89    the money quadrant
-SEO poor / GEO good    17     57     75    great content, weak technical SEO
+SEO good / GEO good    24     66     92    control — healthy on both axes
+SEO good / GEO poor    14     50     90    the money quadrant
+SEO poor / GEO good    17     57     76    great content, weak technical SEO
 SEO poor / GEO poor     9     43     82    both, and we name the mechanism
 ```
 
-Good-SEO/poor-GEO scores 16 points below good-SEO/good-GEO. Those fourteen sites are
+Good-SEO/poor-GEO scores 17 points below good-SEO/good-GEO. Those fourteen sites are
 ones a conventional SEO linter passes clean: perfect sitemaps and canonicals,
 while the edge returns 429 to `ClaudeBot` or robots.txt disallows the retrieval
 crawlers outright.

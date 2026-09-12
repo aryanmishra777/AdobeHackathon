@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -279,3 +280,19 @@ def test_brand_resolver_host_label_and_spaced_letters():
     assert mod._host_label("9p.io") == "9p"
     assert mod._host_label("cr.yp.to") == "yp"
     assert [x.strip() for x in mod.TITLE_SPLIT_RE.split("OpenBSD: Artwork")] == ["OpenBSD", "Artwork"]
+
+
+def test_quote_002_accepts_a_welcome_to_identity_sentence():
+    """'Welcome to Crunchyroll, your ultimate destination for streaming the
+    best in anime entertainment' is an explicit identity statement; the
+    'X is a' pattern missed it and the finding fired at high."""
+    mod = _quote_module()
+    src = open(CHECK_QUOTE, encoding="utf-8").read()
+    assert "welcome to" in src
+    def pat(brand):
+        return re.compile(r"\bwelcome to\s+" + re.escape(brand)
+                          + r"\b[^.!?]{0,20}?,?\s+(?:your|the|a|an|where|home of|india's|the world's)\b", re.I)
+    assert pat("Crunchyroll").search("© Crunchyroll, LLC Welcome to Crunchyroll, your ultimate destination for streaming anime.")
+    assert pat("Acme").search("Welcome to Acme, the home of hand-made tools.")
+    assert not pat("Crunchyroll").search("Welcome to Crunchyroll. Log in to continue.")
+

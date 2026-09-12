@@ -850,6 +850,11 @@ def _sitemap_urls(b: Bundle) -> list:
     """Every URL the site's own sitemaps advertise, deduplicated, order kept."""
     seen, out = set(), []
     for sm in b.sitemaps:
+        # A sitemap index lists other sitemaps, not pages. Counting its
+        # entries reported nike.in's nested index files and adobe.com's
+        # ninety per-locale product sitemaps as orphaned pages.
+        if sm.get("kind") == "index":
+            continue
         for entry in (sm.get("entries") or []):
             loc = entry.get("loc") if isinstance(entry, dict) else entry
             if loc and loc not in seen:
@@ -901,6 +906,15 @@ def check_reach_013(b: Bundle) -> list[dict]:
         orphans.append(loc)
 
     if not orphans:
+        return []
+
+    # Guard: when most of the sitemap is "orphaned", the sample did not cover
+    # the site; that is a statement about our crawl, not about the site's
+    # linking. adobe.com's /in/ sitemaps list 1,764 pages and 25 were
+    # fetched, which made 1,764 orphans. Report only when the sampled pages'
+    # links reach at least half of what the sitemap advertises.
+    total = len(_sitemap_urls(b))
+    if total and len(orphans) > total * 0.5:
         return []
 
     n = len(orphans)
@@ -1273,6 +1287,7 @@ def engine_reachability(b: Bundle) -> list[dict]:
 
         blocked_robots, edge_blocked, degraded, ok = [], [], [], []
         allowed_unprobed: list = []
+        stalled: list = []
         for agent in known:
             entry = matrix.get(agent) or {}
             if entry and entry.get("root_allowed") is False:
@@ -1282,6 +1297,14 @@ def engine_reachability(b: Bundle) -> list[dict]:
             status = pr.get("status")
             if pr.get("challenge_detected") or (status and status in (401, 403, 429)):
                 edge_blocked.append(agent)
+                continue
+            if pr and status is None and pr.get("error"):
+                # The request never got an answer. adobe.com holds the
+                # connection open for every known crawler name from an
+                # unverified address and serves unknown names at once: a
+                # tarpit is a block that never sends a status code. Without
+                # this branch the row vanished from the table.
+                stalled.append(agent)
                 continue
             got = pr.get("text_bytes") or pr.get("bytes") or 0
             if base_bytes and got and got < base_bytes * DEGRADED_RATIO:
@@ -1298,6 +1321,19 @@ def engine_reachability(b: Bundle) -> list[dict]:
         if blocked_robots and not ok:
             state, detail = "blocked", (
                 "robots.txt disallows " + ", ".join(blocked_robots))
+        elif stalled and not ok and baseline.get("status") != 200:
+            agent = stalled[0]
+            state, detail = "partial", (
+                f"unverified: the edge never answered {agent} "
+                f"({(probe_agents.get(agent) or {}).get('error')}) and never answered the "
+                f"browser baseline either, so the stall cannot be attributed to the agent "
+                f"name; robots.txt permits it")
+        elif stalled and not ok:
+            agent = stalled[0]
+            state, detail = "blocked", (
+                f"the edge never answers {agent} "
+                f"({(probe_agents.get(agent) or {}).get('error')}) while it serves a browser "
+                f"user-agent; robots.txt permits it")
         elif edge_blocked and not ok and baseline.get("status") != 200:
             # The browser baseline was refused too, so the probe cannot tell an
             # AI-agent block from bot management challenging every unverified
@@ -1329,9 +1365,9 @@ def engine_reachability(b: Bundle) -> list[dict]:
             if allowed_unprobed:
                 detail += (f"; {', '.join(allowed_unprobed)} is permitted by "
                            f"robots.txt but was not probed")
-            if blocked_robots or edge_blocked or degraded:
+            if blocked_robots or edge_blocked or degraded or stalled:
                 state = "partial"
-                hindered = blocked_robots + edge_blocked + degraded
+                hindered = blocked_robots + edge_blocked + degraded + stalled
                 detail = (f"reachable via {', '.join(ok)}, but "
                           f"{', '.join(hindered)} is blocked or degraded")
         elif allowed_unprobed:

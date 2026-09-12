@@ -670,6 +670,13 @@ def check_quote_002(b: Bundle) -> list:
     patterns.append(re.compile(
         r"\bwe(?:'re| are)\s+(?:a|an|the)\b|\bour\s+(?:company|team|firm|agency|"
         r"studio|platform|service|business)\s+" + SENT_VERB, re.I))
+    # "Welcome to Crunchyroll, your ultimate destination for streaming the best
+    # in anime entertainment" is an explicit, quotable identity sentence that
+    # is not of the "X is a" form. The guard says accept any such sentence.
+    for ph in phrases:
+        patterns.append(re.compile(
+            r"\bwelcome to\s+" + re.escape(ph) + r"\b[^.!?]{0,20}?,?\s+(?:your|the|a|an|"
+            r"where|home of|india's|the world's)\b", re.I))
 
     for p in content_pages:
         text = b.page_text(p["page_id"])
@@ -895,12 +902,24 @@ def _looks_commercial(b) -> bool:
     # A site that is mostly articles or docs is a publisher, whatever else it does.
     n = max(1, len(b.ok_pages))
     editorial = sum(1 for p in b.ok_pages if p.get("page_type") in ("article", "docs"))
-    return editorial / n < 0.5 and any(
-        re.search(r"(buy|order|subscribe|sign up|get started|free trial|shop now|"
-                  r"free shipping|in stock|request a (demo|quote)|add to (cart|basket)|"
-                  r"book now)",
-                  (b.extracted(p["page_id"]).get("text") or {}).get("main") or "", re.I)
-        for p in b.ok_pages[:10])
+    if editorial / n >= 0.5:
+        return False
+    # Vocabulary is the weakest signal, so it needs a transactional phrase --
+    # "subscribe", "sign up", "get started" and "order" are on python.org's
+    # mailing-list page and Wikipedia's account page, and this branch had never
+    # run before (its regex carried a stray 0x08 byte). Require a phrase that
+    # only a seller or a paid service uses, on two or more sampled pages.
+    # "checkout" is a git verb on curl.se, "per month" a statistic on its
+    # dashboard, "pricing" ordinary prose on danluu.com: the phrase has to be
+    # a storefront's, or a price with a billing period attached.
+    transactional = re.compile(
+        r"\b(free trial|start (?:your|a) free trial|shop now|free shipping|in stock|"
+        r"out of stock|request a (?:demo|quote)|add to (?:cart|basket|bag)|book now|"
+        r"buy now|(?:view|see|compare) (?:pricing|plans)|pricing plans|per (?:user|seat)|"
+        r"\d\s?/\s?(?:month|mo|year|yr)|(?:month|year)ly plan)\b", re.I)
+    hits = sum(1 for p in b.ok_pages[:10]
+               if transactional.search((b.extracted(p["page_id"]).get("text") or {}).get("main") or ""))
+    return hits >= 2
 
 
 def check_quote_005(b: Bundle) -> list:
@@ -1457,7 +1476,7 @@ def proactive(b: Bundle, findings: list) -> list:
                     continue
                 heads += 1
                 if text.endswith("?") or re.match(
-                        r"^(how|what|why|when|where|which|who|can|do|does|is|are)",
+                        r"^(how|what|why|when|where|which|who|can|do|does|is|are)\b",
                         text, re.I):
                     question_heads += 1
         if heads >= 8 and question_heads <= max(1, heads // 12):

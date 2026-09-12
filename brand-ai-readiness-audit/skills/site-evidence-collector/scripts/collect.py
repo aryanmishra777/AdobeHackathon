@@ -1245,11 +1245,20 @@ class Collector:
     def load_sitemaps(self, origin: str, declared: list[str]) -> list[dict]:
         os.makedirs(os.path.join(self.out, "sitemaps"), exist_ok=True)
         queue = list(dict.fromkeys(declared + [origin + "/sitemap.xml"]))
-        seen, out, depth = set(), [], 0
-        while queue and depth < 2 and len(out) < 6 and self.time_left() > 5:
+        # When the audit is scoped to a section (--include), a nested sitemap
+        # for that section is fetched ahead of everything still queued and
+        # does not count against the cap. adobe.com declares nine sitemaps
+        # and lists one products sitemap per locale inside them; the /in/ one
+        # was never reached because the cap was spent on the top level.
+        inc = tuple(self.args.include or ())
+        seen, out, depth, cap = set(), [], 0, 6
+        while queue and depth < 2 and len(out) < cap and self.time_left() > 5:
             nxt = []
-            for url in queue:
-                if url in seen or len(out) >= 6:
+            i = 0
+            while i < len(queue):
+                url = queue[i]
+                i += 1
+                if url in seen or len(out) >= cap:
                     continue
                 seen.add(url)
                 r = fetch(url, timeout=self.timeout_within_budget())
@@ -1262,7 +1271,14 @@ class Collector:
                     _write(os.path.join(self.out, "sitemaps",
                                         f"sitemap-{len(out):02d}.xml"), r.body[:2_000_000])
                     if kind == "index":
-                        nxt.extend(e["loc"] for e in entries[:5])
+                        locs = [e["loc"] for e in entries if e.get("loc")]
+                        if inc:
+                            scoped = [u for u in locs if urlparse(u).path.startswith(inc)]
+                            if scoped:
+                                queue[i:i] = scoped[:5]   # next in line
+                                cap += len(scoped[:5])
+                            locs = [u for u in locs if u not in scoped]
+                        nxt.extend(locs[:5])
                 out.append(record)
             queue, depth = nxt, depth + 1
         return out
@@ -1281,8 +1297,19 @@ class Collector:
         return result
 
     # -- pages -------------------------------------------------------------
+    def start_url(self, origin: str) -> str:
+        """Where the crawl and the probe begin. A target with a path -- a
+        country section such as adobe.com/in/ -- is audited from that path;
+        seeding from the origin root fetched one page and stopped when
+        --include kept everything else out."""
+        target = self.args.target if "://" in self.args.target else "https://" + self.args.target
+        path = urlparse(target).path or "/"
+        if path.rstrip("/"):
+            return normalize_url(origin + path)
+        return origin + "/"
+
     def select_and_fetch(self, origin: str, sitemaps: list[dict]) -> None:
-        home = origin + "/"
+        home = self.start_url(origin)
         queue: list[tuple[str, str]] = [(normalize_url(home), "home")]
         queued = {normalize_url(home)}
 
@@ -1355,9 +1382,19 @@ class Collector:
         self.stopped = "max-pages" if fetched >= self.args.max_pages else "completed"
 
     @staticmethod
-    def _segment(url: str) -> str:
-        parts = [p for p in urlparse(url).path.split("/") if p]
-        return parts[0] if parts else ""
+    def _segment(url: str, include=()) -> str:
+        """The site section a URL belongs to, for round-robin sampling. When
+        the audit is scoped with --include, the section is the segment *after*
+        the scope: under /in/ every URL shares "in", and keying on it put 17
+        of adobe.com's 25 sampled pages inside /in/products/pdfprintengine/.
+        Two segments are used so a large sub-tree cannot do the same."""
+        path = urlparse(url).path
+        for prefix in include:
+            if path.startswith(prefix):
+                path = path[len(prefix):]
+                break
+        parts = [p for p in path.split("/") if p]
+        return "/".join(parts[:2]) if parts else ""
 
     @staticmethod
     def _boilerplate_rank(url: str) -> int:
@@ -1383,13 +1420,13 @@ class Collector:
         """
         taken = {}
         for page in self.pages:
-            seg = self._segment(page.get("url", ""))
+            seg = self._segment(page.get("url", ""), self.args.include)
             taken[seg] = taken.get(seg, 0) + 1
 
         seen_in_frontier = {}
         ranked = []
         for url, role in frontier:
-            seg = self._segment(url)
+            seg = self._segment(url, self.args.include)
             position = seen_in_frontier.get(seg, 0)
             seen_in_frontier[seg] = position + 1
             role_rank = 0 if role == "sitemap-priority" else 1
@@ -1520,12 +1557,13 @@ class Collector:
         else:
             robots_info = self.load_robots(origin)
             sitemaps = self.load_sitemaps(origin, robots_info.get("sitemap_urls", []))
-            probe = {} if self.args.no_probe else self.ua_probe(origin + "/")
-            if self.allowed(origin + "/"):
+            start = self.start_url(origin)
+            probe = {} if self.args.no_probe else self.ua_probe(start)
+            if self.allowed(start):
                 self.select_and_fetch(origin, sitemaps)
             else:
                 self.stopped = "site-blocked"
-                self.skip(origin + "/", "robots-disallow")
+                self.skip(start, "robots-disallow")
 
         run_doc["finished_at"] = now_iso()
         _write_json(os.path.join(self.out, "run.json"), run_doc)

@@ -24,6 +24,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -206,6 +207,10 @@ CLIENT_RENDERED_FRAMEWORKS = frozenset({
 # unambiguous below THIN_WORDS; between there and THIN_WORDS_STRONG it only
 # counts when the corroborating signal is overwhelming.
 THIN_WORDS = 50
+# Body text a shell shows to a client that has not run its JavaScript.
+NO_JS_MESSAGE_RE = re.compile(
+    r"(enable javascript|javascript is (required|disabled)|update your (web )?browser|"
+    r"browser we don.t support|please update your browser)")
 THIN_WORDS_STRONG = 120
 STRONG_PAYLOAD_BYTES = 50_000
 STRONG_RATIO = 0.01
@@ -293,7 +298,15 @@ def _describe_signals(sigs: list[dict]) -> str:
     if payloads:
         parts.append(f"a hydration payload of up to {max(payloads):,} bytes")
 
-    shells = sorted({sel for s in sigs for sel in s["shells"]})
+    all_shells = sorted({sel for s in sigs for sel in s["shells"]})
+    identical = [sel for sel in all_shells if sel.startswith("identical-document-x")]
+    if identical:
+        n = max(int(sel.rsplit("x", 1)[1]) for sel in identical)
+        parts.append(f"one byte-identical document served for {n} different URLs")
+    if "no-javascript-message" in all_shells:
+        parts.append("a body message telling non-JavaScript clients to update or enable their browser")
+    shells = [sel for sel in all_shells
+              if not sel.startswith("identical-document-x") and sel != "no-javascript-message"]
     if shells:
         sel = shells[0]
         if not sel.startswith(("#", ".", "[")):
@@ -345,6 +358,28 @@ def check_read_001(b: Bundle) -> list[dict]:
 
     renderer_available = bool(b.run.get("renderer", {}).get("available"))
 
+    # A single-page application serves one document for every route. When
+    # three or more distinct URLs return byte-identical HTML, that document is
+    # the shell whatever selectors it uses: crunchyroll.com returned one
+    # 281,222-byte file for 21 browse routes, carrying 99 words of header and
+    # footer chrome and a body message telling non-JavaScript clients to
+    # update their browser -- and no selector in APP_SHELL_SELECTORS. Both
+    # facts count as the mount-point signal; the word and ratio guards still
+    # have to agree before anything fires.
+    digests = {}
+    for page in valid_pages:
+        try:
+            # Compare the markup, not the scripts: Cloudflare and analytics
+            # tags carry a per-request token that makes otherwise identical
+            # shells differ by a few bytes.
+            markup = re.sub(r"<script\b.*?</script>", "", b.raw_html(page["page_id"]),
+                            flags=re.S | re.I)
+            digest = hashlib.sha1(markup.encode("utf-8", "replace")).hexdigest()
+        except Exception:
+            digest = None
+        digests.setdefault(digest, []).append(page["page_id"])
+    identical = {pid: len(pids) for d, pids in digests.items() if d and len(pids) >= 3 for pid in pids}
+
     affected = []
     fired = []
     max_payload = 0
@@ -352,6 +387,16 @@ def check_read_001(b: Bundle) -> list[dict]:
     for page in valid_pages:
         pid = page["page_id"]
         ext = b.extracted(pid)
+        extra = []
+        if pid in identical:
+            extra.append(f"identical-document-x{identical[pid]}")
+        main_text = ((ext.get("text") or {}).get("main") or "").lower()
+        if NO_JS_MESSAGE_RE.search(main_text):
+            extra.append("no-javascript-message")
+        if extra:
+            rs = dict(ext.get("render_signals") or {})
+            rs["app_shell_selectors"] = list(rs.get("app_shell_selectors") or []) + extra
+            ext = dict(ext, render_signals=rs)
 
         if renderer_available and b.exists(f"pages/{pid}/rendered.html"):
             # Ground truth measurement when rendered.html is captured

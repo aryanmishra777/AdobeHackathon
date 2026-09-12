@@ -973,6 +973,15 @@ def _looks_like_phone(candidate: str) -> bool:
     return 8 <= len(digits) <= 15
 
 
+def _is_directory_page(page: dict) -> bool:
+    """An offices, stores, locations or branches page lists many contacts on
+    purpose."""
+    url = (page.get("final_url") or page.get("url") or "").lower()
+    return bool(re.search(r"/(offices?|locations?|stores?|branches|dealers?|"
+                          r"find-(?:a-)?(?:store|dealer|branch)|store-locator|where-to-buy)"
+                          r"(?:[/.?#]|$)", url))
+
+
 def check_trust_010(b: Bundle) -> list:
     """Name, address or phone details are inconsistent. Deterministic on-site
     half; the off-site comparison needs a tool."""
@@ -985,9 +994,16 @@ def check_trust_010(b: Bundle) -> list:
     phones, postcodes = {}, {}
     for p in b.ok_pages:
         text = b.page_text(p["page_id"])
-        for m in re.findall(r"\+?\d[\d()\-\s]{7,}\d", text):
-            if not _looks_like_phone(m):
-                continue
+        # Guard: multiple genuine locations are not an inconsistency. A page
+        # that is an office or store directory lists one number per site by
+        # design; adobe.com/about-adobe/contact/offices.html carries forty.
+        # Only the numbers a page presents as *the* contact count here, so a
+        # directory page contributes nothing and a page with several numbers
+        # is itself treated as a directory.
+        found = [m for m in re.findall(r"\+?\d[\d()\-\s]{7,}\d", text) if _looks_like_phone(m)]
+        if _is_directory_page(p) or len({re.sub(r"\D", "", m)[-10:] for m in found}) > 2:
+            continue
+        for m in found:
             key = re.sub(r"\D", "", m)[-10:]
             phones.setdefault(key, set()).add(_page_url(p))
         for m in re.findall(r"\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b", text):

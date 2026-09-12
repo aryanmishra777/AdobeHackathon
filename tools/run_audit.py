@@ -189,8 +189,11 @@ def render_markdown(report: dict, engine_rows: list) -> str:
         out.append(f"- {l}")
     if skipped:
         names = sorted({(s.get("check_id") if isinstance(s, dict) else s) for s in skipped})
-        out.append(f"- {len(names)} checks were skipped because they need a web "
-                   f"search this run did not have: {', '.join(names)}")
+        # Skips carry their own reasons in report.json; a site that refused every
+        # fetch skips 90 checks for want of a page, not for want of a search tool.
+        shown = ", ".join(names[:12]) + (f" and {len(names) - 12} more" if len(names) > 12 else "")
+        out.append(f"- {len(names)} checks did not run; each has its reason in "
+                   f"report.json under coverage.checks_skipped: {shown}")
     out.append("- Whether an assistant retrieves anything at all, what third-party "
                "sources say, which competitors share the retrieval pool, and how "
                "each engine reranks are all outside a single-site crawl.")

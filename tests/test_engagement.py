@@ -230,3 +230,36 @@ def test_stay_001_first_screen_guards():
     for word in ("accelerator", "operating system", "headlines", "furniture", "scripting"):
         assert mod.ORIENTATION_NOUN_RE.search("an open-source " + word), word
     assert mod.NON_ENGLISH_LANG_RE.match("et-EE") and not mod.NON_ENGLISH_LANG_RE.match("en-GB")
+
+
+def _stay_module():
+    import importlib
+    sys.path.insert(0, os.path.dirname(CHECK_STAY))
+    return importlib.import_module(os.path.basename(CHECK_STAY)[:-3])
+
+
+def test_stay_007_ignores_loading_overlays_and_hidden_region_pickers():
+    """crunchyroll.com's app shell wraps every route in 'erc-scroll-block-overlay'
+    while it loads (21 findings); adobe.com's 'modal dexter-Author-Hide' is the
+    footer's 'Choose your region' dialog and a hash-opened video dialog."""
+    mod = _stay_module()
+    for html in ('<div class="erc-scroll-block-overlay"><div class="loading--9nt-6 erc-app-shell">',
+                 '<div class="modal dexter-Author-Hide">Language Navigation Choose your region',
+                 '<div class="modal"><div class="dexter-Modal_overlay" data-conf-display="onHashChange" aria-label="Typekit Video" role="dialog">'):
+        m = mod.INTERSTITIAL_RE.search(html)
+        assert m and mod.NOT_AN_INTERSTITIAL_RE.search(html[max(0, m.start() - 300):m.end() + 600]), html
+    real = '<div class="newsletter-signup modal" aria-modal="true">Join our list<form>'
+    m = mod.INTERSTITIAL_RE.search(real)
+    assert m and not mod.NOT_AN_INTERSTITIAL_RE.search(real)
+
+
+def test_stay_006_does_not_fire_when_links_already_carry_filter_state():
+    """nike.in's header search is a script component with no <form>, and its
+    own links carry ?f=gender_filter=...; the check reported nine pages as
+    discarding filter state."""
+    mod = _stay_module()
+    assert mod.STATE_PARAM_RE.search("https://www.nike.in/jordan/c/94294?f=gender_filter%3D5197_")
+    assert mod.STATE_PARAM_RE.search("https://a.test/search?q=shoes")
+    assert mod.STATE_PARAM_RE.search("https://a.test/list?sort=price&page=2")
+    assert not mod.STATE_PARAM_RE.search("https://a.test/about?utm_source=x")
+

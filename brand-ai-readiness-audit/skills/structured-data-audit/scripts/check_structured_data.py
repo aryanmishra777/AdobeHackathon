@@ -1127,9 +1127,16 @@ def check_parse_010(b: Bundle) -> list[dict]:
         if not t or not h1:
             continue
 
-        # Strip brand suffix like " | Brand Name" or " - Brand Name"
-        substantive_title = re.split(r"\s+[|\-—]\s+", t)[0].strip().lower()
+        # Titles carry the brand on either side of the separator: "Buying
+        # Guide | Adobe" or "Adobe PDF Print Engine - Buying Guide". Taking the
+        # first segment read the second pattern as a conflict on twelve of
+        # adobe.com's pages. Use whichever segment agrees with the h1 best.
         clean_h1 = h1.strip().lower()
+        segments = [seg.strip().lower() for seg in re.split(r"\s+[|\-—]\s+", t) if seg.strip()]
+        h1_words = set(re.findall(r"\w+", clean_h1))
+        substantive_title = max(
+            segments or [t.strip().lower()],
+            key=lambda seg: len(set(re.findall(r"\w+", seg)) & h1_words))
 
         # If one is contained in the other, they describe the same subject
         if substantive_title in clean_h1 or clean_h1 in substantive_title:

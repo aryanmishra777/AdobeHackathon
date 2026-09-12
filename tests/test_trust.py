@@ -280,3 +280,14 @@ def test_trust_010_does_not_read_size_runs_as_phone_numbers():
         assert not mod._looks_like_phone(s), s
     for s in ("+91 98765 43210", "1800 806 6453", "(022) 6789 1234", "022-67891234", "9876543210"):
         assert mod._looks_like_phone(s), s
+
+
+def test_trust_010_treats_an_office_directory_as_many_locations_not_an_inconsistency():
+    """adobe.com/about-adobe/contact/offices.html lists forty numbers, one per
+    office; TRUST-010 reported them as inconsistent contact details."""
+    mod = _trust_module()
+    assert mod._is_directory_page({"url": "https://www.adobe.com/in/about-adobe/contact/offices.html"})
+    assert mod._is_directory_page({"url": "https://a.test/store-locator"})
+    assert mod._is_directory_page({"url": "https://a.test/locations/"})
+    assert not mod._is_directory_page({"url": "https://a.test/contact"})
+    assert not mod._is_directory_page({"url": "https://a.test/about"})
