@@ -196,7 +196,10 @@ def quadrant_chart(results: list[dict]) -> str:
             lines.append(f"  {label:26} {0:>3}  {'--':>5}  {'--':>5}  not yet populated")
             continue
         d = sum(r["discoverability"] for r in rows) / len(rows)
-        e = sum(r["engagement_score"] for r in rows) / len(rows)
+        # A zero-page crawl (redcross.org refuses every crawler) grades
+        # engagement "not assessed"; it has no score to average.
+        graded = [r for r in rows if r["engagement_score"] is not None]
+        e = sum(r["engagement_score"] for r in graded) / len(graded) if graded else float("nan")
         means[(seo, geo)] = d
         note = ""
         if (seo, geo) == ("good", "poor"):
@@ -284,8 +287,9 @@ def main(argv=None) -> int:
             print(f"    ERROR {r['error']}")
             continue
         s = r["summary"]
+        eng = "--" if r["engagement_score"] is None else r["engagement_score"]
         print(f"    disc {r['discoverability']:>3}/{r['disc_grade']}  "
-              f"eng {r['engagement_score']:>3}/{r['eng_grade']}  "
+              f"eng {eng:>3}/{r['eng_grade']}  "
               f"{s['total_findings']} findings "
               f"(c{s['critical']} h{s['high']} m{s['medium']} l{s['low']})  "
               f"{r['pages']}p {r['seconds']}s")

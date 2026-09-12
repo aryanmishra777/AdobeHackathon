@@ -138,6 +138,19 @@ ATTRIBUTION_RE = re.compile(
     r"published in|cite|citation|methodology|our research|our survey|our data|"
     r"we surveyed|we analysed|we analyzed|we measured)", re.I)
 OWN_OPS_SUBJECT_RE = re.compile(r"\b(we|our|us)\b", re.I)
+# Sentences the statistic regex matches that are not claims about the world:
+# offers and pricing, material composition, negated idioms, code and config,
+# and anything that already carries a link (a link is a source).
+NOT_A_CLAIM_RE = re.compile(
+    r"(%\s*(?:off|rewards?|cashback|commission|discount|coupon|savings?|bonus|"
+    r"apr|interest|elastane|spandex|cotton|polyester|nylon|wool|linen|silk|"
+    r"recycled|organic|rayon|viscose|lyocell|leather|alcohol|abv|vol)\b"
+    r"|\b(?:not|isn't|isn.t|no|never|nothing)\s+(?:\w+\s+){0,3}100\s?%"
+    r"|\b(?:save|earn|get|receive|enjoy)\s+(?:up\s+to\s+)?\$?\d[\d,.]*\s?%?"
+    r"|\b(?:commissions?|affiliate|referrals?|promo(?:tion)?s?|vouchers?)\b"
+    r"|https?://|www\.|\bskip to (?:main )?content\b"
+    r"|[=*\[\]{}\\|<>]|\(\d\)|%\d)", re.I)
+NON_ENGLISH_LANG_RE = re.compile(r"^(?!en(?:[-_]|$))[a-z]{2,3}(?:[-_]|$)", re.I)
 WORLD_CLAIM_NOUN_RE = re.compile(
     r"\b(users|customers|market|industry|people|respondents|consumers|shoppers|"
     r"the average|most companies|businesses)\b", re.I)
@@ -1113,10 +1126,16 @@ def check_trust_015(b: Bundle) -> list:
         # Guard: an index page lists titles; it does not make claims. danluu.com's
         # home page was reported for "95%-ile isn't that good" -- a post title in
         # its archive list. Claims live on the pages themselves.
-        if p.get("page_type") in ("home", "category"):
+        if p.get("page_type") in ("home", "category", "legal"):
+            continue
+        ex = b.extracted(p["page_id"])
+        # Guard: the attribution vocabulary is English. On an Estonian IKEA
+        # product page or an Indonesian Figma page, "according to" can never
+        # match, so every percentage would read as unsourced.
+        if NON_ENGLISH_LANG_RE.match((ex.get("lang") or "").strip()):
             continue
         flagged = []
-        for sent in _sentences((b.extracted(p["page_id"]).get("text") or {}).get("main") or ""):
+        for sent in _sentences((ex.get("text") or {}).get("main") or ""):
             # Guard: a "sentence" of 60+ words with no terminator is a nav list,
             # a table or a post index, not a claim. Wikipedia's front page and
             # danluu.com's post list each arrived as one such run containing a
@@ -1126,6 +1145,10 @@ def check_trust_015(b: Bundle) -> list:
             if not STAT_CLAIM_RE.search(sent):
                 continue
             if ATTRIBUTION_RE.search(sent):
+                continue
+            # Guard: "5% rewards", "7% elastane", "isn't 100%", a sysctl(8)
+            # manual, a sentence that already links its source.
+            if NOT_A_CLAIM_RE.search(sent):
                 continue
             # Guard: a claim about the company's own operations needs no external
             # source. Only a claim about the wider world does.

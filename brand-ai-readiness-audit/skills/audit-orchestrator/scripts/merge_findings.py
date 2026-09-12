@@ -360,7 +360,8 @@ AXIS_MECHANISMS = {
 }
 
 
-def score_axes(findings: list[dict], mechanisms_analyzed=None) -> dict:
+def score_axes(findings: list[dict], mechanisms_analyzed=None,
+               pages_sampled=None) -> dict:
     """Grade how badly the mechanism chain is broken, not how many nits we counted.
 
     Blocking findings (critical, high) deduct without limit: they are the ones
@@ -398,6 +399,19 @@ def score_axes(findings: list[dict], mechanisms_analyzed=None) -> dict:
 
     out = {}
     for axis, raw in scores.items():
+        # No page was fetched: berkshirehathaway.com answers every request
+        # with Brotli, which the stdlib cannot decode, so the crawl saw the
+        # robots file and nothing else. Grading engagement A from zero pages
+        # is the same false confidence as grading an axis nobody analysed.
+        # Discoverability is still graded: REACH measured the access layer.
+        if pages_sampled == 0 and axis == "engagement":
+            out[axis] = {
+                "score": None,
+                "grade": "not assessed",
+                "reason": ("no page was fetched, so nothing on-page was measured; "
+                           "the axis is not graded"),
+            }
+            continue
         # An axis nobody measured must not be graded. Starting every axis at 100
         # and deducting means a mechanism with no analyzer reports a perfect
         # score -- a confident claim about something we never looked at, which
@@ -458,8 +472,11 @@ def main(argv=None) -> int:
     ap.add_argument("inputs", nargs="+", help="candidate finding JSON files")
     ap.add_argument("--out", help="write merged output here (default: stdout)")
     ap.add_argument("--stdout", action="store_true", help="force output to stdout")
-    ap.add_argument("--pages-sampled", type=int, default=0,
-                    help="pages in the evidence bundle, for scope collapse")
+    ap.add_argument("--pages-sampled", type=int, default=None,
+                    help="pages in the evidence bundle, for scope collapse. Pass 0 "
+                         "when the crawl fetched nothing: on-page axes are then "
+                         "'not assessed'. Omitted means unknown, and no axis is "
+                         "withheld on that basis.")
     ap.add_argument("--supersession", help="JSON file of supersession rules "
                                            "(defaults to the built-in table)")
     ap.add_argument("--mechanisms", default=None,
@@ -479,7 +496,7 @@ def main(argv=None) -> int:
         rules = doc.get("supersession_rules", doc) if isinstance(doc, dict) else doc
 
     findings = dedupe(findings, log)
-    collapse_to_site_wide(findings, args.pages_sampled, log)
+    collapse_to_site_wide(findings, args.pages_sampled or 0, log)
     for f in findings:
         f["severity"] = compute_severity(f, log)
     apply_model_judged_ceiling(findings, log)
@@ -514,7 +531,8 @@ def main(argv=None) -> int:
         "scorecard_input": score_axes(
             findings,
             [m.strip() for m in args.mechanisms.split(",") if m.strip()]
-            if args.mechanisms else None),
+            if args.mechanisms else None,
+            args.pages_sampled),
         "merge_log": log,
     }
 

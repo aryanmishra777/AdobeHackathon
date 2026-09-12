@@ -61,7 +61,24 @@ ORIENTATION_NOUN_RE = re.compile(
     r"documentation|docs|guide|handbook|manual|tutorial|api|framework|language|"
     r"compiler|editor|browser|server|client|toolkit|sdk|restaurant|cafe|bakery|"
     r"hotel|gym|salon|dealer|insurance|bank|health|hospital|government|council|"
-    r"ministry|department|museum|gallery|theatre|theater)\b", re.I)
+    r"ministry|department|museum|gallery|theatre|theater|accelerator|cache|"
+    r"proxy|engine|kernel|operating system|distribution|interpreter|runtime|"
+    r"cms|plugin|utility|program|application|website|headlines|stories|"
+    r"standards|specifications?|rfcs?|task force|retailer|furniture|footwear|"
+    r"apparel|clothing|supplies|pharmacy|groceries|scripting|programming)\b", re.I)
+
+# The first screen is an error or a loading shell, not the site's own words:
+# khanacademy.org served "A required part of this site couldn't load" and
+# quora.com "Something went wrong". That is REACH or READ territory.
+NON_ENGLISH_LANG_RE = re.compile(r"^(?!en(?:[-_]|$))[a-z]{2,3}(?:[-_]|$)", re.I)
+FIRST_SCREEN_ERROR_RE = re.compile(
+    r"(couldn.t load|could not load|something went wrong|enable javascript|"
+    r"javascript is (?:required|disabled)|try again|access denied|please wait|"
+    r"checking your browser|loading\.\.\.)", re.I)
+# A product page whose first screen is a buy box is oriented by the box.
+BUY_BOX_RE = re.compile(
+    r"\b(add(?:ed)? to (?:cart|bag|basket)|buy now|in stock|out of stock|subtotal|"
+    r"checkout|free (?:ground )?shipping)\b", re.I)
 
 # A page is a client-render shell (READ-001 territory, not a STAY gap) only when
 # the render signals are unambiguous: an empty framework mount, a large
@@ -355,13 +372,30 @@ def check_stay_001(b: Bundle) -> list:
                if p.get("page_type") in ("home", "category", "product")]
     for p in landing:
         ex = b.extracted(p["page_id"])
+        # Guard: the orientation vocabulary is English. An Estonian IKEA
+        # product page cannot match "offers" or "furniture"; skip, never guess.
+        if NON_ENGLISH_LANG_RE.match((ex.get("lang") or "").strip()):
+            continue
         # Guard: do not fire where the content is missing from OUR view rather
         # than the visitor's -- a shell is already excluded by content_pages.
         heads = [h.get("text", "") for h in ex.get("headings") or []]
         first_head = (heads[0] if heads else "").strip()
-        first = first_head + " " + " ".join(
-            re.split(r"(?<=[.!?])\s+", (ex.get("text") or {}).get("main") or "")[:2])
+        # The first screen is roughly the first sixty words, not the first two
+        # sentences: "Skip to main content Hey! I'm Julia. Welcome to my blog."
+        # split at "Hey!" and the orientation line fell outside the window.
+        main_words = ((ex.get("text") or {}).get("main") or "").split()
+        # A masthead is often an image: lua.org's home page is a logo whose
+        # alt text reads "The Programming Language Lua" beside a menu. The
+        # visitor sees the logo; count the first two alt texts as on screen.
+        alts = [str(i.get("alt") or "").strip() for i in (ex.get("images") or [])[:2]]
+        first = " ".join([first_head] + alts + main_words[:60])
         first_l = first.lower()
+        if not first_l.strip():
+            continue  # nothing extracted to judge; a READ matter, not STAY
+        if FIRST_SCREEN_ERROR_RE.search(first_l):
+            continue
+        if p.get("page_type") == "product" and BUY_BOX_RE.search(first_l):
+            continue
         # "says what is offered": a provision verb with a category noun, OR a
         # self-describing heading. "The Comprehensive TeX Archive Network" and
         # "Julia Evans -- software developer" orient a visitor with no verb at
@@ -369,11 +403,25 @@ def check_stay_001(b: Bundle) -> list:
         # mastheads and About pages actually say.
         has_verb = bool(re.search(
             r"\b(is|are|offers?|provides?|sells?|makes?|builds?|helps?|serves?|"
-            r"specialis|specializ|publish|publishes|home of|welcome to)\b", first_l))
+            r"produces?|develops?|maintains?|creates?|specialis|specializ|"
+            r"publish|publishes|home of|welcome to)\b", first_l))
         has_noun = bool(ORIENTATION_NOUN_RE.search(first_l))
         self_describing_head = (len(first_head.split()) >= 3
                                 and bool(ORIENTATION_NOUN_RE.search(first_head.lower())))
-        if (has_verb and has_noun) or self_describing_head:
+        # "Welcome to IKEA Global", "The official home of RFCs", "BBC Homepage":
+        # a line that names where the visitor is orients them, verb or not.
+        names_the_place = bool(re.search(
+            r"\b(welcome to|official home of|home of|homepage|home page)\b", first_l))
+        # A well-known masthead above headlines is orientation for a news
+        # site: the brand from the page title, plus a category noun.
+        title_tokens = {t.lower() for t in re.findall(r"[A-Za-z][A-Za-z0-9.&-]{2,}",
+                                                       ex.get("title") or "")
+                        if t.lower() not in ("the", "and", "for", "home", "news",
+                                             "official", "site", "website")}
+        brand_in_view = any(re.search(r"\b" + re.escape(t) + r"\b", first_l)
+                            for t in title_tokens)
+        if ((has_verb and has_noun) or self_describing_head or names_the_place
+                or (brand_in_view and has_noun)):
             continue
         excerpt = _first_screen(ex)
         severity = "high" if p.get("page_type") == "home" else "medium"

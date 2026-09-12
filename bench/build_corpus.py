@@ -64,14 +64,23 @@ def slug(url: str) -> str:
 
 
 def collect(url: str, out: str, pages: int, budget: int) -> bool:
-    if os.path.isdir(out):
-        shutil.rmtree(out)
+    # Crawl into a scratch directory and swap it in only on success, so a
+    # site that refuses us today does not erase the snapshot we already had.
+    fresh = out + ".new"
+    if os.path.isdir(fresh):
+        shutil.rmtree(fresh)
     proc = subprocess.run(
-        [sys.executable, COLLECT, url, "--out", out,
+        [sys.executable, COLLECT, url, "--out", fresh,
          "--max-pages", str(pages), "--budget", str(budget),
          "--delay", "0.5", "--timeout", "12"],
         capture_output=True, text=True, encoding="utf-8")
-    return proc.returncode == 0
+    if proc.returncode != 0 or not os.path.isfile(os.path.join(fresh, "MANIFEST.json")):
+        shutil.rmtree(fresh, ignore_errors=True)
+        return False
+    if os.path.isdir(out):
+        shutil.rmtree(out)
+    os.replace(fresh, out)
+    return True
 
 
 def load(path):

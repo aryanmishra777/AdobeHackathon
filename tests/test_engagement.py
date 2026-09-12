@@ -208,3 +208,25 @@ def test_stay_shell_bundle_skips_content_checks_not_silently():
 
 def test_stay_all_registry_checks_are_implemented_or_listed():
     assert stay_output("clean")["checks_not_implemented"] == []
+
+
+def test_stay_001_first_screen_guards():
+    """The re-crawled sweep produced 27 high STAY-001 findings. Reading them:
+    jvns.ca's "Hey! I'm Julia. Welcome to my blog." fell outside a two-sentence
+    window; lua.org's masthead is a logo image; IKEA's "Welcome to IKEA
+    Global" names where you are; khanacademy.org served an error shell; the
+    allbirds product pages open with a buy box; the BBC home page is a
+    masthead over headlines. None is a hero that says nothing."""
+    import importlib
+    sys.path.insert(0, os.path.dirname(CHECK_STAY))
+    mod = importlib.import_module(os.path.basename(CHECK_STAY)[:-3])
+
+    assert mod.FIRST_SCREEN_ERROR_RE.search("A required part of this site couldn't load.")
+    assert mod.FIRST_SCREEN_ERROR_RE.search("Something went wrong. Try again")
+    assert not mod.FIRST_SCREEN_ERROR_RE.search("We roast coffee for offices.")
+    assert mod.BUY_BOX_RE.search("Added to Cart Spend more to earn free shipping!")
+    assert mod.BUY_BOX_RE.search("Trino Tubers $16 Add to bag")
+    assert not mod.BUY_BOX_RE.search("Our story begins in a barn.")
+    for word in ("accelerator", "operating system", "headlines", "furniture", "scripting"):
+        assert mod.ORIENTATION_NOUN_RE.search("an open-source " + word), word
+    assert mod.NON_ENGLISH_LANG_RE.match("et-EE") and not mod.NON_ENGLISH_LANG_RE.match("en-GB")

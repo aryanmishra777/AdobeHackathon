@@ -141,8 +141,8 @@ Not implementing the five skills. The job:
 - **Own the contracts.** If Lakshay or Mayank hits a case the evidence bundle
   cannot express, that is a contract change and it is yours. Change it once,
   regenerate bundles, tell both.
-- **Grow the corpus.** 85 candidates crawled, **61 usable**, every quadrant at or
-  above the 10-site target, and the thesis passing: good-SEO/poor-GEO scores 16
+- **Grow the corpus.** 85 candidates crawled, **64 usable**, every quadrant at or
+  above the 10-site target, and the thesis passing: good-SEO/poor-GEO scores 15
   points below good-SEO/good-GEO. Both axes are *measured*, never asserted — GEO
   from the blocking mechanisms, SEO from technical hygiene. To extend it, add
   URLs to `bench/candidates.yaml` and re-run `python bench/build_corpus.py`.

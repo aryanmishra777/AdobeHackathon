@@ -222,14 +222,20 @@ NON_CONTENT_PATH_HINTS = (
     "/games", "/game/", "/puzzle", "/crossword", "/wordle", "/quiz",
     "/sudoku", "/tools/", "/calculator", "/login", "/signin", "/register",
     "/account", "/subscribe", "/newsletter", "/gift", "/cart", "/checkout",
-    "/search", "/player", "/embed",
+    "/search", "/player", "/embed", "/wishlist", "/wish-list", "/favorites",
+    "/favourites", "/profile", "/settings", "/preferences",
 )
+# Whole path segments only: "/edit" is a personalisation page, "/editorial" is
+# content.
+NON_CONTENT_PATH_SEGMENTS = {"edit", "compare", "saved", "recent", "history"}
 
 
 def _is_application_page(page: dict) -> bool:
     url = (page.get("final_url") or page.get("url") or "").lower()
     path = urlparse(url).path or "/"
-    return any(h in path for h in NON_CONTENT_PATH_HINTS)
+    if any(h in path for h in NON_CONTENT_PATH_HINTS):
+        return True
+    return any(seg in NON_CONTENT_PATH_SEGMENTS for seg in path.split("/") if seg)
 
 
 def _render_signals(page: dict, ext: dict) -> dict | None:

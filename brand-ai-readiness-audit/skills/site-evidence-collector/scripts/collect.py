@@ -87,13 +87,19 @@ CHALLENGE_SIGNATURES = [
 SKIP_PATH_PATTERNS = re.compile(
     r"/(cart|checkout|account|login|logout|signin|signout|register|admin|"
     r"wp-admin|wp-login|my-account|basket|order|payment|"
+    r"wishlist|wish-list|favou?rites|profile|settings|preferences|edit|"
     r"sitemaps?|sitemap[-_]?index|feed|feeds|rss|atom|search|"
     r"wp-json|xmlrpc\.php|cgi-bin)(/|$|\?)", re.I)
+LEGAL_PATH_RE = re.compile(
+    r"(^|/)(legal|terms|tos|privacy|policy|policies|cookies?|gdpr|ccpa|"
+    r"accessibility-statement|modern-slavery|[a-z0-9-]+-(?:terms|agreement|"
+    r"policy|statement))(/|$)|/legal/", re.I)
 SKIP_QUERY_PATTERNS = re.compile(
     r"(add-to-cart|remove_item|replytocom|share=|print=|sessionid|utm_)", re.I)
 
 NON_HTML_EXT = re.compile(
-    r"\.(pdf|zip|gz|tar|rar|7z|exe|dmg|pkg|mp4|mp3|avi|mov|wmv|webm|wav|"
+    r"\.(pdf|zip|gz|tgz|xz|bz2|tar|rar|7z|exe|dmg|pkg|iso|msi|deb|rpm|apk|jar|"
+    r"whl|sig|asc|mp4|mp3|avi|mov|wmv|webm|wav|"
     r"jpg|jpeg|png|gif|svg|webp|ico|bmp|tiff|css|js|json|xml|rss|atom|"
     r"doc|docx|xls|xlsx|ppt|pptx|csv|woff|woff2|ttf|eot)$", re.I)
 
@@ -254,20 +260,39 @@ class _Redirects(request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
+UNDECODABLE_ENCODINGS = ("br", "zstd")
+
+
 def fetch(url: str, ua: str = AUDIT_UA, timeout: float = 10.0,
-          max_bytes: int = 3_000_000, method: str = "GET") -> Fetched:
+          max_bytes: int = 3_000_000, method: str = "GET",
+          accept_encoding: str = "gzip, deflate") -> Fetched:
     handler = _Redirects()
     opener = request.build_opener(handler)
     req = request.Request(url, method=method, headers={
         "User-Agent": ua,
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate",
+        "Accept-Encoding": accept_encoding,
     })
     started = time.perf_counter()
     try:
         with opener.open(req, timeout=timeout) as resp:
             ttfb = (time.perf_counter() - started) * 1000.0
+            enc = (resp.headers.get("Content-Encoding") or "").lower()
+            # The stdlib decodes gzip and deflate only. berkshirehathaway.com
+            # answered "gzip, deflate" with Brotli, and the page was stored as
+            # eighty kilobytes of mojibake that every analyzer then read as
+            # text. Ask once more for an identity body; if the server insists,
+            # the fetch is an error, never a page.
+            if any(e in enc for e in UNDECODABLE_ENCODINGS):
+                if accept_encoding != "identity":
+                    return fetch(url, ua, timeout, max_bytes, method, "identity")
+                return Fetched(url=url, final_url=resp.geturl(), status=resp.status,
+                               headers=dict(resp.headers.items()), body="",
+                               redirects=handler.chain, ttfb_ms=round(ttfb, 1),
+                               total_ms=round((time.perf_counter() - started) * 1000.0, 1),
+                               error=f"undecodable Content-Encoding: {enc}",
+                               truncated=False)
             raw = resp.read(max_bytes + 1)
             truncated = len(raw) > max_bytes
             raw = raw[:max_bytes]
@@ -958,6 +983,17 @@ def _is_float(s):
 # URL helpers
 # --------------------------------------------------------------------------
 
+def _looks_like_markup(body: str) -> bool:
+    head = body[:4096].lstrip("\ufeff \t\r\n").lower()
+    return head.startswith("<") or "<html" in head or "<!doctype" in head
+
+
+def _norm_final(url: str) -> str:
+    p = urlparse(url)
+    path = (p.path or "/").rstrip("/") or "/"
+    return f"{_bare_host(p.netloc)}{path}" + (f"?{p.query}" if p.query else "")
+
+
 def _bare_host(netloc: str) -> str:
     """Hostname with port and a leading www. removed, lowercased, so that
     www.example.com and example.com compare equal and github.com does not."""
@@ -1062,6 +1098,7 @@ class Collector:
         self.out = args.out
         self.started = time.time()
         self.skipped: list[dict] = []
+        self.seen_final: dict[str, str] = {}
         self.pages: list[dict] = []
         self.robots_groups: list[RobotsGroup] = []
         self.our_group = None
@@ -1289,6 +1326,17 @@ class Collector:
         parts = [p for p in urlparse(url).path.split("/") if p]
         return parts[0] if parts else ""
 
+    @staticmethod
+    def _boilerplate_rank(url: str) -> int:
+        """1 for a URL that is almost certainly a legal or policy document.
+        stripe.com's sitemap opens with /legal, /amex-ch/legal, /alipay/legal
+        ... and nineteen of twenty sampled pages were terms of service: every
+        first segment distinct, so section round-robin could not help. Such
+        pages are still crawled -- last, after the sections that answer
+        anything."""
+        path = urlparse(url).path.lower()
+        return 1 if LEGAL_PATH_RE.search(path) else 0
+
     def _diversify(self, frontier: list) -> list:
         """Order the frontier so each site section is sampled before any section
         is sampled deeply.
@@ -1312,13 +1360,17 @@ class Collector:
             position = seen_in_frontier.get(seg, 0)
             seen_in_frontier[seg] = position + 1
             role_rank = 0 if role == "sitemap-priority" else 1
-            ranked.append(((taken.get(seg, 0) + position), role_rank, url, (url, role)))
-        ranked.sort(key=lambda t: (t[0], t[1], t[2]))
-        return [item for _, _, _, item in ranked]
+            ranked.append((self._boilerplate_rank(url), (taken.get(seg, 0) + position),
+                           role_rank, url, (url, role)))
+        ranked.sort(key=lambda t: (t[0], t[1], t[2], t[3]))
+        return [item for _, _, _, _, item in ranked]
 
     def save_page(self, r: Fetched, url: str, role: str, origin: str):
         if r.error:
-            self.skip(url, "timeout" if "timeout" in r.error.lower() else "http-error")
+            low = r.error.lower()
+            self.skip(url, "timeout" if "timeout" in low
+                      else "undecodable-encoding" if "undecodable" in low
+                      else "http-error")
             return None
         ctype = (r.headers.get("Content-Type") or "").lower()
         if r.status and r.status >= 400:
@@ -1332,6 +1384,11 @@ class Collector:
         if ctype and "html" not in ctype and "xml" not in ctype:
             self.skip(url, "non-html")
             return None
+        # No Content-Type at all: sniff. python.org served a 3 MB .tar.xz with
+        # an empty header and it was stored as a page.
+        if not ctype and not _looks_like_markup(r.body or ""):
+            self.skip(url, "non-html")
+            return None
         # A page that redirected to another host is that host's page, not this
         # site's. curl.se/bug?i=... lands on GitHub Issues; storing the GitHub
         # page as curl's gave the answerability skill og:site_name=GitHub, and
@@ -1343,8 +1400,17 @@ class Collector:
             if there and there != here:
                 self.skip(url, f"redirected off-origin to {there}")
                 return None
+        # Several requested URLs can land on one page. stripe.com/legal/ssa,
+        # /ssa and /legal/connect all redirected to two final URLs, and five of
+        # twenty sampled pages were the same two legal documents. Sample the
+        # destination once; the redirect itself is still recorded as a skip.
+        landed = _norm_final(r.final_url or url)
+        if landed in self.seen_final:
+            self.skip(url, f"duplicate of {self.seen_final[landed]} after redirect")
+            return None
 
         page_id = f"p{len(self.pages):03d}"
+        self.seen_final[landed] = page_id
         pdir = os.path.join(self.out, "pages", page_id)
         os.makedirs(pdir, exist_ok=True)
 

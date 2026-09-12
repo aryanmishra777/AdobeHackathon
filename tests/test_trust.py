@@ -226,3 +226,47 @@ def test_trust_never_calls_a_claim_untrue():
             for phrase in ("is false", "is untrue", "is a lie", "fabricated",
                            "is discontinued", "does not exist"):
                 assert phrase not in blob, f"{name}/{f['check_id']} asserts falsehood: {phrase!r}"
+
+
+def _trust_module():
+    import importlib
+    sys.path.insert(0, os.path.dirname(CHECK_TRUST))
+    return importlib.import_module(os.path.basename(CHECK_TRUST)[:-3])
+
+
+def test_trust_015_ignores_offers_composition_code_and_linked_sentences():
+    """The re-crawled sweep produced 44 TRUST-015 candidates. Reading them:
+    "5% rewards" (chewy), "7% elastane" (gymshark), "No treatment is 100%
+    effective" (nhs), a sysctl(8) manual (openbsd), a mutt config with "%1",
+    and "This publication is available at https://..." (gov.uk). None is a
+    claim about the wider world. The ones that are must still count."""
+    mod = _trust_module()
+
+    def flagged(sent):
+        return bool(mod.STAT_CLAIM_RE.search(sent)) and not mod.NOT_A_CLAIM_RE.search(sent)
+
+    for sent in ("5% rewards Earn rewards on every order.",
+                 "Compressive Fit Leggings: Adapt (Camo: 7% elastane)",
+                 "No treatment is 100% effective.",
+                 "browser support still isn't 100%.",
+                 "This publication is available at https://www.gov.uk/x/2014",
+                 'The sysctl(8) variable "hw.blockcpu" takes 80% to 50% as fast',
+                 'spam "X-DCC" "90+/DCC-%1"',
+                 "Earn commissions up to $50 plus 20% of year one revenue."):
+        assert not flagged(sent), sent
+    for sent in ("And 46.9% of top Russian sites use nginx.",
+                 "57% of footwear out there is made from synthetic materials.",
+                 "Linear is the tool of choice for more than 40,000 companies.",
+                 "Political science research suggests economic trends shift votes."):
+        assert flagged(sent), sent
+
+
+def test_trust_015_skips_pages_not_in_english():
+    """The attribution vocabulary is English. An Estonian IKEA product page or
+    an Indonesian Figma page can never match "according to", so every
+    percentage there would read as unsourced. Skip, never guess."""
+    mod = _trust_module()
+    for lang in ("et-EE", "id", "de", "fr-CA", "pt_BR"):
+        assert mod.NON_ENGLISH_LANG_RE.match(lang), lang
+    for lang in ("en", "en-IN", "EN-us", "en_GB", ""):
+        assert not mod.NON_ENGLISH_LANG_RE.match(lang), repr(lang)

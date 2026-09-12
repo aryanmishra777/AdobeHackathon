@@ -81,7 +81,16 @@ GENERIC_TITLES = {
 ORG_JSONLD_TYPES = {
     "organization", "corporation", "localbusiness", "onlinestore", "store",
     "ngo", "governmentorganization", "educationalorganization",
-    "professionalservice", "ltdifpo", "brand",
+    "professionalservice", "ltdifpo", "brand", "newsmediaorganization",
+    "medicalorganization", "sportsorganization", "researchorganization",
+    "onlinebusiness", "consortium", "library", "airline", "website",
+}
+# Organizations named inside these properties are other organizations: the
+# parent, the subsidiaries, the sponsor. nytimes.com lists The Athletic,
+# Wirecutter and NYT Cooking as subOrganization and was named "The Athletic".
+ORG_JSONLD_OTHER_PARTY = {
+    "suborganization", "parentorganization", "memberof", "sponsor", "funder",
+    "affiliation", "worksfor", "seller", "provider", "manufacturer",
 }
 
 # Fact classes a buyer asks about (QUOTE-003). Each maps to a detector over the
@@ -117,7 +126,32 @@ CATEGORY_NOUN_RE = re.compile(
 SUMMARY_HINT_RE = re.compile(
     r"\b(summary|tl;?dr|key\s+takeaways?|in\s+short|at\s+a\s+glance|overview)\b", re.I)
 
-TITLE_SPLIT_RE = re.compile(r"\s+[|–—·•]\s+|\s+-\s+")
+TITLE_SPLIT_RE = re.compile(r"\s+[|–—·•]\s+|\s+-\s+|(?<=\S):\s+")
+# Title text that names nothing. who.int's <title> is "Home" on 10 of 20
+# pages; rfc-editor.org's is "Expand sidebar" on all 20 -- a button label.
+GENERIC_NAME_RE = re.compile(
+    r"^(home|homepage|home page|index|welcome|untitled|default|document|page|"
+    r"loading|menu|news|blog|notes|archive|archives|expand sidebar|skip to "
+    r"(?:main )?content|login|log in|sign in)$", re.I)
+
+
+def _host_label(host: str) -> str:
+    """The registrable label a reader would call the site: 'openbsd' for
+    www.openbsd.org, 'tuhs' for www.tuhs.org, '9p' for 9p.io."""
+    parts = [x for x in (host or "").lower().split(".") if x]
+    if parts and parts[0] == "www":
+        parts = parts[1:]
+    if len(parts) >= 3 and parts[-2] in ("co", "com", "org", "net", "ac", "gov", "edu"):
+        parts = parts[:-1]
+    return parts[-2] if len(parts) >= 2 else (parts[0] if parts else "")
+
+
+def _unspace_letters(name: str) -> str:
+    """'T E X T F I L E S' -> 'TEXTFILES'."""
+    toks = name.split()
+    if len(toks) >= 4 and all(len(t) == 1 for t in toks):
+        return "".join(toks)
+    return name
 SENT_VERB = (r"(?:is|are|was|were|provides?|offers?|helps?|builds?|makes?|"
              r"delivers?|sells?|operates?|creates?|designs?|specialise|"
              r"specialize|manufactures?|runs?|powers?)")
@@ -248,9 +282,11 @@ class Bundle:
         # page that redirected there.
         declared: Counter = Counter()
         titled: Counter = Counter()
+        on_home: set = set()
         for p in self.ok_pages:
             ex = self.extracted(p["page_id"])
             page_names: set = set()
+            title_segs: set = set()
             for block in ex.get("jsonld") or []:
                 if block.get("parsed_ok"):
                     page_names |= {n.strip() for n in _jsonld_org_names(block.get("value")) if n}
@@ -261,9 +297,12 @@ class Bundle:
             for n in page_names:
                 declared[n] += 1
             for seg in TITLE_SPLIT_RE.split(ex.get("title") or ""):
-                seg = seg.strip()
-                if len(seg) >= 3:
+                seg = _unspace_letters(seg.strip())
+                if len(seg) >= 3 and not GENERIC_NAME_RE.match(seg):
                     titled[seg] += 1
+                    title_segs.add(seg)
+            if p.get("page_type") == "home":
+                on_home |= page_names | title_segs
 
         # "Stripe logo" is what 18 of stripe.com's <title>s literally say --
         # the logo's alt text leaking into the title. Strip that class of
@@ -271,16 +310,29 @@ class Bundle:
         def _clean(name: str) -> str:
             return re.sub(r"\s+(logo|icon|homepage|home page|home|official site)$",
                           "", name.strip(), flags=re.I).strip() or name.strip()
-        declared = Counter({_clean(k): v for k, v in declared.items()})
+        declared = Counter({_clean(k): v for k, v in declared.items()
+                            if not GENERIC_NAME_RE.match(_clean(k))})
         titled = Counter({_clean(k): v for k, v in titled.items()})
+        on_home = {_clean(k) for k in on_home}
 
         n_pages = max(1, len(self.ok_pages))
+        label = _host_label(self.site)
         scored: dict = {}
         for name, c in declared.items():
             scored[name] = scored.get(name, 0.0) + c * 2.0   # self-declared: weight 2
         for name, c in titled.items():
-            if c >= max(2, n_pages // 3):
+            if c >= max(2, n_pages // 3) or name in on_home:
                 scored[name] = scored.get(name, 0.0) + c * 1.0
+        # Two anchors outrank recurrence. The home page is the site's own
+        # statement of identity: nytimes.com sampled seven Athletic pages, each
+        # declaring og:site_name "The Athletic", and the home title lost 14 to
+        # 4. And a name that contains the host label ("OpenBSD" on openbsd.org,
+        # "TEXTFILES" on textfiles.com) is the name a reader would use.
+        for name in list(scored):
+            if name in on_home:
+                scored[name] += n_pages
+            if label and len(label) >= 3 and label in _norm_name(name).replace(" ", ""):
+                scored[name] += n_pages
         ranked = sorted(scored.items(), key=lambda kv: (-kv[1], kv[0]))
 
         seen, res = set(), []
@@ -334,8 +386,18 @@ class Bundle:
     def brand_display(self) -> str:
         if self.brand_phrases:
             return self.brand_phrases[0]
-        if self.brand_terms:
-            return " ".join(w.capitalize() for w in sorted(self.brand_terms)[:2])
+        # No declared or recurring name. Prefer the host label as the titles
+        # spell it ("OpenBSD" from "OpenBSD: Artwork"); never an alphabetical
+        # pair of recurring capitalised words ("Notes Openbsd", "Archive
+        # Archives", "Plan").
+        label = _host_label(self.site)
+        if label and label in self.brand_terms:
+            for p in self.ok_pages:
+                ex = self.extracted(p["page_id"])
+                for src in [ex.get("title") or ""] + [h.get("text", "") for h in (ex.get("headings") or [])]:
+                    m = re.search(r"\b" + re.escape(label) + r"\b", src, re.I)
+                    if m:
+                        return m.group(0)
         return self.site or "the organisation"
 
     def sitemap_locs(self) -> list:
@@ -407,7 +469,9 @@ def _jsonld_org_names(node) -> list:
             name = node.get("name")
             if isinstance(name, str) and name.strip():
                 out.append(name.strip())
-        for v in node.values():
+        for k, v in node.items():
+            if str(k).lower() in ORG_JSONLD_OTHER_PARTY:
+                continue
             out.extend(_jsonld_org_names(v))
     elif isinstance(node, list):
         for item in node:
@@ -593,7 +657,14 @@ def check_quote_002(b: Bundle) -> list:
     if not content_pages:
         return []
 
-    phrases = b.brand_phrases
+    # The subject of an identity sentence may be the declared name, the host
+    # label or the bare domain: "lighttpd is a secure, fast web server" on a
+    # site whose title suffix is "lighty news".
+    phrases = list(b.brand_phrases)
+    label = _host_label(b.site)
+    for extra in ([label] if len(label) >= 3 else []) + [re.sub(r"^www\.", "", b.site or "")]:
+        if extra and extra.lower() not in {ph.lower() for ph in phrases}:
+            phrases.append(extra)
     patterns = [re.compile(r"\b" + re.escape(ph) + r"\b\s+" + SENT_VERB + r"\b", re.I)
                 for ph in phrases]
     patterns.append(re.compile(

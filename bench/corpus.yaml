@@ -57,8 +57,8 @@ sites:
     geo_score: 100
     seo_score: 86
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (164 median words),
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
+      mechanism found: crawlers permitted, content server-rendered (171 median words),
       structured data on 5/20 pages.'
     expect_absent:
     - REACH-002
@@ -74,8 +74,8 @@ sites:
     geo_score: 100
     seo_score: 90
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (1075 median
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
+      mechanism found: crawlers permitted, content server-rendered (1051 median
       words), structured data on 20/20 pages.'
     expect_absent:
     - PARSE-001
@@ -93,7 +93,7 @@ sites:
     geo_score: 85
     seo_score: 100
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 85/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 85/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages.'
     expect_findings:
     - PARSE-001
@@ -112,7 +112,7 @@ sites:
     geo_score: 73
     seo_score: 96
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 73/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 73/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages; 59/96 passages
       neither name their subject nor resolve their opening reference. Blocks training
       crawlers (GPTBot, Google-Extended) -- a deliberate opt-out, not a defect.'
@@ -133,7 +133,7 @@ sites:
     geo_score: 85
     seo_score: 100
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 85/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 85/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages.'
     expect_findings:
     - PARSE-001
@@ -152,7 +152,7 @@ sites:
     geo_score: 100
     seo_score: 90
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
       mechanism found: crawlers permitted, content server-rendered (6057 median
       words), structured data on 20/20 pages.'
     expect_absent:
@@ -169,9 +169,9 @@ sites:
     vertical: productivity
     smoke: false
     geo_score: 85
-    seo_score: 95
+    seo_score: 94
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 85/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 85/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages.'
     expect_findings:
     - PARSE-001
@@ -188,11 +188,11 @@ sites:
     vertical: payments
     smoke: false
     geo_score: 100
-    seo_score: 96
+    seo_score: 97
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (1899 median
-      words), structured data on 1/20 pages.'
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
+      mechanism found: crawlers permitted, content server-rendered (1111 median
+      words), structured data on 2/20 pages.'
     expect_absent:
     - REACH-002
     - REACH-005
@@ -201,15 +201,15 @@ sites:
   - url: https://vercel.com
     seo: good
     geo: good
-    engagement: moderate
+    engagement: high
     site_type: saas
     vertical: devtools
     smoke: false
     geo_score: 100
     seo_score: 100
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (834 median words),
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
+      mechanism found: crawlers permitted, content server-rendered (759 median words),
       structured data on 6/20 pages.'
     expect_absent:
     - REACH-002
@@ -226,7 +226,7 @@ sites:
     geo_score: 100
     seo_score: 100
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
       mechanism found: crawlers permitted, content server-rendered (491 median words),
       structured data on 6/20 pages.'
     expect_absent:
@@ -244,7 +244,7 @@ sites:
     geo_score: 100
     seo_score: 94
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
       mechanism found: crawlers permitted, content server-rendered (313 median words),
       structured data on 15/20 pages.'
     expect_absent:
@@ -261,9 +261,9 @@ sites:
     geo_score: 100
     seo_score: 95
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
       mechanism found: crawlers permitted, content server-rendered (743 median words),
-      structured data on 13/20 pages.'
+      structured data on 14/20 pages.'
     expect_absent:
     - REACH-002
     - REACH-005
@@ -277,15 +277,14 @@ sites:
     vertical: pet
     smoke: false
     geo_score: 100
-    seo_score: 92
+    seo_score: 93
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (457 median words),
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
+      mechanism found: crawlers permitted, content server-rendered (361 median words),
       structured data on 6/20 pages.'
     expect_absent:
     - REACH-002
     - REACH-005
-    - READ-001
 
   - url: https://www.figma.com
     seo: good
@@ -297,7 +296,7 @@ sites:
     geo_score: 100
     seo_score: 100
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
       mechanism found: crawlers permitted, content server-rendered (355 median words),
       structured data on 14/20 pages. Blocks training crawlers (CCBot, GPTBot, Google-Extended,
       cohere-ai) -- a deliberate opt-out, not a defect.'
@@ -314,12 +313,30 @@ sites:
     site_type: nonprofit-gov
     vertical: government
     smoke: false
-    geo_score: 100
-    seo_score: 100
+    geo_score: 88
+    seo_score: 98
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (552 median words),
-      structured data on 19/20 pages.'
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 88/100). Mechanisms
+      found: 49/119 passages neither name their subject nor resolve their opening
+      reference.'
+    expect_absent:
+    - REACH-002
+    - REACH-005
+    - READ-001
+
+  - url: https://www.gymshark.com
+    seo: good
+    geo: good
+    engagement: high
+    site_type: ecommerce
+    vertical: apparel
+    smoke: false
+    geo_score: 100
+    seo_score: 98
+    measurement: measured
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
+      mechanism found: crawlers permitted, content server-rendered (978 median words),
+      structured data on 6/20 pages.'
     expect_absent:
     - REACH-002
     - REACH-005
@@ -335,7 +352,7 @@ sites:
     geo_score: 100
     seo_score: 98
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
       mechanism found: crawlers permitted, content server-rendered (642 median words),
       structured data on 13/20 pages.'
     expect_absent:
@@ -353,8 +370,8 @@ sites:
     geo_score: 100
     seo_score: 98
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (637 median words),
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
+      mechanism found: crawlers permitted, content server-rendered (620 median words),
       structured data on 20/20 pages.'
     expect_absent:
     - PARSE-001
@@ -372,8 +389,8 @@ sites:
     geo_score: 100
     seo_score: 100
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (1428 median
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
+      mechanism found: crawlers permitted, content server-rendered (1406 median
       words), structured data on 20/20 pages.'
     expect_absent:
     - PARSE-001
@@ -391,8 +408,8 @@ sites:
     geo_score: 100
     seo_score: 100
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (289 median words),
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
+      mechanism found: crawlers permitted, content server-rendered (260 median words),
       structured data on 19/20 pages.'
     expect_absent:
     - REACH-002
@@ -408,7 +425,7 @@ sites:
     geo_score: 80
     seo_score: 70
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 80/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 80/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages; no canonical
       tags on any sampled page.'
     expect_findings:
@@ -428,30 +445,78 @@ sites:
     geo_score: 85
     seo_score: 84
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 85/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 85/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages.'
     expect_findings:
     - PARSE-001
     expect_absent:
     - REACH-002
     - REACH-005
+    - READ-001
 
   - url: https://www.varnish-cache.org
     seo: good
     geo: good
-    engagement: moderate
+    engagement: high
     site_type: docs
     vertical: opensource
     smoke: false
     geo_score: 100
-    seo_score: 98
+    seo_score: 90
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 100/100). No blocking
-      mechanism found: crawlers permitted, content server-rendered (492 median words),
-      structured data on 19/20 pages.'
+    notes: 'Measured 2026-09-12 from a 8-page crawl (GEO score 100/100). No blocking
+      mechanism found: crawlers permitted, content server-rendered (1150 median
+      words), structured data on 8/8 pages.'
     expect_absent:
+    - PARSE-001
     - REACH-002
     - REACH-005
+    - READ-001
+
+  - url: https://www.who.int
+    seo: good
+    geo: good
+    engagement: high
+    site_type: nonprofit-gov
+    vertical: health
+    smoke: false
+    geo_score: 100
+    seo_score: 92
+    measurement: measured
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 100/100). No blocking
+      mechanism found: crawlers permitted, content server-rendered (507 median words),
+      structured data on 20/20 pages. Blocks training crawlers (CCBot) -- a deliberate
+      opt-out, not a defect.'
+    expect_findings:
+    - REACH-003
+    expect_absent:
+    - PARSE-001
+    - REACH-002
+    - REACH-005
+    - READ-001
+
+  - url: https://apnews.com
+    seo: good
+    geo: poor
+    engagement: high
+    site_type: media-publisher
+    vertical: news
+    smoke: true
+    geo_score: 20
+    seo_score: 100
+    measurement: measured
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 20/100). Mechanisms
+      found: robots.txt blocks 3 retrieval/search crawler(s) (Claude-SearchBot,
+      Claude-User, PerplexityBot); bot user-agents are blocked or challenged at
+      the edge (ChatGPT-User:403/challenge, Googlebot:403/challenge) despite robots.txt
+      permitting them. Blocks training crawlers (Applebot-Extended, CCBot, GPTBot,
+      anthropic-ai) -- a deliberate opt-out, not a defect.'
+    expect_findings:
+    - REACH-002
+    - REACH-003
+    - REACH-005
+    expect_absent:
+    - PARSE-001
     - READ-001
 
   - url: https://www.bbc.co.uk
@@ -464,7 +529,7 @@ sites:
     geo_score: 60
     seo_score: 94
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 60/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 60/100). Mechanisms
       found: robots.txt blocks 5 retrieval/search crawler(s) (ChatGPT-User, OAI-SearchBot,
       Perplexity-User). Blocks training crawlers (Applebot-Extended, Bytespider,
       CCBot, GPTBot) -- a deliberate opt-out, not a defect.'
@@ -480,19 +545,22 @@ sites:
     engagement: high
     site_type: media-publisher
     vertical: finance-news
-    smoke: true
-    geo_score: 60
-    seo_score: 91
+    smoke: false
+    geo_score: 20
+    seo_score: 92
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 60/100). Mechanisms
-      found: robots.txt blocks 2 retrieval/search crawler(s) (Perplexity-User, PerplexityBot).
-      Blocks training crawlers (Applebot-Extended, Bytespider, CCBot, Google-Extended)
-      -- a deliberate opt-out, not a defect.'
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 20/100). Mechanisms
+      found: robots.txt blocks 2 retrieval/search crawler(s) (Perplexity-User, PerplexityBot);
+      bot user-agents are blocked or challenged at the edge (GPTBot:403/challenge,
+      ChatGPT-User:403/challenge, Claude-User:403/challenge) despite robots.txt
+      permitting them. Blocks training crawlers (Applebot-Extended, Bytespider,
+      CCBot, Google-Extended) -- a deliberate opt-out, not a defect.'
     expect_findings:
     - REACH-002
     - REACH-003
-    expect_absent:
     - REACH-005
+    expect_absent:
+    - PARSE-001
     - READ-001
 
   - url: https://www.ietf.org
@@ -505,7 +573,7 @@ sites:
     geo_score: 40
     seo_score: 80
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 40/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 40/100). Mechanisms
       found: bot user-agents are blocked or challenged at the edge (GPTBot:403/challenge)
       despite robots.txt permitting them; no parseable structured data on any of
       20 sampled pages; no canonical tags on any sampled page.'
@@ -526,7 +594,7 @@ sites:
     geo_score: 33
     seo_score: 81
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 33/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 33/100). Mechanisms
       found: bot user-agents are blocked or challenged at the edge (ChatGPT-User:403)
       despite robots.txt permitting them; no parseable structured data on any of
       20 sampled pages; 37/41 passages neither name their subject nor resolve their
@@ -545,9 +613,9 @@ sites:
     vertical: research
     smoke: false
     geo_score: 60
-    seo_score: 89
+    seo_score: 88
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 60/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 60/100). Mechanisms
       found: robots.txt blocks 3 retrieval/search crawler(s) (ChatGPT-User, PerplexityBot,
       YouBot). Blocks training crawlers (Applebot-Extended, Bytespider, CCBot, GPTBot)
       -- a deliberate opt-out, not a defect.'
@@ -568,7 +636,7 @@ sites:
     geo_score: 60
     seo_score: 100
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 60/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 60/100). Mechanisms
       found: bot user-agents are blocked or challenged at the edge (Googlebot:403/challenge)
       despite robots.txt permitting them. Blocks training crawlers (meta-externalagent)
       -- a deliberate opt-out, not a defect.'
@@ -586,9 +654,9 @@ sites:
     vertical: news
     smoke: false
     geo_score: 60
-    seo_score: 94
+    seo_score: 81
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 60/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 60/100). Mechanisms
       found: robots.txt blocks 7 retrieval/search crawler(s) (ChatGPT-User, Claude-SearchBot,
       Claude-User). Blocks training crawlers (Applebot-Extended, Bytespider, CCBot,
       GPTBot) -- a deliberate opt-out, not a defect.'
@@ -597,7 +665,6 @@ sites:
     - REACH-003
     expect_absent:
     - REACH-005
-    - READ-001
 
   - url: https://www.redcross.org
     seo: good
@@ -609,7 +676,7 @@ sites:
     geo_score: 0
     seo_source: prior (site refuses crawlers; nothing to measure)
     measurement: crawler-refused
-    notes: 'Measured 2026-09-11 from a 0-page crawl (GEO score 0/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 0-page crawl (GEO score 0/100). Mechanisms
       found: the site returns 200 to a browser user-agent but refuses every crawler
       request (GPTBot:403/challenge, ChatGPT-User:403/challenge, ClaudeBot:403/challenge,
       Claude-User:403/challenge), so no page of it can be fetched, read or cited.'
@@ -629,7 +696,7 @@ sites:
     geo_score: 60
     seo_score: 95
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 60/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 60/100). Mechanisms
       found: robots.txt blocks 5 retrieval/search crawler(s) (Applebot, Claude-SearchBot,
       Claude-User). Blocks training crawlers (Applebot-Extended, Bytespider, CCBot,
       Google-Extended) -- a deliberate opt-out, not a defect.'
@@ -637,7 +704,6 @@ sites:
     - REACH-002
     - REACH-003
     expect_absent:
-    - PARSE-001
     - REACH-005
     - READ-001
 
@@ -651,7 +717,7 @@ sites:
     geo_score: 60
     seo_score: 100
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 60/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 60/100). Mechanisms
       found: robots.txt blocks 4 retrieval/search crawler(s) (Claude-SearchBot,
       Claude-User, PerplexityBot). Blocks training crawlers (Applebot-Extended,
       Bytespider, CCBot, anthropic-ai) -- a deliberate opt-out, not a defect.'
@@ -672,7 +738,7 @@ sites:
     geo_score: 60
     seo_score: 98
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 60/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 60/100). Mechanisms
       found: robots.txt blocks 8 retrieval/search crawler(s) (Applebot, ChatGPT-User,
       Claude-SearchBot). Blocks training crawlers (Applebot-Extended, Bytespider,
       CCBot, GPTBot) -- a deliberate opt-out, not a defect.'
@@ -681,18 +747,19 @@ sites:
     - REACH-003
     expect_absent:
     - REACH-005
+    - READ-001
 
   - url: https://www.vox.com
     seo: good
     geo: poor
-    engagement: moderate
+    engagement: high
     site_type: media-publisher
     vertical: news
     smoke: false
     geo_score: 60
     seo_score: 100
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 60/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 60/100). Mechanisms
       found: robots.txt blocks 6 retrieval/search crawler(s) (ChatGPT-User, Claude-SearchBot,
       Claude-User). Blocks training crawlers (Applebot-Extended, Bytespider, CCBot,
       Google-Extended) -- a deliberate opt-out, not a defect.'
@@ -700,6 +767,7 @@ sites:
     - REACH-002
     - REACH-003
     expect_absent:
+    - PARSE-001
     - REACH-005
     - READ-001
 
@@ -713,7 +781,7 @@ sites:
     geo_score: 75
     seo_score: 33
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 19-page crawl (GEO score 75/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 19-page crawl (GEO score 75/100). Mechanisms
       found: no parseable structured data on any of 19 sampled pages; no reachable
       XML sitemap; no canonical tags on any sampled page.'
     expect_findings:
@@ -735,7 +803,7 @@ sites:
     geo_score: 75
     seo_score: 28
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 19-page crawl (GEO score 75/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 19-page crawl (GEO score 75/100). Mechanisms
       found: no parseable structured data on any of 19 sampled pages; no reachable
       XML sitemap; no canonical tags on any sampled page.'
     expect_findings:
@@ -757,7 +825,7 @@ sites:
     geo_score: 75
     seo_score: 45
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 75/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 75/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages; no reachable
       XML sitemap; no canonical tags on any sampled page.'
     expect_findings:
@@ -778,8 +846,8 @@ sites:
     geo_score: 75
     seo_score: 46
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 75/100). Mechanisms
-      found: no parseable structured data on any of 20 sampled pages; no reachable
+    notes: 'Measured 2026-09-12 from a 19-page crawl (GEO score 75/100). Mechanisms
+      found: no parseable structured data on any of 19 sampled pages; no reachable
       XML sitemap; no canonical tags on any sampled page.'
     expect_findings:
     - PARSE-001
@@ -799,12 +867,33 @@ sites:
     geo_score: 80
     seo_score: 60
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 80/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 80/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages; no canonical
       tags on any sampled page.'
     expect_findings:
     - PARSE-001
     - REACH-010
+    expect_absent:
+    - REACH-002
+    - REACH-005
+    - READ-001
+
+  - url: https://motherfuckingwebsite.com
+    seo: poor
+    geo: good
+    engagement: high
+    site_type: portfolio-brochure
+    vertical: satire
+    smoke: false
+    geo_score: 75
+    seo_score: 30
+    measurement: measured
+    notes: 'Measured 2026-09-12 from a 1-page crawl (GEO score 75/100). Mechanisms
+      found: no parseable structured data on any of 1 sampled pages; no reachable
+      XML sitemap; no canonical tags on any sampled page.'
+    expect_findings:
+    - PARSE-001
+    - REACH-006
     expect_absent:
     - REACH-002
     - REACH-005
@@ -820,7 +909,7 @@ sites:
     geo_score: 75
     seo_score: 45
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 75/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 75/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages; no reachable
       XML sitemap; no canonical tags on any sampled page.'
     expect_findings:
@@ -842,7 +931,7 @@ sites:
     geo_score: 75
     seo_score: 36
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 75/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 75/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages; no reachable
       XML sitemap; no canonical tags on any sampled page.'
     expect_findings:
@@ -864,7 +953,7 @@ sites:
     geo_score: 75
     seo_score: 32
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 75/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 75/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages; no reachable
       XML sitemap; no canonical tags on any sampled page.'
     expect_findings:
@@ -886,7 +975,7 @@ sites:
     geo_score: 75
     seo_score: 45
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 75/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 75/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages; no reachable
       XML sitemap; no canonical tags on any sampled page.'
     expect_findings:
@@ -908,7 +997,7 @@ sites:
     geo_score: 80
     seo_score: 63
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 80/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 80/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages; no reachable
       XML sitemap.'
     expect_findings:
@@ -922,19 +1011,20 @@ sites:
   - url: https://www.python.org
     seo: poor
     geo: good
-    engagement: moderate
+    engagement: high
     site_type: docs
     vertical: programming
     smoke: false
     geo_score: 90
-    seo_score: 52
+    seo_score: 53
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 90/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 90/100). Mechanisms
       found: no reachable XML sitemap; no canonical tags on any sampled page.'
     expect_findings:
     - REACH-006
     - REACH-010
     expect_absent:
+    - PARSE-001
     - REACH-002
     - REACH-005
 
@@ -948,7 +1038,7 @@ sites:
     geo_score: 75
     seo_score: 42
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 75/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 75/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages; no reachable
       XML sitemap; no canonical tags on any sampled page.'
     expect_findings:
@@ -960,6 +1050,27 @@ sites:
     - REACH-005
     - READ-001
 
+  - url: https://www.vim.org
+    seo: poor
+    geo: good
+    engagement: moderate
+    site_type: docs
+    vertical: opensource
+    smoke: false
+    geo_score: 75
+    seo_score: 45
+    measurement: measured
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 75/100). Mechanisms
+      found: no parseable structured data on any of 20 sampled pages; no reachable
+      XML sitemap; no canonical tags on any sampled page.'
+    expect_findings:
+    - PARSE-001
+    - REACH-006
+    - REACH-010
+    expect_absent:
+    - REACH-002
+    - REACH-005
+
   - url: https://www.w3.org
     seo: poor
     geo: good
@@ -970,34 +1081,12 @@ sites:
     geo_score: 83
     seo_score: 50
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 83/100). Mechanisms
-      found: 200/441 passages neither name their subject nor resolve their opening
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 83/100). Mechanisms
+      found: 201/447 passages neither name their subject nor resolve their opening
       reference; no reachable XML sitemap.'
     expect_findings:
     - REACH-006
     expect_absent:
-    - REACH-002
-    - REACH-005
-    - READ-001
-
-  - url: https://www.who.int
-    seo: poor
-    geo: good
-    engagement: high
-    site_type: nonprofit-gov
-    vertical: health
-    smoke: false
-    geo_score: 95
-    seo_score: 67
-    measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 95/100). Mechanisms
-      found: no reachable XML sitemap. Blocks training crawlers (CCBot) -- a deliberate
-      opt-out, not a defect.'
-    expect_findings:
-    - REACH-003
-    - REACH-006
-    expect_absent:
-    - PARSE-001
     - REACH-002
     - REACH-005
     - READ-001
@@ -1012,7 +1101,7 @@ sites:
     geo_score: 35
     seo_score: 16
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 35/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 35/100). Mechanisms
       found: bot user-agents are blocked or challenged at the edge (GPTBot:403,
       ClaudeBot:403) despite robots.txt permitting them; no parseable structured
       data on any of 20 sampled pages; no reachable XML sitemap; no canonical tags
@@ -1036,7 +1125,7 @@ sites:
     geo_score: 50
     seo_score: 50
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 1-page crawl (GEO score 50/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 1-page crawl (GEO score 50/100). Mechanisms
       found: median 15 words of body text in the raw HTML across 1 pages with no
       server-rendered body content; no parseable structured data on any of 1 sampled
       pages; no canonical tags on any sampled page.'
@@ -1056,34 +1145,11 @@ sites:
     geo_score: 43
     seo_score: 65
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 43/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 43/100). Mechanisms
       found: bot user-agents are blocked or challenged at the edge (ChatGPT-User:403,
-      Googlebot:403) despite robots.txt permitting them; 617/1148 passages neither
+      Googlebot:403) despite robots.txt permitting them; 637/1167 passages neither
       name their subject nor resolve their opening reference; no reachable XML sitemap.'
     expect_findings:
-    - REACH-005
-    - REACH-006
-    expect_absent:
-    - REACH-002
-    - READ-001
-
-  - url: https://motherfuckingwebsite.com
-    seo: poor
-    geo: poor
-    engagement: high
-    site_type: portfolio-brochure
-    vertical: satire
-    smoke: false
-    geo_score: 35
-    seo_score: 30
-    measurement: measured
-    notes: 'Measured 2026-09-11 from a 1-page crawl (GEO score 35/100). Mechanisms
-      found: bot user-agents are blocked or challenged at the edge (GPTBot:429)
-      despite robots.txt permitting them; no parseable structured data on any of
-      1 sampled pages; no reachable XML sitemap; no canonical tags on any sampled
-      page.'
-    expect_findings:
-    - PARSE-001
     - REACH-005
     - REACH-006
     expect_absent:
@@ -1100,7 +1166,7 @@ sites:
     geo_score: 68
     seo_score: 60
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 68/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 68/100). Mechanisms
       found: no parseable structured data on any of 20 sampled pages; 62/65 passages
       neither name their subject nor resolve their opening reference; no canonical
       tags on any sampled page.'
@@ -1121,7 +1187,7 @@ sites:
     geo_score: 35
     seo_score: 36
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 35/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 35/100). Mechanisms
       found: bot user-agents are blocked or challenged at the edge (GPTBot:429)
       despite robots.txt permitting them; no parseable structured data on any of
       20 sampled pages; no reachable XML sitemap; no canonical tags on any sampled
@@ -1145,7 +1211,7 @@ sites:
     geo_score: 35
     seo_score: 43
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 35/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 35/100). Mechanisms
       found: bot user-agents are blocked or challenged at the edge (GPTBot:403/challenge,
       ClaudeBot:403/challenge) despite robots.txt permitting them; no parseable
       structured data on any of 20 sampled pages; no reachable XML sitemap; no canonical
@@ -1169,7 +1235,7 @@ sites:
     geo_score: 0
     seo_score: 34
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 0/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 0/100). Mechanisms
       found: robots.txt blocks 4 retrieval/search crawler(s) (Applebot, ChatGPT-User,
       PerplexityBot); bot user-agents are blocked or challenged at the edge (Claude-User:403)
       despite robots.txt permitting them; no parseable structured data on any of
@@ -1196,7 +1262,7 @@ sites:
     geo_score: 0
     seo_source: prior (site refuses crawlers; nothing to measure)
     measurement: crawler-refused
-    notes: 'Measured 2026-09-11 from a 0-page crawl (GEO score 0/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 0-page crawl (GEO score 0/100). Mechanisms
       found: the site returns 200 to a browser user-agent but refuses every crawler
       request (ChatGPT-User:403, Claude-User:403/challenge, PerplexityBot:403, Googlebot:403/challenge),
       so no page of it can be fetched, read or cited. Blocks training crawlers (Applebot-Extended,
@@ -1218,8 +1284,8 @@ sites:
     geo_score: 68
     seo_score: 45
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 68/100). Mechanisms
-      found: no parseable structured data on any of 20 sampled pages; 210/481 passages
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 68/100). Mechanisms
+      found: no parseable structured data on any of 20 sampled pages; 207/480 passages
       neither name their subject nor resolve their opening reference; no reachable
       XML sitemap.'
     expect_findings:
@@ -1240,7 +1306,7 @@ sites:
     geo_score: 15
     seo_score: 25
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 1-page crawl (GEO score 15/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 1-page crawl (GEO score 15/100). Mechanisms
       found: crawlers are served a stripped page while browsers get the full one
       (GPTBot:1%-of-baseline, ClaudeBot:1%-of-baseline, PerplexityBot:1%-of-baseline);
       median 35 words of body text in the raw HTML across 1 pages with no server-rendered
@@ -1263,7 +1329,7 @@ sites:
     geo_score: 10
     seo_score: 55
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 1-page crawl (GEO score 10/100). Mechanisms
+    notes: 'Measured 2026-09-12 from a 1-page crawl (GEO score 10/100). Mechanisms
       found: robots.txt blocks 5 retrieval/search crawler(s) (ChatGPT-User, Claude-SearchBot,
       Claude-User); median 11 words of body text in the raw HTML across 1 pages
       with an app-shell mount on 1 of them; no parseable structured data on any
@@ -1286,10 +1352,10 @@ sites:
     vertical: archive
     smoke: false
     geo_score: 63
-    seo_score: 38
+    seo_score: 46
     measurement: measured
-    notes: 'Measured 2026-09-11 from a 20-page crawl (GEO score 63/100). Mechanisms
-      found: no parseable structured data on any of 20 sampled pages; 45/69 passages
+    notes: 'Measured 2026-09-12 from a 20-page crawl (GEO score 63/100). Mechanisms
+      found: no parseable structured data on any of 20 sampled pages; 41/73 passages
       neither name their subject nor resolve their opening reference; no reachable
       XML sitemap; no canonical tags on any sampled page.'
     expect_findings:
@@ -1306,21 +1372,11 @@ sites:
 #     browser probe refused; cannot separate a site block from our address being filtered
 #   https://www.reuters.com
 #     browser probe refused; cannot separate a site block from our address being filtered
-#   https://apnews.com
-#     browser probe refused; cannot separate a site block from our address being filtered
 #   https://www.npr.org
 #     browser probe refused; cannot separate a site block from our address being filtered
 #   https://www.etsy.com
 #     browser probe refused; cannot separate a site block from our address being filtered
-#   https://www.gymshark.com
-#     browser probe refused; cannot separate a site block from our address being filtered
 #   https://www.rei.com
-#     browser probe refused; cannot separate a site block from our address being filtered
-#   http://www.catb.org
-#     browser probe refused; cannot separate a site block from our address being filtered
-#   https://www.vim.org
-#     browser probe refused; cannot separate a site block from our address being filtered
-#   https://www.berkshirehathaway.com
 #     browser probe refused; cannot separate a site block from our address being filtered
 #   https://www.jwz.org
 #     browser probe refused; cannot separate a site block from our address being filtered

@@ -164,7 +164,9 @@ several are the most severe possible finding:
 | `robots.txt` disallows everything for our UA | Fetch nothing beyond `robots.txt`; `stopped_reason: site-blocked`. Still run the probe. This is a finding, not a failure. |
 | Every page 403s | Record statuses and challenge signatures. The probe is the evidence. |
 | Time budget exhausted | Stop cleanly, `complete: false`, keep what was collected. |
-| Non-HTML content type | Skip with reason `non-html`; record the type. |
+| Non-HTML content type | Skip with reason `non-html`; record the type. No `Content-Type` at all: sniff the body for markup, and skip a binary the same way. |
+| `Content-Encoding: br` or `zstd` | Ask once more with `Accept-Encoding: identity`. If the server insists, skip with reason `undecodable-encoding`; the stdlib cannot decode Brotli and a mojibake page must never be analysed as text. |
+| Several URLs redirect to one page | Store the destination once; later arrivals are skipped with reason `duplicate of <page_id> after redirect`. |
 | Page exceeds 3 MB | Truncate, record actual size, flag in the page record. |
 
 Never abort the whole run because one page failed. A partial bundle honestly

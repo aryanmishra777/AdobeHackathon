@@ -32,6 +32,7 @@ CHECK_RENDER = os.path.join(SKILLS, "render-extractability-audit", "scripts", "c
 CHECK_PARSE = os.path.join(SKILLS, "structured-data-audit", "scripts", "check_structured_data.py")
 VALIDATE_BUNDLE = os.path.join(SKILLS, "site-evidence-collector", "scripts",
                                "validate_bundle.py")
+COLLECT = os.path.join(SKILLS, "site-evidence-collector", "scripts", "collect.py")
 MERGE = os.path.join(SKILLS, "audit-orchestrator", "scripts", "merge_findings.py")
 VALIDATE_REPORT = os.path.join(SKILLS, "audit-orchestrator", "scripts",
                                "validate_report.py")
@@ -742,3 +743,61 @@ def test_read_001_ignores_games_and_utility_pages():
     for path in ("/2026/09/10/world/story.html", "/wirecutter/money/phone",
                  "/athletic/live-blogs/match", "/about"):
         assert not mod._is_application_page({"url": "https://example.com" + path}), path
+
+
+def test_read_001_treats_personalisation_pages_as_application_pages():
+    """gymshark.com's /wishlist and /edit ("Recommended for you") are
+    client-rendered by design and carry nothing to server-render. "/edit" must
+    match as a whole segment: "/editorial" is content."""
+    import importlib
+    sys.path.insert(0, os.path.dirname(CHECK_RENDER))
+    mod = importlib.import_module(os.path.basename(CHECK_RENDER)[:-3])
+    for path in ("/wishlist", "/edit", "/edit/", "/favourites", "/profile/settings"):
+        assert mod._is_application_page({"url": "https://example.com" + path}), path
+    for path in ("/editorial/standards", "/edited-volumes", "/blog/edit-your-cv"):
+        assert not mod._is_application_page({"url": "https://example.com" + path}), path
+
+
+def test_collector_sniffs_bodies_and_dedupes_redirect_targets():
+    """python.org served a 3 MB .tar.xz with no Content-Type and it was stored
+    as a page; stripe.com/legal/ssa, /ssa and /legal/connect all redirected to
+    two final URLs and five of twenty sampled pages were the same two legal
+    documents."""
+    import importlib
+    sys.path.insert(0, os.path.dirname(COLLECT))
+    mod = importlib.import_module(os.path.basename(COLLECT)[:-3])
+    assert mod._looks_like_markup("\ufeff\n  <!DOCTYPE html><html>")
+    assert mod._looks_like_markup("<html lang=en>")
+    assert not mod._looks_like_markup("\xfd7zXZ\x00\x00\x04")
+    assert not mod._looks_like_markup("")
+    assert mod.NON_HTML_EXT.search("/ftp/python/3.14.7/Python-3.14.7.tar.xz")
+    assert mod.NON_HTML_EXT.search("/dl/app.whl") and not mod.NON_HTML_EXT.search("/docs/xz-format")
+    assert mod._norm_final("https://stripe.com/in/legal/ssa/") == mod._norm_final("http://www.stripe.com/in/legal/ssa")
+    assert mod._norm_final("https://a.com/x?p=1") != mod._norm_final("https://a.com/x?p=2")
+
+
+def test_merge_does_not_grade_engagement_from_zero_pages(tmp_path):
+    """berkshirehathaway.com answers every request with Brotli, which the
+    stdlib cannot decode; the crawl saw robots.txt and nothing else, and the
+    report graded engagement 100/A. Zero pages is 'not assessed', while
+    discoverability -- which REACH did measure -- is still graded."""
+    cand = tmp_path / "cand.json"
+    cand.write_text(json.dumps([{
+        "id": "F-000", "check_id": "REACH-001", "title": "No robots.txt",
+        "severity": "medium", "confidence": "high", "determinism": "deterministic",
+        "category": "discoverability", "mechanism": "reach",
+        "evidence": "GET /robots.txt returned 404.",
+        "evidence_detail": {"pages_affected": [], "counts": {}, "artifact_refs": ["robots_fetch.json"]},
+        "affected_scope": {"pages_checked": 0, "pages_affected": 0, "scope": "site-wide"},
+        "verification": "curl -I https://example.com/robots.txt",
+        "suggested_action": {"summary": "Add a robots.txt", "priority": "medium",
+                              "steps": ["Publish /robots.txt"], "effort": "S",
+                              "impact_rationale": "Declares crawl policy.", "owner": "engineering"},
+    }]), encoding="utf-8")
+    merged = json.loads(run(MERGE, str(cand), "--pages-sampled", "0", "--stdout").stdout)
+    sc = merged["scorecard_input"]
+    assert sc["engagement"]["grade"] == "not assessed" and sc["engagement"]["score"] is None
+    assert isinstance(sc["discoverability"]["score"], int)
+    # Omitting the flag means unknown, and must not withhold an axis.
+    merged = json.loads(run(MERGE, str(cand), "--stdout").stdout)
+    assert isinstance(merged["scorecard_input"]["engagement"]["score"], int)

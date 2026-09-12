@@ -108,7 +108,11 @@ emits a single report.
 - **Never grade an axis nothing measured.** If no analyzer ran for a mechanism,
   its axis is `"not assessed"`, not a score. Pass `--mechanisms` to
   `scripts/merge_findings.py` listing the mechanisms whose analyzer actually ran,
-  and it will do this for you.
+  and it will do this for you. The same applies when the crawl fetched no page
+  at all (a site that answers only in an encoding the collector cannot decode,
+  recorded as `undecodable-encoding` in `coverage.skipped`): pass
+  `--pages-sampled 0` and engagement is withheld, while discoverability is
+  still graded from what REACH measured.
 
 ## Inputs
 

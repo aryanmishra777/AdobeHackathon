@@ -243,3 +243,39 @@ def test_quote_candidates_survive_the_merge():
     finally:
         if os.path.exists(cand):
             os.remove(cand)
+
+
+def _quote_module():
+    import importlib
+    sys.path.insert(0, os.path.dirname(CHECK_QUOTE))
+    return importlib.import_module(os.path.basename(CHECK_QUOTE)[:-3])
+
+
+def test_brand_resolver_ignores_sub_organisations_and_generic_titles():
+    """nytimes.com lists The Athletic, Wirecutter and NYT Cooking as
+    subOrganization in its home-page JSON-LD, and a sample with seven Athletic
+    pages named the brand "The Athletic". who.int's <title> is "Home" on ten
+    of twenty pages; rfc-editor.org's is "Expand sidebar" on all of them."""
+    mod = _quote_module()
+    node = {"@type": "NewsMediaOrganization", "name": "The New York Times",
+            "subOrganization": [{"@type": "Organization", "name": "The Athletic"},
+                                {"@type": "Organization", "name": "Wirecutter"}],
+            "parentOrganization": {"@type": "Organization", "name": "NYT Co"}}
+    assert mod._jsonld_org_names(node) == ["The New York Times"]
+    assert mod._jsonld_org_names({"@type": "WebSite", "name": "GOV.UK"}) == ["GOV.UK"]
+    for t in ("Home", "Expand sidebar", "Untitled", "Skip to main content", "Archives"):
+        assert mod.GENERIC_NAME_RE.match(t), t
+    assert not mod.GENERIC_NAME_RE.match("Home Depot")
+
+
+def test_brand_resolver_host_label_and_spaced_letters():
+    """textfiles.com titles every page "T E X T F I L E S"; openbsd.org titles
+    are "OpenBSD: Artwork". The name a reader would use is the host label."""
+    mod = _quote_module()
+    assert mod._unspace_letters("T E X T F I L E S") == "TEXTFILES"
+    assert mod._unspace_letters("Plan 9 from Bell Labs") == "Plan 9 from Bell Labs"
+    assert mod._host_label("www.openbsd.org") == "openbsd"
+    assert mod._host_label("www.bbc.co.uk") == "bbc"
+    assert mod._host_label("9p.io") == "9p"
+    assert mod._host_label("cr.yp.to") == "yp"
+    assert [x.strip() for x in mod.TITLE_SPLIT_RE.split("OpenBSD: Artwork")] == ["OpenBSD", "Artwork"]
