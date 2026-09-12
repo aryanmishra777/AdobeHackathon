@@ -270,3 +270,13 @@ def test_trust_015_skips_pages_not_in_english():
         assert mod.NON_ENGLISH_LANG_RE.match(lang), lang
     for lang in ("en", "en-IN", "EN-us", "en_GB", ""):
         assert not mod.NON_ENGLISH_LANG_RE.match(lang), repr(lang)
+
+
+def test_trust_010_does_not_read_size_runs_as_phone_numbers():
+    """nike.in's trouser size selector, '28 30 32 34 36 38', was reported as
+    four inconsistent phone numbers."""
+    mod = _trust_module()
+    for s in ("28 30 32 34 36", "28 30 32 34 36 38 40 42", "2019 2020 2021 2022", "1 2 3 4 5 6 7 8"):
+        assert not mod._looks_like_phone(s), s
+    for s in ("+91 98765 43210", "1800 806 6453", "(022) 6789 1234", "022-67891234", "9876543210"):
+        assert mod._looks_like_phone(s), s

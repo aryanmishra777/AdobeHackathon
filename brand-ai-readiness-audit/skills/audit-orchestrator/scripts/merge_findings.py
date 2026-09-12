@@ -166,7 +166,11 @@ def _is_primary_page(finding: dict) -> bool:
         if "/" not in tail or tail.endswith(".com") or tail.endswith(".org"):
             return True
         low = path.lower()
-        if any(k in low for k in ("/pricing", "/plans", "/contact", "/buy", "/checkout")):
+        # Help, support and FAQ pages count too: they hold the policy facts
+        # (returns, delivery, payment) an assistant is asked for most, so a
+        # defect there degrades a whole class of answers, not one page.
+        if any(k in low for k in ("/pricing", "/plans", "/contact", "/buy", "/checkout",
+                                  "/help", "/support", "/faq")):
             return True
     return False
 

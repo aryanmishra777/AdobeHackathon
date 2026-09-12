@@ -1298,6 +1298,19 @@ def engine_reachability(b: Bundle) -> list[dict]:
         if blocked_robots and not ok:
             state, detail = "blocked", (
                 "robots.txt disallows " + ", ".join(blocked_robots))
+        elif edge_blocked and not ok and baseline.get("status") != 200:
+            # The browser baseline was refused too, so the probe cannot tell an
+            # AI-agent block from bot management challenging every unverified
+            # client, our address included (nike.in's Akamai edge returned 403
+            # to a plain Chrome UA while serving the audit's declared UA).
+            # "blocked" would be a confident false positive; say unverified.
+            agent = edge_blocked[0]
+            code = (probe_agents.get(agent) or {}).get("status")
+            state, detail = "partial", (
+                f"unverified: the edge returned {code or 'a challenge'} to {agent}, "
+                f"but it returned {baseline.get('status') or 'a challenge'} to the "
+                f"browser baseline as well, so the refusal cannot be attributed to "
+                f"the agent name; robots.txt permits it")
         elif edge_blocked and not ok:
             agent = edge_blocked[0]
             code = (probe_agents.get(agent) or {}).get("status")

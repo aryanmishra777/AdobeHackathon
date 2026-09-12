@@ -801,3 +801,112 @@ def test_merge_does_not_grade_engagement_from_zero_pages(tmp_path):
     # Omitting the flag means unknown, and must not withhold an axis.
     merged = json.loads(run(MERGE, str(cand), "--stdout").stdout)
     assert isinstance(merged["scorecard_input"]["engagement"]["score"], int)
+
+
+def _collect_module():
+    import importlib
+    sys.path.insert(0, os.path.dirname(COLLECT))
+    return importlib.import_module(os.path.basename(COLLECT)[:-3])
+
+
+def test_collector_robots_matching_includes_the_query_string():
+    """nike.in disallows /*?root= and /*?ptype=. The first audit matched robots
+    patterns against the bare path and fetched 21 URLs the site had refused."""
+    mod = _collect_module()
+    groups, _sitemaps, _errors = mod.parse_robots(
+        "User-agent: *\nDisallow: /*?root=\nDisallow: /cart\n")
+    _, group = mod.match_group(groups, "BrandAIReadinessAudit")
+    assert mod.robots_allows(group, "/air-force-1/c/94020")
+    assert not mod.robots_allows(group, "/air-force-1/c/94020?root=nav_3&ptype=listing")
+    assert not mod.robots_allows(group, "/cart")
+
+
+def test_collector_document_title_ignores_svg_titles_and_keeps_the_first():
+    """Every icon in nike.in's filter panel is <svg><title></title>; last-wins
+    reported 21 of 25 pages as having no title at all."""
+    mod = _collect_module()
+    html = ('<html><head><title>Nike – Official Online Store</title></head><body>'
+            '<svg viewBox="0 0 24 24"><title></title><path d="M1 1"/></svg>'
+            '<svg><title>Close</title></svg></body></html>')
+    ex = mod.extract_page("p", "https://x.test/a", html, "https://x.test")
+    assert ex["title"] == "Nike – Official Online Store"
+
+
+def test_collector_combines_repeated_robots_meta_instead_of_last_wins():
+    """nike.in's campaign pages emit noindex,nofollow twice via react-helmet and
+    then index,follow once. Crawlers honour the most restrictive; last-wins read
+    the page as indexable and REACH-008 never fired."""
+    mod = _collect_module()
+    html = ('<html><head><meta data-react-helmet="true" name="robots" content="noindex, nofollow"/>'
+            '<meta name="robots" content="index, follow"/>'
+            '<meta name="description" content="one"/><meta name="description" content="two"/>'
+            '</head><body></body></html>')
+    ex = mod.extract_page("p", "https://x.test/a", html, "https://x.test")
+    assert "noindex" in ex["meta"]["robots"] and "index, follow" in ex["meta"]["robots"]
+    assert ex["meta"]["description"] == "two"   # non-robots keys keep last-wins
+
+
+def test_collector_keeps_links_that_wrap_a_heading():
+    """Every product card on nike.in is <a><h3>name</h3>...</a>. The heading
+    capture replaced the link capture, so no product URL was ever extracted and
+    the crawl never reached a product page."""
+    mod = _collect_module()
+    html = ('<html><body><a href="/nike-swift/p/27753539"><img src="x.jpg" alt="x"/>'
+            '<h3>Nike Swift</h3><span>₹3,295</span></a>'
+            '<a href="/plain">Plain</a></body></html>')
+    ex = mod.extract_page("p", "https://x.test/c/1", html, "https://x.test")
+    hrefs = {l["href"] for l in ex["links"]}
+    assert "https://x.test/nike-swift/p/27753539" in hrefs and "https://x.test/plain" in hrefs
+    assert [h["text"] for h in ex["headings"]] == ["Nike Swift"]
+    assert "Nike Swift" in next(l for l in ex["links"] if l["href"].endswith("27753539"))["text"]
+
+
+def test_collector_classifies_an_itemlist_page_as_category_not_article():
+    """A 50-product listing with an ItemList block, a copyright date and an h1
+    passed the article shape rule; PARSE-014 then wanted an author on it."""
+    mod = _collect_module()
+    ex = {"jsonld": [{"parsed_ok": True, "value": {"@type": "ItemList", "itemListElement": []}}],
+          "text": {"main_word_count": 900},
+          "dates": [{"source": "meta", "value": "2026"}],
+          "headings": [{"level": 1, "text": "Running (50)"}]}
+    assert mod.classify_page_type("https://x.test/nike-running/c/94958", ex) == "category"
+    ex["jsonld"] = []
+    assert mod.classify_page_type("https://x.test/nike-running/c/94958", ex) == "article"
+
+
+def test_engine_reachability_is_unverified_when_the_browser_baseline_is_refused_too(tmp_path):
+    """nike.in's Akamai edge returned 403 to ChatGPT-User, Claude-User and a
+    plain Chrome UA alike, while serving the audit's own UA. 'blocked' would be
+    a confident false positive; the row must say the probe could not tell."""
+    import shutil
+    src = bundle("clean")
+    dst = tmp_path / "b"
+    shutil.copytree(src, dst)
+    probe = json.loads((dst / "ua_probe.json").read_text(encoding="utf-8"))
+    probe["baseline"].update({"status": 403, "challenge_detected": True, "bytes": 363, "text_bytes": 283})
+    for a in probe["agents"].values():
+        a.update({"status": 403, "challenge_detected": True, "bytes": 363, "text_bytes": 283})
+    (dst / "ua_probe.json").write_text(json.dumps(probe), encoding="utf-8")
+    man_path = dst / "MANIFEST.json"
+    man = json.loads(man_path.read_text(encoding="utf-8"))
+    man["ua_probe"] = probe
+    man_path.write_text(json.dumps(man), encoding="utf-8")
+    proc = run(CHECK_ACCESS, str(dst), "--stdout")
+    assert proc.returncode == 0, proc.stderr
+    doc = json.loads(proc.stdout)
+    assert not [f for f in doc["findings"] if f["check_id"] == "REACH-005"]
+    rows = {r["engine"]: r for r in doc["engine_reachability"]}
+    for name in ("ChatGPT", "Claude", "Perplexity"):
+        assert rows[name]["state"] == "partial", rows[name]
+        assert "unverified" in rows[name]["detail"] and "baseline" in rows[name]["detail"]
+
+
+def test_merge_treats_help_and_support_pages_as_primary(tmp_path):
+    """A JS-shell /help-center holds every returns and delivery answer on
+    nike.in; the single-page de-escalation had made it a 'low'."""
+    import importlib
+    sys.path.insert(0, os.path.dirname(MERGE))
+    mod = importlib.import_module(os.path.basename(MERGE)[:-3])
+    assert mod._is_primary_page({"evidence_detail": {"pages_affected": ["https://x.test/help-center"]}})
+    assert mod._is_primary_page({"evidence_detail": {"pages_affected": ["https://x.test/faq"]}})
+    assert not mod._is_primary_page({"evidence_detail": {"pages_affected": ["https://x.test/blog/one"]}})

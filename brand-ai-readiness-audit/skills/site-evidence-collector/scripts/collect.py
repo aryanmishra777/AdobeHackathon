@@ -355,6 +355,8 @@ def _decode_body(raw: bytes, headers) -> str:
 VOID = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link",
         "meta", "param", "source", "track", "wbr"}
 NON_TEXT = {"script", "style", "template", "svg", "canvas", "noscript"}
+# Meta names whose repeated values are combined rather than overwritten.
+ROBOTS_META_KEYS = {"robots", "googlebot", "bingbot", "googlebot-news"}
 BOILERPLATE = {"nav", "header", "footer", "aside"}
 
 
@@ -404,6 +406,7 @@ class PageParser(HTMLParser):
         self._boilerplate_depth = 0
         self._current_heading = None
         self._current_link = None
+        self._link_capture: list[str] | None = None  # link text paused by a heading
         self._current_form = None
         self._mounts: dict[str, int] = {}      # candidate app-shell -> text len at open
         self._mount_stack: list[tuple[str, int]] = []
@@ -452,9 +455,20 @@ class PageParser(HTMLParser):
                 or self._attr(attrs, "http-equiv")
             content = self._attr(attrs, "content")
             if key and content is not None:
-                self.meta[key.lower()] = content
+                key = key.lower()
+                # Crawlers combine repeated robots directives and honour the
+                # most restrictive. Last-wins hid a `noindex, nofollow` that
+                # nike.in follows with a second `index, follow` tag.
+                if key in ROBOTS_META_KEYS and key in self.meta \
+                        and content.strip() not in self.meta[key]:
+                    self.meta[key] = self.meta[key] + ", " + content.strip()
+                else:
+                    self.meta[key] = content
         elif tag == "title":
-            self._capture, self._capture_tag = [], "title"
+            # Only the document title counts: `<svg><title>` is an icon label,
+            # and nike.in's filter panel has dozens of empty ones after </head>.
+            if "svg" not in self._stack and self.title is None:
+                self._capture, self._capture_tag = [], "title"
         elif tag == "link":
             rel = (self._attr(attrs, "rel") or "").lower()
             href = self._attr(attrs, "href")
@@ -486,6 +500,11 @@ class PageParser(HTMLParser):
         elif tag == "noscript":
             self._capture, self._capture_tag = [], "noscript"
         elif tag in ("h1", "h2", "h3", "h4", "h5", "h6"):
+            # A heading inside an anchor (every product card on nike.in wraps
+            # its <h3> name in the link) must not lose the link: pause the
+            # link capture and resume it when the heading closes.
+            if self._capture_tag == "link" and self._current_link is not None:
+                self._link_capture = self._capture
             self._current_heading = {"level": int(tag[1]), "text": ""}
             self._capture, self._capture_tag = [], "heading"
         elif tag == "a":
@@ -567,6 +586,10 @@ class PageParser(HTMLParser):
                     self._emit_text(text)
                 self._current_heading = None
                 self._capture = None
+                if self._link_capture is not None and self._current_link is not None:
+                    self._capture = self._link_capture + [text]
+                    self._capture_tag = "link"
+                self._link_capture = None
             elif ct == "link" and tag == "a":
                 if self._current_link is not None:
                     self._current_link["text"] = _collapse(text)
@@ -1053,6 +1076,11 @@ def classify_page_type(url: str, extracted: dict | None) -> str:
                 types |= {t.lower() for t in _collect_types(block["value"])}
         if "product" in types:
             return "product"
+        # A listing that declares itself one is a category page, whatever its
+        # length. nike.in's 50-product category pages carry an ItemList and
+        # enough words and dates to pass the shape rule below as articles.
+        if types & {"itemlist", "collectionpage", "offercatalog"}:
+            return "category"
         if types & {"article", "newsarticle", "blogposting"}:
             return "article"
         if "faqpage" in types:
@@ -1206,7 +1234,12 @@ class Collector:
         return info
 
     def allowed(self, url: str) -> bool:
-        return robots_allows(self.our_group, urlparse(url).path or "/")
+        # Match against path AND query: patterns such as `Disallow: /*?root=`
+        # only ever fire on the query string. Matching the bare path once let
+        # this crawler fetch 21 URLs nike.in had explicitly disallowed.
+        u = urlparse(url)
+        target = (u.path or "/") + (("?" + u.query) if u.query else "")
+        return robots_allows(self.our_group, target)
 
     # -- sitemaps ----------------------------------------------------------
     def load_sitemaps(self, origin: str, declared: list[str]) -> list[dict]:

@@ -960,6 +960,19 @@ def check_trust_009(b: Bundle) -> list:
     return _skip_offsite(b, "TRUST-009")
 
 
+def _looks_like_phone(candidate: str) -> bool:
+    """A size run ("28 30 32 34 36"), a year list or a price ladder matches the
+    digit regex as readily as a phone number. nike.in's trouser sizes were
+    reported as four inconsistent phone numbers. A phone number is one or a
+    few groups of several digits; a list is many groups of one or two."""
+    groups = re.split(r"[\s\-()]+", candidate.strip("+() -"))
+    groups = [g for g in groups if g]
+    if len(groups) >= 3 and all(len(g) <= 2 for g in groups):
+        return False
+    digits = re.sub(r"\D", "", candidate)
+    return 8 <= len(digits) <= 15
+
+
 def check_trust_010(b: Bundle) -> list:
     """Name, address or phone details are inconsistent. Deterministic on-site
     half; the off-site comparison needs a tool."""
@@ -973,6 +986,8 @@ def check_trust_010(b: Bundle) -> list:
     for p in b.ok_pages:
         text = b.page_text(p["page_id"])
         for m in re.findall(r"\+?\d[\d()\-\s]{7,}\d", text):
+            if not _looks_like_phone(m):
+                continue
             key = re.sub(r"\D", "", m)[-10:]
             phones.setdefault(key, set()).add(_page_url(p))
         for m in re.findall(r"\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b", text):
