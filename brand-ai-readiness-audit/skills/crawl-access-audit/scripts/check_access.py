@@ -62,6 +62,10 @@ UTILITY_PATH_HINTS = ("/cart", "/checkout", "/account", "/login", "/signin",
 
 SLOW_TTFB_MEDIUM_MS = 1500
 SLOW_TTFB_HIGH_MS = 3000
+# Above this a delay is no longer distance. ea.com's edge held every response
+# to our client for 16-49 s once it had seen a few requests while curl from
+# the same machine got the page in under a second: a hold, not a slow origin.
+HOLD_TTFB_MS = 10000
 
 
 class Bundle:
@@ -903,13 +907,20 @@ def check_reach_015(b: Bundle) -> list[dict]:
     if median < SLOW_TTFB_MEDIUM_MS:
         return []
     severity = "high" if median >= SLOW_TTFB_HIGH_MS else "medium"
+    title = "The server responds slowly enough to limit crawling"
+    caveat = ("This figure is a single measurement from one location and includes "
+              "network latency.")
+    if median >= HOLD_TTFB_MS:
+        title = "The edge holds responses to this client for tens of seconds"
+        caveat = (f"A delay of {int(median / 1000)} s is not network distance: an edge "
+                  "that rate-limits or holds unrecognised clients produces it, and every "
+                  "AI crawler is such a client. Confirm with the verification command, "
+                  "which uses a different TLS client, and compare.")
     return [finding(
-        "REACH-015", "The server responds slowly enough to limit crawling",
+        "REACH-015", title,
         severity,
         f"Median time to first byte across {len(ttfbs)} sampled pages was "
-        f"{int(median)} ms (range {int(min(ttfbs))}-{int(max(ttfbs))} ms). "
-        f"This figure is a single measurement from one location and includes "
-        f"network latency.",
+        f"{int(median)} ms (range {int(min(ttfbs))}-{int(max(ttfbs))} ms). " + caveat,
         [f"pages/{p['page_id']}/request.json" for p in b.ok_pages[:5]],
         counts={"median_ttfb_ms": int(median), "pages": len(ttfbs)},
         confidence="medium",

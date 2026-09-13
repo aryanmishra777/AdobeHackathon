@@ -24,6 +24,7 @@ import json
 import os
 import re
 import shutil
+import statistics
 import subprocess
 import sys
 import time
@@ -80,6 +81,11 @@ PROBE_AGENTS = ["GPTBot", "ChatGPT-User", "ClaudeBot", "Claude-User",
 # (crunchyroll.com). Every known name stalled while the unknown one is served
 # instantly is impersonation defence (adobe.com).
 PROBE_CONTROLS = ["BrandAIReadinessAudit-Control", "Bytespider"]
+
+# A median time to first byte above this is a hold, not distance: the edge
+# is queueing or delaying an unrecognised client. The sitemap and probe
+# phases shrink under it so the page sample still gets its share.
+HOLD_TTFB_MS = 10000
 
 CHALLENGE_SIGNATURES = [
     "cf-browser-verification", "just a moment...", "checking your browser",
@@ -282,6 +288,50 @@ CITATION_MARKER_RE = re.compile(r"\[\s*(?:\d+|[a-z]|note \d+|citation needed)\s*
 # is the better chunk source. Product, category, pricing and home pages carry
 # their facts in grids and boxes that such extractors discard.
 PROSE_PAGE_TYPES = {"article", "docs", "about", "faq", "legal", "other", "contact"}
+
+# A locale code as a URL segment or a sitemap name token: "ar-sa", "cs-cz",
+# "de", "en_gb", "hk_zh". Big sites keep one tree per locale and list them
+# alphabetically in the sitemap index; sampled naively, ea.com/sports (the
+# English default) produced 24 Arabic and Czech pages.
+LOCALE_TOKEN_RE = re.compile(r"^[a-z]{2}(?:[-_][a-z]{2})?$", re.I)
+
+
+def _locale_of_path(path: str):
+    """The locale a path lives under, or None: /cs-cz/careers -> "cs-cz",
+    /sports -> None. Two-letter segments that are ordinary words (/in/ on
+    adobe.com is a country, /de/ a language) are still locales."""
+    seg = [x for x in (path or "").split("/") if x][:1]
+    if seg and LOCALE_TOKEN_RE.match(seg[0]):
+        return seg[0].lower().replace("_", "-")
+    return None
+
+
+def _locale_of_sitemap(url: str):
+    """A locale token in a sitemap's file name or path: sitemap-cs-cz.xml,
+    /in/products.sitemap.cc.xml, sitemaps/news/es-ES/latest.xml."""
+    path = urlparse(url).path or ""
+    for seg in path.split("/"):
+        if LOCALE_TOKEN_RE.match(seg):
+            return seg.lower().replace("_", "-")
+    name = path.rsplit("/", 1)[-1]
+    m = re.search(r"(?:^|[-_.])([a-z]{2}[-_][a-z]{2})(?:[-_.]|$)", name, re.I)
+    if m:
+        return m.group(1).lower().replace("_", "-")
+    for tok in re.split(r"[.\-_]", name):
+        if LOCALE_TOKEN_RE.match(tok) and tok.lower() not in ("xml", "gz", "cc"):
+            return tok.lower()
+    return None
+
+
+def _locale_rank(seed_locale, locale) -> int:
+    """0 when a URL belongs to the seed's locale tree (or to none), 1 when it
+    belongs to another locale's. English defaults match a seed with no
+    locale, so ea.com/sports prefers sitemap-en-us over sitemap-ar-sa."""
+    if locale is None:
+        return 0
+    if seed_locale is not None:
+        return 0 if locale == seed_locale else 1
+    return 0 if locale.startswith("en") else 1
 
 # Optional libraries (requirements-optional.txt). Each is imported behind a
 # guard at its single call site; what was actually used is recorded here and
@@ -1345,11 +1395,17 @@ class Collector:
         self.seen_canonical: dict[str, str] = {}   # canonical URL -> page_id already sampled
         self.protego = None
         self.robots_disagreements: list[str] = []
+        target = args.target if "://" in args.target else "https://" + args.target
+        self.seed_locale = _locale_of_path(urlparse(target).path)
         self.pages: list[dict] = []
         self.robots_groups: list[RobotsGroup] = []
         self.our_group = None
         self.delay = max(args.delay, 0.0)
         self.renderer_cmd, self.renderer_name = self._resolve_renderer(getattr(args, "renderer", "auto"))
+        # The budget clock starts after the renderer check: launching Chromium
+        # once hung for two minutes on ea.com's second crawl and the crawl
+        # found its 120 s already spent, fetched nothing, and said so.
+        self.started = time.time()
         self.rendered: dict[str, bool] = {}   # page_id -> rendered.html written
         self.render_attempted = 0
         self.extractor_disagreements = 0
@@ -1369,7 +1425,7 @@ class Collector:
         script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "render_playwright.py")
         try:
             proc = subprocess.run([sys.executable, script, "--check"], capture_output=True,
-                                  text=True, encoding="utf-8", timeout=60)
+                                  text=True, encoding="utf-8", timeout=30)
         except Exception:
             return None, None
         if proc.returncode != 0:
@@ -1379,6 +1435,24 @@ class Collector:
     # -- budget ------------------------------------------------------------
     def time_left(self) -> float:
         return self.args.budget - (time.time() - self.started)
+
+    # Shares of the budget that the phases before the page sample may spend.
+    # An edge that holds every response for tens of seconds (ea.com: 42 s
+    # each once it had seen a few requests) let six sitemaps and the probe
+    # consume the whole budget before a single page was fetched. The page
+    # sample is the evidence every analyzer reads, so it always keeps a share.
+    SITEMAP_SHARE = 0.45     # sitemaps stop once 45% of the budget is gone
+    PROBE_SHARE = 0.70       # the probe stops once 70% is gone
+
+    def phase_open(self, share: float) -> bool:
+        return (time.time() - self.started) < self.args.budget * share and self.time_left() > 5
+
+    def hold_ms(self):
+        """Median time to first byte of the origin variants: a hold this
+        client is under, recorded so the run can say why the sample is small."""
+        values = [v.get("ttfb_ms") for v in getattr(self, "origin_variants", {}).values()
+                  if isinstance(v.get("ttfb_ms"), (int, float))]
+        return statistics.median(values) if values else None
 
     def timeout_within_budget(self, ceiling: float = None) -> float:
         """A per-request timeout that cannot outlive the crawl budget.
@@ -1413,17 +1487,25 @@ class Collector:
         for candidate in ("https://" + bare, "https://www." + bare,
                           "http://" + bare, "http://www." + bare):
             variants.setdefault(candidate, None)
+        # The four variants are fetched together: an edge that holds every
+        # response from an unrecognised client (ea.com held each one for
+        # 16-49 s once it had seen a few requests) spent the whole crawl
+        # budget here when they ran one after another, and the sample was
+        # empty. Together they cost one round trip, and the crawl still runs.
         results = {}
         chosen = None
+        timeout = self.timeout_within_budget(8)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(variants)) as pool:
+            futures = {candidate: pool.submit(fetch, candidate + "/", AUDIT_UA, timeout)
+                       for candidate in variants}
         for candidate in list(variants):
-            if self.time_left() <= 0:
-                break
-            r = fetch(candidate + "/", timeout=self.timeout_within_budget(8))
+            r = futures[candidate].result()
             results[candidate] = {
                 "status": r.status,
                 "error": getattr(r, "error", None),
                 "redirects_to": r.final_url if r.final_url and
                 normalize_url(r.final_url) != normalize_url(candidate + "/") else None,
+                "ttfb_ms": r.ttfb_ms,
             }
             if chosen is None and r.status and 200 <= r.status < 400:
                 final = urlparse(r.final_url or candidate)
@@ -1525,7 +1607,12 @@ class Collector:
         # was never reached because the cap was spent on the top level.
         inc = tuple(self.args.include or ())
         seen, out, depth, cap = set(), [], 0, 6
-        while queue and depth < 2 and len(out) < cap and self.time_left() > 5:
+        hold = self.hold_ms()
+        if hold and hold >= HOLD_TTFB_MS:
+            # under a hold every sitemap costs as much as a page; read the
+            # index and the seed locale's sitemap, nothing more
+            cap = 2
+        while queue and depth < 2 and len(out) < cap and self.phase_open(self.SITEMAP_SHARE):
             nxt = []
             i = 0
             while i < len(queue):
@@ -1545,6 +1632,8 @@ class Collector:
                                         f"sitemap-{len(out):02d}.xml"), r.body[:2_000_000])
                     if kind == "index":
                         locs = [e["loc"] for e in entries if e.get("loc")]
+                        # the seed's locale tree before the alphabet's
+                        locs.sort(key=lambda u: _locale_rank(self.seed_locale, _locale_of_sitemap(u)))
                         if inc:
                             scoped = [u for u in locs if urlparse(u).path.startswith(inc)]
                             if scoped:
@@ -1559,22 +1648,21 @@ class Collector:
     # -- probe -------------------------------------------------------------
     def ua_probe(self, url: str) -> dict:
         baseline = fetch(url, ua=BROWSER_UA, timeout=self.timeout_within_budget())
-        result = {"url": url, "baseline": _probe_result(baseline, BROWSER_UA), "agents": {}}
-        for token in PROBE_AGENTS:
-            if self.time_left() <= 5:
-                break
+        result = {"url": url, "baseline": _probe_result(baseline, BROWSER_UA),
+                  "agents": {}, "controls": {}}
+        # The agent tokens go out in batches of --concurrency, like pages:
+        # twelve serial probes under a 42 s hold were the rest of the budget.
+        pending = [("agents", t) for t in PROBE_AGENTS] + [("controls", t) for t in PROBE_CONTROLS]
+        while pending and self.phase_open(self.PROBE_SHARE):
+            batch, pending = pending[:self.args.concurrency], pending[self.args.concurrency:]
             time.sleep(self.delay)
-            r = fetch(url, ua=f"Mozilla/5.0 (compatible; {token}/1.0)",
-                      timeout=self.timeout_within_budget())
-            result["agents"][token] = _probe_result(r, token)
-        result["controls"] = {}
-        for token in PROBE_CONTROLS:
-            if self.time_left() <= 5:
-                break
-            time.sleep(self.delay)
-            r = fetch(url, ua=f"Mozilla/5.0 (compatible; {token}/1.0)",
-                      timeout=self.timeout_within_budget())
-            result["controls"][token] = _probe_result(r, token)
+            timeout = self.timeout_within_budget()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=len(batch)) as pool:
+                futures = {(group, token): pool.submit(
+                    fetch, url, f"Mozilla/5.0 (compatible; {token}/1.0)", timeout)
+                    for group, token in batch}
+            for (group, token), fut in futures.items():
+                result[group][token] = _probe_result(fut.result(), token)
         return result
 
     # -- pages -------------------------------------------------------------
@@ -1711,10 +1799,11 @@ class Collector:
             position = seen_in_frontier.get(seg, 0)
             seen_in_frontier[seg] = position + 1
             role_rank = 0 if role == "sitemap-priority" else 1
-            ranked.append((self._boilerplate_rank(url), (taken.get(seg, 0) + position),
-                           role_rank, url, (url, role)))
-        ranked.sort(key=lambda t: (t[0], t[1], t[2], t[3]))
-        return [item for _, _, _, _, item in ranked]
+            locale_rank = _locale_rank(self.seed_locale, _locale_of_path(urlparse(url).path))
+            ranked.append((self._boilerplate_rank(url), locale_rank,
+                           (taken.get(seg, 0) + position), role_rank, url, (url, role)))
+        ranked.sort(key=lambda t: (t[0], t[1], t[2], t[3], t[4]))
+        return [item for _, _, _, _, _, item in ranked]
 
     def save_page(self, r: Fetched, url: str, role: str, origin: str):
         if r.error:
@@ -1868,6 +1957,7 @@ class Collector:
         self.discovered = 0
 
         origin, variants = self.resolve_origin(self.args.target)
+        self.origin_variants = variants
         reachable = any(v.get("status") for v in variants.values())
 
         run_doc = {
@@ -1878,6 +1968,7 @@ class Collector:
             "renderer": {"available": bool(self.renderer_cmd),
                          "name": self.renderer_name,
                          "pages_rendered": 0, "pages_attempted": 0},
+            "hold_ttfb_ms": self.hold_ms(),
             "budget": {
                 "max_pages": self.args.max_pages,
                 "max_concurrency": self.args.concurrency,

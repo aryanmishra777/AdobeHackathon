@@ -114,7 +114,12 @@ python scripts/collect.py https://example.com --out .audit/example.com/run-01
 4. **Select pages deterministically.** Home page first, then sitemap entries in
    file order, then breadth-first from the home page with URLs sorted
    lexicographically, until the budget is reached. No randomness, no
-   time-dependent ordering: the same site yields the same sample.
+   time-dependent ordering: the same site yields the same sample. The seed's
+   locale tree comes first: a site with one sitemap per locale lists them
+   alphabetically, and sampled naively `ea.com/sports` gave 24 Arabic and
+   Czech pages for an English target. A seed under `/in/` samples `/in/`;
+   a seed with no locale segment samples English (`en-*`) and locale-free
+   paths before any other locale.
 
 5. **Fetch pages** with bounded concurrency and the politeness delay. Record the
    full redirect chain, headers, timings and transfer size.
@@ -172,6 +177,7 @@ several are the most severe possible finding:
 | `robots.txt` disallows everything for our UA | Fetch nothing beyond `robots.txt`; `stopped_reason: site-blocked`. Still run the probe. This is a finding, not a failure. |
 | Every page 403s | Record statuses and challenge signatures. The probe is the evidence. |
 | Time budget exhausted | Stop cleanly, `complete: false`, keep what was collected. |
+| The edge holds every response for tens of seconds | `run.json#hold_ttfb_ms` records the median first-byte time of the origin variants. Above 10 s the sitemap phase reads only the index plus the seed locale's sitemap, and both it and the probe stop at a fixed share of the budget (45% and 70%) so the page sample always gets the rest. The origin variants and the probe's agent tokens are fetched together, not one after another. Rerun with a larger `--budget` (and `--timeout`) for a fuller sample; `REACH-015` names the hold. |
 | Non-HTML content type | Skip with reason `non-html`; record the type. No `Content-Type` at all: sniff the body for markup, and skip a binary the same way. |
 | `Content-Encoding: br` or `zstd` | Ask once more with `Accept-Encoding: identity`. If the server insists, skip with reason `undecodable-encoding`; the stdlib cannot decode Brotli and a mojibake page must never be analysed as text. |
 | Several URLs redirect to one page | Store the destination once; later arrivals are skipped with reason `duplicate of <page_id> after redirect`. |

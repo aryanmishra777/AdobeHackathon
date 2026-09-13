@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import tempfile
+import time
 import os
 import subprocess
 import sys
@@ -934,6 +935,109 @@ def test_collector_diversifies_below_the_include_prefix():
     assert seg("https://a.test/in/products/pdfprintengine/faq.html", ["/in/"]) == "products/pdfprintengine"
     assert seg("https://a.test/in/acrobat/pro.html", ["/in/"]) == "acrobat/pro.html"
     assert seg("https://a.test/in/products/x.html", []) == "in/products"
+
+
+def test_collector_samples_the_seed_locale_before_the_alphabet():
+    """ea.com/sports lists one sitemap per locale, alphabetically: sitemap-ar-sa,
+    sitemap-cs-cz, ... The naive sample of the English default was 24 Arabic
+    and Czech pages. The seed's locale tree (English when the seed has none)
+    is ranked first in both the sitemap index and the frontier."""
+    import argparse
+    mod = _collect_module()
+    assert mod._locale_of_path("/cs-cz/careers") == "cs-cz"
+    assert mod._locale_of_path("/in/products/acrobat.html") == "in"
+    assert mod._locale_of_path("/sports") is None
+    assert mod._locale_of_path("/") is None
+    assert mod._locale_of_sitemap("https://www.ea.com/sitemap-ar-sa.xml") == "ar-sa"
+    assert mod._locale_of_sitemap("https://www.ea.com/sitemap-en-us.xml") == "en-us"
+    assert mod._locale_of_sitemap("https://www.adobe.com/in/products.sitemap.cc.xml") == "in"
+    assert mod._locale_of_sitemap("https://x.test/sitemaps/news/es-ES/latest.xml") == "es-es"
+    assert mod._locale_of_sitemap("https://x.test/sitemap-products.xml") is None
+    # no seed locale: English first, locale-free URLs equal to English
+    assert mod._locale_rank(None, None) == 0
+    assert mod._locale_rank(None, "en-gb") == 0
+    assert mod._locale_rank(None, "ar-sa") == 1
+    # a seed under /in/: only /in/ counts as home
+    assert mod._locale_rank("in", "in") == 0
+    assert mod._locale_rank("in", "en-us") == 1
+    args = argparse.Namespace(target="https://www.ea.com/sports", out=tempfile.mkdtemp(), max_pages=5,
+                              timeout=10.0, budget=60.0, concurrency=8, delay=0.0, include=[],
+                              exclude=[], renderer="none", render_pages=0, no_probe=True)
+    c = mod.Collector(args)
+    assert c.seed_locale is None
+    frontier = [("https://www.ea.com/ar-sa/games/fc", "sitemap"),
+                ("https://www.ea.com/cs-cz/games/fc", "sitemap"),
+                ("https://www.ea.com/games/fc", "sitemap"),
+                ("https://www.ea.com/en-gb/games/fc", "sitemap")]
+    ordered = [u for u, _ in c._diversify(frontier)]
+    assert ordered[:2] == ["https://www.ea.com/en-gb/games/fc", "https://www.ea.com/games/fc"]
+    assert set(ordered[2:]) == {"https://www.ea.com/ar-sa/games/fc", "https://www.ea.com/cs-cz/games/fc"}
+
+
+def test_collector_resolves_origin_variants_together(monkeypatch):
+    """ea.com's edge held every response to our client for 16-49 s once it had
+    seen a few requests; four variants fetched one after another spent the
+    whole budget before the crawl began and the sample was empty."""
+    import argparse
+    mod = _collect_module()
+    calls = []
+
+    def slow_fetch(url, ua=mod.AUDIT_UA, timeout=10.0, *a, **k):
+        calls.append(url)
+        time.sleep(0.3)
+        return mod.Fetched(url=url, final_url="https://www.ea.com/", status=200, headers={}, body="",
+                           redirects=[], ttfb_ms=300.0, total_ms=310.0, error=None, truncated=False)
+    monkeypatch.setattr(mod, "fetch", slow_fetch)
+    args = argparse.Namespace(target="https://www.ea.com/sports", out=tempfile.mkdtemp(), max_pages=5,
+                              timeout=10.0, budget=60.0, concurrency=8, delay=0.0, include=[],
+                              exclude=[], renderer="none", render_pages=0, no_probe=True)
+    c = mod.Collector(args)
+    t = time.time()
+    origin, variants = c.resolve_origin(args.target)
+    assert time.time() - t < 0.9          # four fetches, one round trip
+    assert origin == "https://www.ea.com"
+    assert len(calls) == 4 and len(variants) == 4
+    assert variants["https://ea.com"]["redirects_to"] == "https://www.ea.com/"
+    assert variants["https://www.ea.com"]["ttfb_ms"] == 300.0
+
+
+def test_collector_keeps_a_budget_share_for_pages_under_a_hold(monkeypatch, tmp_path):
+    """With ea.com holding every response for 42 s, six sitemaps and twelve
+    serial probes spent a 420 s budget before the first page. The probe now
+    goes out in batches, sitemaps stop at 45% of the budget and shrink to the
+    index plus one under a hold, and the hold is written to run.json."""
+    import argparse
+    mod = _collect_module()
+
+    def slow_fetch(url, ua=mod.AUDIT_UA, timeout=10.0, *a, **k):
+        time.sleep(0.2)
+        body = ""
+        if url.endswith("sitemap.xml"):
+            body = ("<sitemapindex><sitemap><loc>https://www.ea.com/sitemap-ar-sa.xml</loc></sitemap>"
+                    "<sitemap><loc>https://www.ea.com/sitemap-en-us.xml</loc></sitemap></sitemapindex>")
+        elif "sitemap-" in url:
+            body = "<urlset><url><loc>https://www.ea.com/x</loc></url></urlset>"
+        return mod.Fetched(url=url, final_url=url, status=200, headers={"Content-Type": "text/xml"},
+                           body=body, redirects=[], ttfb_ms=42000.0, total_ms=42010.0, error=None,
+                           truncated=False)
+    monkeypatch.setattr(mod, "fetch", slow_fetch)
+    args = argparse.Namespace(target="https://www.ea.com/sports", out=str(tmp_path), max_pages=5,
+                              timeout=10.0, budget=60.0, concurrency=8, delay=0.0, include=[],
+                              exclude=[], renderer="none", render_pages=0, no_probe=True,
+                              max_bytes=3_000_000)
+    c = mod.Collector(args)
+    c.origin_variants = {"https://www.ea.com": {"ttfb_ms": 42000.0}, "https://ea.com": {"ttfb_ms": 16000.0}}
+    assert c.hold_ms() == 29000.0
+    maps = c.load_sitemaps("https://www.ea.com", ["https://www.ea.com/sitemap.xml"])
+    assert [m["url"] for m in maps] == ["https://www.ea.com/sitemap.xml", "https://www.ea.com/sitemap-en-us.xml"]
+    t = time.time()
+    probe = c.ua_probe("https://www.ea.com/sports")
+    assert time.time() - t < 1.5                       # baseline + two batches, not thirteen fetches
+    assert set(probe["agents"]) == set(mod.PROBE_AGENTS)
+    assert set(probe["controls"]) == set(mod.PROBE_CONTROLS)
+    # the probe stops when its share of the budget is gone
+    c.started = time.time() - 50
+    assert c.ua_probe("https://www.ea.com/sports")["agents"] == {}
 
 
 def test_read_001_recognises_a_byte_identical_shell_and_a_no_javascript_message(tmp_path):
