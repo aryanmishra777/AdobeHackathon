@@ -97,9 +97,12 @@ def _run(dst):
     return json.loads(proc.stdout)
 
 
-def _truthful(f, names, pattern, baseline, probe):
+def _truthful(f, names, pattern, baseline, probe, state="refused"):
     """Every claim in the finding's title and evidence is true of the probe."""
     text = (f["title"] + " " + f["evidence"]).lower()
+    if "audit's own" in f["title"].lower() and ("refused" in f["title"].lower() or "turned away" in f["title"].lower()):
+        # the audit's own user-agent is only known to have been refused in these states
+        assert state in ("refused", "challenged"), (f["title"], state)
     outcome = {n: pattern[i % len(pattern)] for i, n in enumerate(names)}
     served = [n for n, o in outcome.items() if o in ("served", "soft")]
     unserved = [n for n, o in outcome.items() if o not in ("served", "soft")]
@@ -117,8 +120,16 @@ def _truthful(f, names, pattern, baseline, probe):
         assert not unserved, (f["title"], unserved)
     if "every named ai agent" in text and ("refused" in text or "stalled" in text):
         assert not served, (f["title"], served)
-    if "every request" in f["title"].lower():
+    if "every request" in f["title"].lower() or "every user-agent" in f["title"].lower():
         assert not served, (f["title"], served)          # a refusal of everything spares no agent
+    if "were refused while" in f["title"] or "were turned away while" in f["title"]:
+        after = f["title"].split("while", 1)[1]          # only served agents are named after "while"
+        for n in unserved:
+            assert n not in after, (f["title"], n)
+        seg = f["evidence"].split("The edge served", 1)[-1]
+        for n, o in outcome.items():                     # "refused" only for agents that were
+            if o in ("stalled", "error", "soft", "served"):
+                assert f"{n} were refused" not in seg and f"{n} was refused" not in seg, (n, seg[:200])
     if f["title"].startswith("The named AI agents were refused") or "refused or unanswered" in f["title"]:
         assert truly_refused, (f["title"], outcome)      # an error is not a refusal
     for n in unserved:
@@ -146,7 +157,7 @@ def test_every_empty_sample_gets_exactly_one_truthful_explanation(tmp_path, stat
     reach = [f for f in doc["findings"] if f["check_id"] in ("REACH-005", "REACH-002")]
     assert reach, (state, baseline, pattern, controls, [f["check_id"] for f in doc["findings"]])
     for f in reach:
-        _truthful(f, names, pattern, baseline, probe=True)
+        _truthful(f, names, pattern, baseline, probe=True, state=state)
     # one explanation, not two competing ones, unless REACH-005's verified block
     # and REACH-002's robots block are both genuinely present
     titles = [f["title"] for f in reach if f["check_id"] == "REACH-005"]
@@ -227,7 +238,7 @@ def test_empty_state_names_its_cause(tmp_path, stopped, check, phrase):
 
 
 @pytest.mark.parametrize("baseline,pattern,controls,phrase", [
-    ("refused", ("refused",), ("refused", "refused"), "browser user-agent included"),
+    ("refused", ("refused",), ("refused", "refused"), "browser included"),
     ("served", ("refused",), ("served", "served"), "control names were served"),
     ("challenged", ("served",), ("served", "served"), "named ai agents were served"),
 ])
@@ -241,7 +252,25 @@ def test_empty_state_keeps_the_probes_explanation(tmp_path, baseline, pattern, c
     assert hits and phrase in hits[0]["title"].lower(), [f["title"] for f in doc["findings"]]
     assert not [f for f in doc["findings"] if "larger --budget" in f["evidence"]]
     for f in hits:
-        _truthful(f, names, pattern, baseline, probe=True)
+        _truthful(f, names, pattern, baseline, probe=True, state="empty")
+
+
+@pytest.mark.parametrize("state", ["empty", "refused"])
+@pytest.mark.parametrize("pattern", [("served", "error"), ("served", "stalled"), ("served", "refused", "error")])
+def test_mixed_refusals_name_each_outcome_apart(tmp_path, state, pattern):
+    """Seventh review: the mixed title called stalled and 5xx agents 'refused',
+    the body argued the rule was not keyed on the name while the title listed
+    agents served by name, and an empty sample claimed the audit's own
+    user-agent was refused."""
+    dst, names = _build(tmp_path, state, "refused", pattern, ("served", "served"), stopped="completed")
+    doc = _run(dst)
+    hits = [f for f in doc["findings"] if f["check_id"] == "REACH-005"]
+    assert hits
+    for f in hits:
+        _truthful(f, names, pattern, "refused", probe=True, state=state)
+        assert "not on the agent name" not in f["evidence"]
+        if state == "empty":
+            assert "audit's own" not in f["title"]
 
 
 def test_empty_completed_crawl_names_the_skip_reasons(tmp_path):

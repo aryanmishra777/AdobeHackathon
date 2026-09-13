@@ -1800,13 +1800,18 @@ def check_sample_state(b: Bundle) -> list[dict]:
              "that is not a page, robots-disallow at a rule that covers every path",
              "Rerun from the page a visitor lands on, or with a larger --timeout"],
             "An empty sample measures nothing.")]
+    # Whether the audit's own user-agent was refused is only known for the
+    # refused and challenged states; an empty sample's own fetches were
+    # skipped or never made, so the titles below speak of the probe alone.
+    own = " and the audit's own" if state in ("refused", "challenged") else ""
     if not p["baseline_served"] and p["served"] and not p["unserved"]:
         # The browser user-agent was refused or challenged while every named
         # agent was served: a rule against unfamiliar browsers or automation,
         # not against the address and not against the agents.
         return [_sample_finding(
-            "REACH-005", "The browser user-agent and the audit's own were refused while the named "
-                         "AI agents were served", "low", refs,
+            "REACH-005", f"The browser user-agent{own} were refused while the named AI agents were served"
+                         if own else "The browser user-agent was refused while the named AI agents were served",
+            "low", refs,
             f"{what}. {observed} The edge spares the agents robots.txt permits and challenges or "
             f"refuses what it does not recognise as a real browser -- this probe's browser string "
             f"included. Not a defect for AI discoverability; it is why this audit could sample no "
@@ -1817,13 +1822,40 @@ def check_sample_state(b: Bundle) -> list[dict]:
              "they should see content"],
             "Unknown crawlers include the next AI agent that has not published a name yet.",
             confidence="medium")]
+    if not p["baseline_served"] and p["served"]:
+        # The browser was refused and so were some named agents, while others
+        # were served by name: a rule with exceptions, keyed on the name --
+        # that much was observed. Refused, stalled and errored are said apart.
+        parts = []
+        if p["refused"]:
+            parts.append(f"{', '.join(p['refused'])} were refused or challenged")
+        if p["stalled"]:
+            parts.append(f"{', '.join(p['stalled'])} never answered")
+        if p["other"]:
+            parts.append(f"{', '.join(p['other'])} received an error")
+        return [_sample_finding(
+            "REACH-005", f"The browser user-agent{own} and some named AI agents were turned away "
+                         f"while {', '.join(p['served'])} were served",
+            "medium", refs,
+            f"{what}. {observed} The edge served {', '.join(p['served'])} by name while "
+            f"{'; '.join(parts)}, and the browser user-agent got "
+            f"{'a challenge page' if p['baseline'] == 200 else p['baseline'] or 'no answer'}: "
+            f"a rule keyed on client names with exceptions, and this address was not one of them. "
+            f"Which of the turned-away agents are refused as a policy and which as unverified "
+            f"impersonation of a name cannot be told from here.",
+            f"curl -s -o /dev/null -w '%{{http_code}}' -A 'Mozilla/5.0 (compatible; "
+            f"{(p['refused'] + p['stalled'] + p['other'])[0]}/1.0)' {b.origin}/  from a second network",
+            "Confirm which named AI agents the edge means to turn away",
+            ["Check the bot-management rule for the turned-away names: verification by IP range "
+             "(genuine agents pass) or a plain deny",
+             "If it is a deny, allow-list the retrieval agents robots.txt permits"],
+            "If the rule is a deny, the agents it names are turned away wherever they come from; "
+            "if it is verification, nothing on the site is wrong.")]
     if not p["baseline_served"]:
-        # The browser was refused too: keyed on the address or network -- or,
-        # when some named agents were spared, a rule with exceptions.
+        # The browser was refused too and no named agent was spared: keyed
+        # on the address or network.
         title = ("Every request from the audit's address was refused, browser user-agent included"
-                 if not p["served"] else
-                 f"The browser user-agent, the audit's own and {', '.join(p['unserved'])} were "
-                 f"refused while {', '.join(p['served'])} were served")
+                 if own else "Every user-agent the probe tried was refused, browser included")
         return [_sample_finding(
             "REACH-005", title,
             "medium", refs,
