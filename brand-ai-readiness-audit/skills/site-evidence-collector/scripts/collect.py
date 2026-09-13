@@ -98,6 +98,35 @@ CHALLENGE_SIGNATURES = [
     "security issue was automatically identified",
 ]
 
+# A page that is not the page: an edge or an application answering 200 with
+# a challenge, an "unsupported client" notice or a "please enable JavaScript"
+# stub. canva.com served "Unsupported client" (58 words) to the audit's
+# user-agent on all 25 URLs while a browser and every AI agent got the real
+# 330 KB page; lemonde.fr served "Client Challenge" (48 words) the same way.
+# Analysing those as content produced forty findings about a stub.
+SOFT_BLOCK_SIGNATURES = [
+    "client challenge", "unsupported client", "update your browser",
+    "unsupported browser", "browser is not supported", "browser not supported",
+    "please enable javascript to proceed", "javascript is disabled in your browser",
+    "verify you are human", "are you a robot", "bot detection", "access to this page has been denied",
+    "please verify you are a human", "one more step", "checking if the site connection is secure",
+]
+SOFT_BLOCK_MAX_WORDS = 200
+
+
+def _is_challenge_page(body: str) -> bool:
+    """Whether a 200 body is a challenge or unsupported-client stub rather
+    than the page: a known signature and almost no text."""
+    if not body:
+        return False
+    low = body.lower()
+    if not any(sig in low for sig in CHALLENGE_SIGNATURES + SOFT_BLOCK_SIGNATURES):
+        return False
+    text = re.sub(r"<script.*?</script>|<style.*?</style>", " ", body, flags=re.S | re.I)
+    text = re.sub(r"<[^>]+>", " ", text)
+    return len(text.split()) <= SOFT_BLOCK_MAX_WORDS
+
+
 # Paths that are never content: transactional and authenticated areas the
 # handout forbids us to touch, plus machine-facing utility pages. An HTML
 # sitemap index (vox.com/sitemaps/entries/2026/9) sampled as a content page
@@ -110,7 +139,7 @@ SKIP_PATH_PATTERNS = re.compile(
     r"sitemaps?|sitemap[-_]?index|feed|feeds|rss|atom|search|"
     r"wp-json|xmlrpc\.php|cgi-bin)(/|$|\?)", re.I)
 LEGAL_PATH_RE = re.compile(
-    r"(^|/)(legal|terms|tos|privacy|policy|policies|cookies?|gdpr|ccpa|"
+    r"(^|/)(legal|terms|tos|privacy|policy|policies|cookies?|gdpr|ccpa|licen[cs]e|copyright|imprint|impressum|disclaimer|"
     r"accessibility-statement|modern-slavery|[a-z0-9-]+-(?:terms|agreement|"
     r"policy|statement))(/|$)|/legal/", re.I)
 SKIP_QUERY_PATTERNS = re.compile(
@@ -474,6 +503,17 @@ def _decode_body(raw: bytes, headers) -> str:
             _note_extra("zstandard", "decoded a zstd-encoded response body")
     except Exception:
         pass  # truncated compressed body; fall through with what we have
+    # a .xml.gz sitemap served as application/x-gzip: the bytes are the file,
+    # not a transfer encoding, and airbnb.com's sitemap index was stored as
+    # mojibake and reported as "does not parse". airbnb.com also gzip-encodes
+    # the transfer of the .gz file, so there can be two layers.
+    for _ in range(2):
+        if raw[:2] != b"\x1f\x8b":
+            break
+        try:
+            raw = gzip.decompress(raw)
+        except Exception:
+            break
     charset = None
     ctype = headers.get("Content-Type") or ""
     if "charset=" in ctype:
@@ -1271,6 +1311,10 @@ def parse_sitemap(text: str):
     """Return (kind, entries, errors). lastmod is preserved verbatim -- TRUST-003
     tests whether the claim is honest, which is impossible once normalized."""
     import xml.etree.ElementTree as ET
+    head = (text or "").lstrip()[:300].lower()
+    if head.startswith("<!doctype html") or head.startswith("<html") or "<html" in head[:120]:
+        # tartinebakery.com answers /sitemap.xml with its HTML home page
+        return "invalid", [], ["not XML: the URL returned an HTML page"]
     try:
         root = ET.fromstring(text.strip())
     except ET.ParseError as exc:
@@ -1377,7 +1421,7 @@ def classify_page_type(url: str, extracted: dict | None) -> str:
         (r"/(about|company|team|who-we-are|our-story)", "about"),
         (r"/(contact|support|help-?desk|get-in-touch)", "contact"),
         (r"/(faq|faqs|questions|q-and-a)", "faq"),
-        (r"/(privacy|terms|legal|cookie|gdpr|imprint|disclaimer)", "legal"),
+        (r"/(privacy|terms|legal|cookie|gdpr|imprint|impressum|disclaimer|licen[cs]e|copyright)", "legal"),
     ]
     for pattern, label in rules:
         if re.search(pattern, path):
@@ -1520,6 +1564,8 @@ class Collector:
 
     def skip(self, url: str, reason: str) -> None:
         self.skipped.append({"url": url, "reason": reason})
+
+    challenge_pages = 0
 
     # -- origin ------------------------------------------------------------
     def resolve_origin(self, target: str):
@@ -1753,6 +1799,13 @@ class Collector:
             if self.time_left() <= 3:
                 self.stopped = "time-budget"
                 return
+            # An edge answering every URL with a challenge stub will answer
+            # the next hundred the same way: lemonde.fr yielded 293 stubs and
+            # three pages before the budget ran out. Stop once the pattern
+            # is plain and let the report say what was served.
+            if self.challenge_pages >= 12 and fetched < 5:
+                self.stopped = "challenged"
+                return
             batch = []
             while index < len(queue) and len(batch) < self.args.concurrency \
                     and fetched + len(batch) < self.args.max_pages:
@@ -1905,6 +1958,10 @@ class Collector:
         if not ctype and not _looks_like_markup(r.body or ""):
             self.skip(url, "non-html")
             return None
+        if _is_challenge_page(r.body or ""):
+            self.challenge_pages += 1
+            self.skip(url, "challenge-page")
+            return None
         # A page that redirected to another host is that host's page, not this
         # site's. curl.se/bug?i=... lands on GitHub Issues; storing the GitHub
         # page as curl's gave the answerability skill og:site_name=GitHub, and
@@ -2056,7 +2113,13 @@ class Collector:
         }
 
         if not reachable:
-            self.stopped = "dns-failure"
+            errors = " ".join(str(v.get("error") or "") for v in variants.values()).lower()
+            # zomato.com answered curl in under a second and timed out every
+            # connection from this client; "dns-failure" was the wrong story
+            self.stopped = ("unreachable-timeout" if "timed out" in errors or "timeout" in errors
+                            else "dns-failure" if ("getaddrinfo" in errors or "name or service" in errors
+                                                    or "nodename" in errors or "gaierror" in errors)
+                            else "unreachable")
             robots_info = {"fetched": False, "status": None, "parse_errors": [],
                            "groups": [], "sitemap_urls": [], "agent_matrix": {},
                            "llms_txt": {}}
@@ -2091,6 +2154,19 @@ class Collector:
             "stopped_reason": self.stopped,
             "skipped": self.skipped,
             "extractor_disagreements": self.extractor_disagreements,
+            # "challenge-page" skips: the edge answered 200 with a stub
+            "challenge_pages": self.challenge_pages,
+            # what the analyzers have to work with, in one word: "pages",
+            # "refused" (every fetch 4xx/5xx), "challenged" (stubs only),
+            # "timed-out", "unresolved" (DNS) or "empty"
+            "sample": ("challenged" if self.challenge_pages >= 10
+                       and len([p for p in self.pages if p.get("status") == 200]) < 5
+                       else "pages" if any(p.get("status") == 200 for p in self.pages)
+                       else "challenged" if self.challenge_pages
+                       else "refused" if any((p.get("status") or 0) >= 400 for p in self.pages)
+                       else "timed-out" if self.stopped == "unreachable-timeout"
+                       else "unresolved" if self.stopped == "dns-failure"
+                       else "empty"),
         }
         _write_json(os.path.join(self.out, "coverage.json"), coverage)
 

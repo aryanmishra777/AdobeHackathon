@@ -357,3 +357,15 @@ def test_site_profile_needs_a_majority_of_articles_and_reads_pricing_from_links(
                  os.path.join(os.path.dirname(CHECK_TRUST), "..", "..", "structured-data-audit", "scripts", "check_structured_data.py")):
         other = open(path, encoding="utf-8").read()
         assert 'article_count >= max(2, len(self.ok_pages) // 2)' in other, path
+
+
+def test_trust_004_reads_the_last_year_of_a_copyright_range_and_current_account_is_a_product():
+    """docs.python.org writes 'Copyright 2001-2026' and every page was
+    twenty-five years stale; hdfcbank.com's 'Current Account' was a claim
+    about the present."""
+    mod = _trust_module()
+    ex = {"dates": [{"source": "copyright", "value": "© Copyright 2001-2026, Python Software Foundation"},
+                    {"source": "copyright", "value": "© 1990"}]}
+    assert mod._copyright_years(ex) == [1990, 2026]
+    assert mod._currency_match("Open a Current Account with HDFC Bank") is None
+    assert mod._currency_match("Current offers on home loans").group(0).lower() == "current"

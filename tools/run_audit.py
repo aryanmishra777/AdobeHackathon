@@ -243,11 +243,55 @@ def main(argv=None) -> int:
 
     manifest = json.load(io.open(os.path.join(bundle, "MANIFEST.json"), encoding="utf-8"))
     pages = sum(1 for p in manifest.get("pages", []) if p.get("status") == 200)
+    run_doc = manifest.get("run") or {}
+    try:
+        run_doc = json.load(io.open(os.path.join(bundle, "run.json"), encoding="utf-8"))
+    except (OSError, ValueError):
+        pass
+    renderer = run_doc.get("renderer") or {}
+    hold_ms = run_doc.get("hold_ttfb_ms")
+    stopped = (manifest.get("coverage") or {}).get("stopped_reason") or run_doc.get("stopped_reason")
+    try:
+        cov_doc = json.load(io.open(os.path.join(bundle, "coverage.json"), encoding="utf-8"))
+        stopped = cov_doc.get("stopped_reason") or stopped
+        complete = bool(cov_doc.get("complete"))
+    except (OSError, ValueError):
+        complete = False
+    # A hostile edge: every response held for tens of seconds (ea.com held
+    # each one for 42 s once it had seen a burst), so the default budget
+    # buys a handful of pages. Say so loudly, in the terminal and in the
+    # report, and say what to run instead. The report stays honest either
+    # way; what must not happen is a reader taking a two-page sample for a
+    # verdict on the site.
+    held = isinstance(hold_ms, (int, float)) and hold_ms >= 10000
+    budget_used = (run_doc.get("budget") or {}).get("total_fetch_budget_s") or args.budget
+    starved = pages < 10 and (held or stopped == "time-budget")
+    if starved:
+        print("\n  NOTE: the site's edge held responses for about "
+              f"{int((hold_ms or 0) / 1000)} s each and the crawl fetched {pages} page(s) "
+              f"before its {budget_used:.0f}s budget ran out. The report below is honest about "
+              "that but thin. For a full sample rerun with a larger budget and cap, e.g.\n"
+              f"    python tools/run_audit.py {args.target} --budget 900 --cap 1500\n",
+              file=sys.stderr)
 
     candidates, ran, skipped, engine_rows, proactive = [], [], [], [], []
     cut_stages, cut_checks = [], []
+    # What the crawl produced: "pages", or "refused" / "challenged" /
+    # "timed-out" / "unresolved" / "empty". With no page, only REACH has
+    # anything to say (robots.txt, the probe, the sample state itself); the
+    # five content analyzers would grade an empty sample, and did -- seven
+    # unseen sites that refused every fetch scored 83-100 on discoverability.
+    sample = (cov_doc.get("sample") if isinstance(cov_doc, dict) else None) or ("pages" if pages else "empty")
+    not_sampled = [] if sample == "pages" else [m for m, _, _ in ANALYZERS if m != "reach"]
+    if not_sampled:
+        print(f"\n  NOTE: the crawl fetched no page content (sample: {sample}); only the "
+              f"access analysis runs and both axes are reported as not assessed.\n",
+              file=sys.stderr)
     for mech, skill, script in ANALYZERS:
         path = os.path.join(SKILLS, skill, "scripts", script)
+        if mech in not_sampled:
+            print(f"  {skill:<32} NOT RUN: no page content to analyse", file=sys.stderr)
+            continue
         if remaining() < MERGE_RESERVE_SECONDS:
             cut_stages.append(mech)
             print(f"  {skill:<32} NOT RUN: {remaining():.0f}s left of the "
@@ -279,10 +323,20 @@ def main(argv=None) -> int:
     # The orchestrator writes these in prose; standing in for it, we compose
     # them from what was measured so the report satisfies its own schema.
     sc = merged["scorecard_input"]
+    if not_sampled:
+        # REACH alone cannot grade discoverability, and a verdict over an empty
+        # sample is the confident false positive the rubric punishes hardest.
+        reason = f"the crawl fetched no page content (sample: {sample})"
+        sc["discoverability"] = {"score": None, "grade": "not assessed", "reason": reason}
+        sc["engagement"] = {"score": None, "grade": "not assessed", "reason": reason}
     for axis, question in (("discoverability", "find, trust and cite you"),
                            ("engagement", "stay once they arrive")):
         a = sc.get(axis) or {}
-        if a.get("score") is None:
+        if a.get("score") is None and not_sampled:
+            a["headline"] = (f"Not assessed -- the crawl fetched no page content (sample: {sample}); "
+                             f"the findings below describe the access problem and nothing else "
+                             f"was measured.")
+        elif a.get("score") is None:
             a["headline"] = ("Not assessed -- no analyzer ran for this axis, so "
                              "it is deliberately left ungraded.")
         elif axis == "engagement":
@@ -298,6 +352,9 @@ def main(argv=None) -> int:
             a["headline"] = (f"{a['grade']} ({a['score']}/100) for whether people "
                              f"and machines can {question}.")
     sc["verdict"] = grade_line(sc)
+    if not_sampled:
+        sc["verdict"] = ("Nothing about the site's content could be measured from this address; "
+                         "the access findings below say why, and whether named AI agents are affected.")
 
     for i, p_ in enumerate(proactive, 1):
         p_["id"] = f"P-{i:03d}"
@@ -312,14 +369,36 @@ def main(argv=None) -> int:
         "proactive_recommendations": proactive,
         "engine_reachability": engine_rows,
         "coverage": {
-            "complete": False,
+            "complete": complete,
             "pages_sampled": pages,
             "pages_fetched": pages,
             "checks_skipped": skipped,
-            "limitations": [
+            "limitations": ([
+                f"{renderer.get('pages_rendered', 0)} of {renderer.get('pages_attempted', 0)} "
+                f"sampled pages were rendered with {renderer.get('name')}; JavaScript dependency "
+                f"is measured on those and inferred from raw HTML on the rest."
+            ] if renderer.get("available") else [
                 "No browser renderer was available, so JavaScript dependency is "
                 "inferred from raw HTML rather than measured.",
-            ] + ([f"The audit's {args.cap:.0f}s wall-clock cap was reached: "
+            ]) + ([
+                f"The site's edge held every response for about {int((hold_ms or 0) / 1000)} s "
+                f"and the crawl fetched {pages} page(s) inside its {budget_used:.0f}s budget; the sample "
+                f"is too small for a site-wide verdict. Rerun with --budget 900 --cap 1500 for a full "
+                f"sample. What was fetched is analysed honestly below."
+            ] if (starved and not not_sampled) else [
+                f"The site's edge held every response for about {int((hold_ms or 0) / 1000)} s; the "
+                f"{pages}-page sample needed a {budget_used:.0f}s fetch budget. REACH-015 describes the hold."
+            ] if (held and not not_sampled) else []) + ([
+                f"No page content was sampled (sample: {sample}): "
+                + {"refused": "every fetch under the audit's user-agent was refused",
+                   "challenged": "every fetch returned a challenge or unsupported-client stub",
+                   "timed-out": "every connection timed out from the audit's client",
+                   "unresolved": "the host did not resolve from the audit's network",
+                   "empty": "no page was fetched"}.get(sample, sample)
+                + ". Only the access analysis ran; the reachability table and the REACH findings are "
+                "what was measured. Rerun from another network or with a browser before drawing a "
+                "conclusion about the site's content."
+            ] if not_sampled else []) + ([f"The audit's {args.cap:.0f}s wall-clock cap was reached: "
                   f"{len(cut_stages)} analysis stage(s) did not run ({', '.join(cut_stages)}) "
                   f"and {len(cut_checks)} check(s) were cut short "
                   f"({', '.join(cut_checks[:12])}{'...' if len(cut_checks) > 12 else ''}). "

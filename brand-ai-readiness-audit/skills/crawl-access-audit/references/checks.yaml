@@ -346,8 +346,11 @@ checks:
     inputs: [pages/*/request.json#timing]
     detection: deterministic
     severity_rule: >-
-      medium when median TTFB across sampled pages exceeds 1500 ms;
-      high when it exceeds 3000 ms or any sampled page times out.
+      low (confidence low) when median TTFB across sampled pages is between
+      1500 and 3000 ms, which one ocean of distance can explain on its own;
+      medium when it exceeds 3000 ms; medium, locked, when it exceeds 10 s,
+      which is an edge holding the client, not distance. Never high from
+      timing alone.
     evidence_template: "Median time to first byte across {m} sampled pages was {ttfb} ms."
     verification: "curl -s -o /dev/null -w '%{time_starttransfer}' https://{site}/"
     fix_ref: references/fixes/performance.md

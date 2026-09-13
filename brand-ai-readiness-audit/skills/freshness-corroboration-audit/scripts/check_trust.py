@@ -133,7 +133,10 @@ COMING_YEAR_RE = re.compile(r"\bcoming (?:soon )?in (20\d{2})\b", re.I)
 UI_CURRENT_RE = re.compile(
     r"\b(?:the |a )?current(?:ly)? (?:item|slide|page|tab|step|view|selection|"
     r"language|region|location|settings?|disabled|enabled|selected|active|"
-    r"viewing|playing|open|closed|hidden|shown)\b", re.I)
+    r"viewing|playing|open|closed|hidden|shown|"
+    # a product or a genre named "current": hdfcbank.com's Current Account
+    r"accounts?|affairs|events|issue|edition|liabilities|assets|ratio|density|"
+    r"transformer|sensor|clamp|limit(?:er|ing)?|draw|flow|loop)\b", re.I)
 
 
 def _currency_match(text: str):
@@ -586,8 +589,17 @@ def _page_any_dates(ex: dict) -> list:
 
 
 def _copyright_years(ex: dict) -> list:
-    return sorted({y for y in (_year(d.get("value")) for d in ex.get("dates") or []
-                               if d.get("source") == "copyright") if y})
+    """The year each copyright line claims: the LAST year in it. docs.python.org
+    writes 'Copyright 2001-2026, Python Software Foundation' and the first
+    year made every page twenty-five years stale."""
+    out = set()
+    for d in ex.get("dates") or []:
+        if d.get("source") != "copyright":
+            continue
+        years = [int(y) for y in re.findall(r"(?<!\d)(?:19|20)\d{2}(?!\d)", str(d.get("value") or ""))]
+        if years:
+            out.add(max(years))
+    return sorted(out)
 
 
 def _sentences(text: str) -> list:
@@ -1006,6 +1018,10 @@ def check_trust_008(b: Bundle) -> list:
     """No sentence identifies the organization unambiguously. Model-judged,
     on-site (runs even when the off-site checks are skipped)."""
     phrases = b.brand_phrases
+    if len(b.content_pages) < 3 and b.content_pages:
+        b.skip_check("TRUST-008", f"only {len(b.content_pages)} content page(s) in the sample; "
+                                  "a site-wide absence cannot be claimed from fewer than three")
+        return []
     if not phrases or not b.content_pages:
         b.skip_check("TRUST-008", "could not run: no brand name resolved from the "
                      "bundle, or no page carries assessable content")

@@ -106,7 +106,7 @@
   "supersession_rules": [
     {
       "root_cause": "READ-001",
-      "supersedes": ["PARSE-001", "QUOTE-001", "QUOTE-002", "QUOTE-003"],
+      "supersedes": ["PARSE-001", "QUOTE-001", "QUOTE-002", "QUOTE-003", "READ-003", "STAY-001", "STAY-003", "STAY-004"],
       "scope": "same page",
       "rationale": "If the main content is absent from the raw HTML, the absence of structured data and quotable facts on that page is a symptom of one root cause, not four independent defects."
     },
@@ -124,7 +124,7 @@
     },
     {
       "root_cause": "READ-013",
-      "supersedes": ["READ-001", "QUOTE-001", "STAY-001"],
+      "supersedes": ["READ-001", "QUOTE-001", "STAY-001", "READ-003", "STAY-003", "STAY-004"],
       "scope": "same page",
       "rationale": "A consent wall serving no content pre-consent explains the empty body, the unquotable chunks, and the missing orientation simultaneously."
     }

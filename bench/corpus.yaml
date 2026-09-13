@@ -685,7 +685,9 @@ sites:
     - REACH-002
     - REACH-003
     - REACH-005
-    - REACH-006
+    # REACH-006 removed 2026-09-13: a refused or unparseable sitemap on a
+    # crawl that fetched no page (or whose sitemap is REACH-007's) says
+    # nothing about the sitemap's absence; the check now records a skip.
 
   - url: https://www.redcross.org
     seo: good
@@ -703,9 +705,11 @@ sites:
       Claude-User:403/challenge), so no page of it can be fetched, read or cited.'
     expect_findings:
     - REACH-005
-    - REACH-006
     expect_absent:
     - REACH-002
+    # REACH-006 removed 2026-09-13: a refused or unparseable sitemap on a
+    # crawl that fetched no page (or whose sitemap is REACH-007's) says
+    # nothing about the sitemap's absence; the check now records a skip.
 
   - url: https://www.theatlantic.com
     seo: good
@@ -1311,9 +1315,11 @@ sites:
     expect_findings:
     - REACH-003
     - REACH-005
-    - REACH-006
     expect_absent:
     - REACH-002
+    # REACH-006 removed 2026-09-13: a refused or unparseable sitemap on a
+    # crawl that fetched no page (or whose sitemap is REACH-007's) says
+    # nothing about the sitemap's absence; the check now records a skip.
 
   - url: https://www.khanacademy.org
     seo: poor
@@ -1334,9 +1340,11 @@ sites:
     expect_findings:
     - PARSE-001
     - REACH-005
-    - REACH-006
     expect_absent:
     - REACH-002
+    # REACH-006 removed 2026-09-13: a refused or unparseable sitemap on a
+    # crawl that fetched no page (or whose sitemap is REACH-007's) says
+    # nothing about the sitemap's absence; the check now records a skip.
 
   - url: https://www.tuhs.org
     seo: poor

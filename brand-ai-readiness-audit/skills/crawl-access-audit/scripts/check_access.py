@@ -26,6 +26,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import os
 import re
@@ -79,12 +80,35 @@ class Bundle:
         self.sitemaps = self.manifest.get("sitemaps") or []
         self.probe = self.manifest.get("ua_probe") or {}
         self.coverage = self.manifest.get("coverage") or {}
+        try:
+            cov = json.load(io.open(os.path.join(self.root, "coverage.json"), encoding="utf-8"))
+            self.coverage = {**self.coverage, **cov} if isinstance(cov, dict) else self.coverage
+        except (OSError, ValueError):
+            pass
         self.pages = self.manifest.get("pages") or []
+        self.checks_skipped: list = []
         self.origin = self.run.get("origin") or ""
         self.site = urlparse(self.origin).netloc or self.origin
         self._extracted: dict[str, dict] = {}
         self._headers: dict[str, dict] = {}
         self._requests: dict[str, dict] = {}
+
+    @property
+    def sample(self) -> str:
+        """What the analyzers have to work with: "pages", or one of
+        "refused", "challenged", "timed-out", "unresolved", "empty"."""
+        state = self.coverage.get("sample")
+        if state:
+            return state
+        if any(p.get("status") == 200 for p in self.pages):
+            return "pages"
+        if any((p.get("status") or 0) >= 400 for p in self.pages):
+            return "refused"
+        stopped = self.coverage.get("stopped_reason") or ""
+        return "timed-out" if "timeout" in stopped else "unresolved" if stopped == "dns-failure" else "empty"
+
+    def skip_check(self, check_id: str, reason: str) -> None:
+        self.checks_skipped.append({"check_id": check_id, "reason": reason})
 
     def _json(self, rel: str):
         path = os.path.join(self.root, rel.replace("/", os.sep))
@@ -522,8 +546,20 @@ def check_reach_006(b: Bundle) -> list[dict]:
     reachable = [s for s in b.sitemaps if s.get("kind") in ("index", "urlset")]
     if reachable:
         return []
+    # a sitemap that was fetched (200) but did not parse is REACH-007's
+    # finding; airbnb.com's gzipped index and tartinebakery.com's HTML at
+    # /sitemap.xml were reported as both "does not parse" and "none published"
+    if any(s.get("status") == 200 and s.get("kind") == "invalid" for s in b.sitemaps):
+        return []
 
     statuses = ", ".join(str(s.get("status")) for s in b.sitemaps) or "no attempt"
+    if b.sample != "pages":
+        # etsy.com refused every fetch and the check called it "small enough
+        # that crawling reaches everything"; nothing was crawled
+        b.skip_check("REACH-006", f"sitemap presence was not judged: the crawl fetched no "
+                                  f"pages (sample: {b.sample}), so the site's size is unknown "
+                                  f"and a refused /sitemap.xml says nothing about its absence")
+        return []
     n_pages = max(len(b.ok_pages), b.coverage.get("pages_discovered", 0))
     # Guard: a small brochure site does not need a sitemap.
     if n_pages < 20:
@@ -720,6 +756,38 @@ def _same_site(host_a: str, host_b: str) -> bool:
     return strip(a) == strip(b_)
 
 
+def _brand_label(host: str) -> str:
+    """The brand part of a host: 'airbnb' for www.airbnb.co.in, 'hdfcbank' for
+    www.hdfcbank.com and 'hdfc' for hdfc.bank.in -- the first label after
+    www, with dots and hyphens dropped so hdfc.bank.in and hdfcbank.com agree."""
+    host = (host or "").lower().split(":")[0]
+    if host.startswith("www."):
+        host = host[4:]
+    labels = [l for l in host.split(".") if l]
+    if not labels:
+        return ""
+    ext = _optional("tldextract")
+    if ext is not None:
+        try:
+            e = ext.extract(host)
+            if e.domain:
+                return re.sub(r"[-.]", "", (e.subdomain + e.domain) if e.subdomain and e.subdomain != "www" and len(e.domain) <= 4 else e.domain)
+        except Exception:
+            pass
+    # without the public suffix list: drop a 2-letter country code and a
+    # known second-level label, keep what is left, squash punctuation
+    while len(labels) > 1 and (len(labels[-1]) == 2 or labels[-1] in ("com", "org", "net", "co", "bank", "gov", "edu", "ac")):
+        labels.pop()
+    return re.sub(r"[-.]", "", "".join(labels))
+
+
+def _same_brand(host_a: str, host_b: str) -> bool:
+    x, y = _brand_label(host_a), _brand_label(host_b)
+    if not x or not y:
+        return False
+    return x == y or (min(len(x), len(y)) >= 4 and (x.startswith(y) or y.startswith(x)))
+
+
 def check_reach_010(b: Bundle) -> list[dict]:
     """Canonical problems."""
     out = []
@@ -741,16 +809,27 @@ def check_reach_010(b: Bundle) -> list[dict]:
             mismatched.append((page, canonical))
 
     if cross:
-        out.append(finding(
-            "REACH-010", "Canonical tags point to a different domain", "high",
+        # The same brand on another suffix -- airbnb.com pointing at
+        # airbnb.co.in from India, hdfc.bank.in pointing at hdfcbank.com -- is
+        # a regional or legacy edition of the site, not another site taking
+        # its credit. Say which it is, and grade the edition case low.
+        sibling = all(_same_brand(urlparse(c).netloc, origin_host) for _, c in cross)
+        sev = "low" if sibling else "high"
+        title = ("Canonical tags point to a regional or legacy edition of this site on another domain"
+                 if sibling else "Canonical tags point to a different domain")
+        tail = (". The other domain carries the same brand name, so this is the site crediting "
+                "a sister edition (a country site, or the domain it moved from), which is "
+                "deliberate more often than not; the cost is that this edition accrues no "
+                "authority of its own." if sibling else
+                ". Indexing signals and citations are attributed to that domain instead of this one.")
+        cross_finding = finding(
+            "REACH-010", title, sev,
             f"{len(cross)} of {len(pages)} sampled pages declare a canonical URL "
             f"on another domain: "
-            + ", ".join(f"{p['url']} -> {c}" for p, c in cross[:3])
-            + ". Indexing signals and citations are attributed to that domain "
-              "instead of this one.",
+            + ", ".join(f"{p['url']} -> {c}" for p, c in cross[:3]) + tail,
             [f"pages/{p['page_id']}/extracted.json" for p, _ in cross[:5]],
             pages=[p["url"] for p, _ in cross],
-            counts={"cross_domain": len(cross), "sampled": len(pages)},
+            counts={"cross_domain": len(cross), "sampled": len(pages), "sister_edition": sibling},
             # Guard: legitimate for syndicated content, so never claim certainty.
             confidence="medium",
             verification=f"curl -s {cross[0][0]['url']} | grep -i 'rel=\"canonical\"'",
@@ -764,7 +843,10 @@ def check_reach_010(b: Bundle) -> list[dict]:
                        "A cross-domain canonical tells indexes to credit the other "
                        "domain, so this site accumulates none of the authority "
                        "that would make it a preferred source.",
-                       owner="engineering")))
+                       owner="engineering"))
+        if sibling:
+            cross_finding["severity_locked"] = True   # a deliberate edition choice; breadth must not escalate it
+        out.append(cross_finding)
 
     if len(missing) == len(pages) and len(pages) >= 3:
         out.append(finding(
@@ -855,7 +937,9 @@ def check_reach_011(b: Bundle) -> list[dict]:
 def check_reach_012(b: Bundle) -> list[dict]:
     """Broken internal links -- only ones we actually fetched and saw fail."""
     broken = [p for p in b.pages
-              if p.get("status") and 400 <= p["status"] < 600 and p["status"] != 403]
+              if p.get("status") and 400 <= p["status"] < 600 and p["status"] not in (403, 429)]
+    if b.sample != "pages":
+        return []   # bombas.com's 429 to our own start URL was "a broken internal link"
     if not broken:
         return []
 
@@ -912,10 +996,14 @@ def check_reach_015(b: Bundle) -> list[dict]:
     # one shot. Locked, because breadth is the nature of the measurement
     # and the merge's site-wide escalation would turn it critical (it did,
     # on two corpus sites, once the slow pages were listed as affected).
-    severity = "medium"
+    # 1.5-3 s is what an ocean costs: from India, mit.edu, zalando.de and
+    # airbnb.com all measured 2.4-2.7 s and were each "slow". Report that
+    # band at low with low confidence; above 3 s at medium; a hold above.
+    severity = "medium" if median >= SLOW_TTFB_HIGH_MS else "low"
+    confidence = "medium" if median >= SLOW_TTFB_HIGH_MS else "low"
     title = "The server responds slowly enough to limit crawling"
     caveat = ("This figure is a single measurement from one location and includes "
-              "network latency.")
+              "network latency; between 1.5 and 3 s it may be distance alone.")
     if median >= HOLD_TTFB_MS:
         title = "The edge holds responses to this client for tens of seconds"
         caveat = (f"A delay of {int(median / 1000)} s is not network distance: an edge "
@@ -932,7 +1020,7 @@ def check_reach_015(b: Bundle) -> list[dict]:
         # a site-wide finding with nothing affected and demoted it to one page
         pages=slow,
         counts={"median_ttfb_ms": int(median), "pages": len(ttfbs)},
-        confidence="medium",
+        confidence=confidence,
         verification=f"curl -s -o /dev/null -w '%{{time_starttransfer}}' {b.origin}/",
         scope="site-wide", checked=len(b.ok_pages),
         action=act("Reduce time to first byte", "medium",
@@ -1542,7 +1630,163 @@ def engine_reachability(b: Bundle) -> list[dict]:
         })
     return rows
 
+def check_sample_state(b: Bundle) -> list[dict]:
+    """What to say when nothing could be sampled. Seven of fifteen unseen sites
+    refused, challenged or timed out every fetch from the audit's address;
+    the reports graded them 83-100 on discoverability from an empty sample.
+
+    A verified block of named AI agents is REACH-005's job and fires from the
+    probe on its own. This covers the rest: every client refused (browser
+    baseline too), a challenge stub served to the audit's own user-agent,
+    connections that time out, a host that does not resolve. None of those
+    is a confident defect -- an address-level refusal cannot be told from an
+    agent-level one -- so severity is capped, locked, and the wording says
+    what was and was not observed."""
+    state = b.sample
+    if state == "pages":
+        return []
+    probe = b.probe or {}
+    baseline = probe.get("baseline") or {}
+    agents = probe.get("agents") or {}
+    served = [a for a, r in agents.items() if r.get("status") == 200]
+    refused = [a for a, r in agents.items() if r.get("status") in (401, 403, 429) or r.get("challenge_detected")]
+    refs = ["MANIFEST.json", "coverage.json"] + (["ua_probe.json"] if probe else [])
+    if state == "refused":
+        if baseline.get("status") == 200 and refused:
+            return []   # REACH-005 says it, verified against the browser baseline
+        if baseline.get("status") == 200:
+            # apollohospitals.com: the browser and every named agent served,
+            # only the audit's own user-agent refused. Not an AI-discoverability
+            # defect; the reason nothing could be sampled.
+            return [_locked(finding(
+                "REACH-005",
+                "The edge refused the audit's own user-agent while serving browsers and the named AI agents",
+                "low",
+                (f"The crawl fetched no pages: every request under the audit's user-agent answered "
+                 f"{_statuses(b)}, while the browser baseline and {', '.join(served)} received the "
+                 f"full page. The rule keys on unknown crawler names and spares the agents robots.txt "
+                 f"permits, so it is not a defect for AI discoverability -- it is why this audit "
+                 f"could sample no content. Informational."),
+                refs, confidence="medium", scope="site-wide", checked=0,
+                verification=f"curl -s -o /dev/null -w '%{{http_code}}' -A 'SomeUnknownBot/1.0' {b.origin}/",
+                action=act("Decide whether unknown crawlers should be refused", "low",
+                           ["Keep the rule if it is intended; allow-list partner or audit crawlers "
+                            "by name when they should see content"],
+                           "S", "Unknown crawlers include the next AI agent that has not published "
+                           "a name yet.", owner="infrastructure")))]
+        base = baseline.get("status")
+        return [_locked(finding(
+            "REACH-005",
+            "Every request from the audit's address was refused, browser user-agent included",
+            "medium",
+            (f"The crawl fetched no pages: the origin answered {_statuses(b)} to every request, "
+             f"and the browser-user-agent baseline received {base or 'no answer'} as well"
+             + (f" while {', '.join(served)} were served" if served else "")
+             + ". A refusal that does not spare a browser is keyed on the address or the "
+             "network, not on the agent name, so it cannot be attributed to an AI-crawler "
+             "policy; it can equally be bot management challenging an unfamiliar address. "
+             "Nothing beyond robots.txt could be examined. Re-run from another network, or "
+             "a browser, before drawing a conclusion."),
+            refs, confidence="low", scope="site-wide", checked=0,
+            verification=(f"curl -s -o /dev/null -w '%{{http_code}}' -A 'Mozilla/5.0' {b.origin}/  "
+                          f"from a second network"),
+            action=act("Confirm the edge's rule for unfamiliar clients", "medium",
+                       ["Check the bot-management rule that answered this address and whether it "
+                        "distinguishes named AI retrieval agents from unknown clients",
+                        "Allow-list the retrieval agents robots.txt permits, by verified network",
+                        "Re-test from a plain HTTP client on a residential and a datacenter address"],
+                       "S",
+                       "A site that turns away every unfamiliar client is, for a crawler that has "
+                       "not been allow-listed, a site that does not exist; whether the named AI "
+                       "agents are among them could not be observed from here.",
+                       owner="infrastructure")))]
+    if state == "challenged":
+        n = b.coverage.get("challenge_pages") or 0
+        if served and not refused:
+            return [_locked(finding(
+                "REACH-005",
+                "The edge serves a challenge page to unrecognised crawlers; the named AI agents are served",
+                "low",
+                (f"Every one of the {n} URLs the crawl fetched came back as a challenge or "
+                 f"'unsupported client' stub for the audit's user-agent, while the browser "
+                 f"baseline and {', '.join(served)} received the full page. The rule keys on "
+                 f"unknown crawler names and spares the AI agents robots.txt permits, so it is "
+                 f"not a defect for AI discoverability -- it is why this audit could sample no "
+                 f"content. Informational."),
+                refs, confidence="medium", scope="site-wide", checked=0,
+                verification=f"curl -s -A 'SomeUnknownBot/1.0' {b.origin}/ | head -c 600",
+                action=act("Decide whether unknown crawlers should get a stub", "low",
+                           ["Keep the rule if it is intended; add the audit's or any partner "
+                            "crawler's name to the allow-list when it should see content"],
+                           "S", "Unknown crawlers include the next AI agent that has not "
+                           "published a name yet.", owner="infrastructure")))]
+        return [_locked(finding(
+            "REACH-005",
+            "The edge serves a challenge page to this client and to the AI agents probed",
+            "medium",
+            (f"Every one of the {n} URLs fetched came back as a challenge or 'unsupported client' "
+             f"stub, and the probe found {', '.join(refused) or 'the named agents'} refused or "
+             f"challenged as well"
+             + (f" (browser baseline: {baseline.get('status')})" if baseline else "")
+             + ". No page content could be sampled; whether the block is keyed on the agent "
+             "name or on this address could not be separated from here."),
+            refs, confidence="low", scope="site-wide", checked=0,
+            verification=f"curl -s -A 'Mozilla/5.0 (compatible; GPTBot/1.0)' {b.origin}/ | head -c 600",
+            action=act("Confirm what the edge serves to named AI agents", "medium",
+                       ["Fetch the home page as GPTBot, ClaudeBot and PerplexityBot from a "
+                        "second network and compare with a browser",
+                        "Allow-list the retrieval agents robots.txt permits"],
+                       "S", "A challenge page is a page with nothing on it; an agent that "
+                       "receives one cites nothing.", owner="infrastructure")))]
+    if state == "timed-out":
+        return [_locked(finding(
+            "REACH-015",
+            "Every connection from the audit's client timed out",
+            "medium",
+            (f"No request to {b.origin} completed: the origin variants, robots.txt and the "
+             f"page fetches all timed out from this client, while the same URL answers a browser "
+             f"or curl promptly if it answers at all. An edge that holds unrecognised clients "
+             f"open until they give up produces exactly this; so does a network path problem. "
+             f"Nothing could be examined. Confidence is low because the two cannot be told apart "
+             f"from one address."),
+            refs, confidence="low", scope="site-wide", checked=0,
+            verification=f"curl -s -o /dev/null -w '%{{time_starttransfer}}' {b.origin}/",
+            action=act("Check the edge's handling of unrecognised TLS clients", "medium",
+                       ["Compare a browser, curl and a plain HTTP client against the home page",
+                        "If unknown clients are held rather than answered, exempt the retrieval "
+                        "agents robots.txt permits"],
+                       "M", "A crawler that never gets a byte indexes nothing.",
+                       owner="infrastructure")))]
+    if state == "unresolved":
+        return [_locked(finding(
+            "REACH-014",
+            "The host did not resolve from the audit's network",
+            "high",
+            (f"Every origin variant of {b.origin} failed at DNS resolution from this client. "
+             f"If the name resolves elsewhere, this is a resolver or network problem on the "
+             f"auditing side and nothing about the site was measured; if it does not, the site "
+             f"is unreachable to everyone. Confidence is low for that reason."),
+            refs, confidence="low", scope="site-wide", checked=0,
+            verification=f"nslookup {b.site}  and  curl -sI {b.origin}/",
+            action=act("Confirm the host resolves publicly", "high",
+                       ["Check the zone's A/AAAA records and the registrar's status",
+                        "Re-run the audit from a second network"],
+                       "S", "A name that does not resolve is not a site.", owner="infrastructure")))]
+    return []
+
+
+def _locked(f: dict) -> dict:
+    f["severity_locked"] = True
+    return f
+
+
+def _statuses(b: Bundle) -> str:
+    codes = sorted({str(p.get("status")) for p in b.pages if p.get("status")})
+    return ", ".join(codes) or "no status"
+
+
 CHECKS = [
+    check_sample_state,
     check_reach_001, check_reach_002, check_reach_003, check_reach_004,
     check_reach_005, check_reach_006, check_reach_007, check_reach_008,
     check_reach_009, check_reach_010, check_reach_011, check_reach_012,
@@ -1672,6 +1916,7 @@ def main(argv=None) -> int:
               "bundle": args.bundle, "findings": kept,
               "proactive_recommendations": proactive(b),
               "engine_reachability": engine_reachability(b),
+              "checks_skipped": b.checks_skipped,
               "checks_not_implemented": NOT_YET_IMPLEMENTED}
 
     if cut_by_deadline:

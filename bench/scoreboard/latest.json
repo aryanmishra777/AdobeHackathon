@@ -42,7 +42,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.4,
+      "seconds": 6.0,
       "findings": [
         {
           "check_id": "READ-001",
@@ -187,7 +187,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.5,
+      "seconds": 3.7,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -261,8 +261,8 @@
         "total_findings": 14,
         "critical": 0,
         "high": 0,
-        "medium": 7,
-        "low": 7,
+        "medium": 6,
+        "low": 8,
         "by_category": {
           "discoverability": 11,
           "engagement": 3
@@ -287,7 +287,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.4,
+      "seconds": 4.2,
       "findings": [
         {
           "check_id": "PARSE-010",
@@ -320,11 +320,6 @@
           "title": "Time-sensitive content carries no visible date"
         },
         {
-          "check_id": "TRUST-004",
-          "severity": "medium",
-          "title": "Stale year stamps contradict current content"
-        },
-        {
           "check_id": "PARSE-001",
           "severity": "low",
           "title": "The site publishes no structured data at all"
@@ -348,6 +343,11 @@
           "check_id": "STAY-011",
           "severity": "low",
           "title": "Content is hard to read"
+        },
+        {
+          "check_id": "TRUST-004",
+          "severity": "low",
+          "title": "Stale year stamps contradict current content"
         },
         {
           "check_id": "TRUST-008",
@@ -402,7 +402,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.6,
+      "seconds": 4.7,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -522,7 +522,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 12.5,
+      "seconds": 10.9,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -631,7 +631,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 137.7,
+      "seconds": 106.9,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -672,22 +672,22 @@
       "engagement": "high",
       "site_type": "saas",
       "pages": 20,
-      "discoverability": 53,
-      "disc_grade": "D",
+      "discoverability": 62,
+      "disc_grade": "C",
       "engagement_score": 89,
       "eng_grade": "B",
       "summary": {
-        "total_findings": 19,
+        "total_findings": 18,
         "critical": 0,
-        "high": 3,
+        "high": 2,
         "medium": 11,
         "low": 5,
         "by_category": {
-          "discoverability": 14,
+          "discoverability": 13,
           "engagement": 5
         },
         "by_mechanism": {
-          "reach": 4,
+          "reach": 3,
           "read": 2,
           "parse": 3,
           "quote": 1,
@@ -706,17 +706,12 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 6.0,
+      "seconds": 6.5,
       "findings": [
         {
           "check_id": "PARSE-001",
           "severity": "high",
           "title": "The site publishes no structured data at all"
-        },
-        {
-          "check_id": "REACH-012",
-          "severity": "high",
-          "title": "Internal links point to pages that error"
         },
         {
           "check_id": "READ-013",
@@ -846,7 +841,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 12.2,
+      "seconds": 12.6,
       "findings": [
         {
           "check_id": "PARSE-010",
@@ -969,7 +964,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 6.0,
+      "seconds": 6.6,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -1094,7 +1089,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.3,
+      "seconds": 4.5,
       "findings": [
         {
           "check_id": "READ-013",
@@ -1214,7 +1209,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 8.0,
+      "seconds": 8.4,
       "findings": [
         {
           "check_id": "PARSE-004",
@@ -1343,7 +1338,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 14.5,
+      "seconds": 15.4,
       "findings": [
         {
           "check_id": "REACH-008",
@@ -1429,22 +1424,22 @@
       "engagement": "high",
       "site_type": "ecommerce",
       "pages": 20,
-      "discoverability": 45,
+      "discoverability": 54,
       "disc_grade": "D",
       "engagement_score": 85,
       "eng_grade": "B",
       "summary": {
-        "total_findings": 19,
+        "total_findings": 18,
         "critical": 1,
-        "high": 1,
+        "high": 0,
         "medium": 10,
         "low": 7,
         "by_category": {
-          "discoverability": 11,
+          "discoverability": 10,
           "engagement": 8
         },
         "by_mechanism": {
-          "reach": 2,
+          "reach": 1,
           "read": 4,
           "parse": 3,
           "quote": 1,
@@ -1463,17 +1458,12 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.7,
+      "seconds": 5.2,
       "findings": [
         {
           "check_id": "READ-013",
           "severity": "critical",
           "title": "A consent wall or interstitial hides the content"
-        },
-        {
-          "check_id": "REACH-012",
-          "severity": "high",
-          "title": "Internal links point to pages that error"
         },
         {
           "check_id": "PARSE-010",
@@ -1603,7 +1593,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 12.3,
+      "seconds": 12.2,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -1797,8 +1787,8 @@
         "total_findings": 15,
         "critical": 0,
         "high": 0,
-        "medium": 13,
-        "low": 2,
+        "medium": 12,
+        "low": 3,
         "by_category": {
           "discoverability": 15,
           "engagement": 0
@@ -1821,7 +1811,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.9,
+      "seconds": 6.2,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -1864,11 +1854,6 @@
           "title": "Content pages are excluded from search indexes"
         },
         {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
-        },
-        {
           "check_id": "READ-008",
           "severity": "medium",
           "title": "Informational images lack alternative text"
@@ -1894,6 +1879,11 @@
           "title": "Common buyer questions have no answer on the site"
         },
         {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        },
+        {
           "check_id": "READ-016",
           "severity": "low",
           "title": "Character encoding or language is undeclared"
@@ -1912,14 +1902,14 @@
       "engagement_score": 91,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 22,
+        "total_findings": 21,
         "critical": 0,
         "high": 1,
         "medium": 11,
-        "low": 10,
+        "low": 9,
         "by_category": {
           "discoverability": 17,
-          "engagement": 5
+          "engagement": 4
         },
         "by_mechanism": {
           "reach": 2,
@@ -1927,7 +1917,7 @@
           "parse": 6,
           "quote": 1,
           "trust": 3,
-          "stay": 5
+          "stay": 4
         }
       },
       "skills_run": [
@@ -2029,11 +2019,6 @@
           "title": "No clear next action"
         },
         {
-          "check_id": "STAY-007",
-          "severity": "low",
-          "title": "An interstitial blocks the page on arrival"
-        },
-        {
           "check_id": "STAY-009",
           "severity": "low",
           "title": "Images without dimensions risk layout shift"
@@ -2070,8 +2055,8 @@
         "total_findings": 17,
         "critical": 0,
         "high": 0,
-        "medium": 13,
-        "low": 4,
+        "medium": 12,
+        "low": 5,
         "by_category": {
           "discoverability": 13,
           "engagement": 4
@@ -2129,11 +2114,6 @@
           "title": "Internal links point to pages that error"
         },
         {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
-        },
-        {
           "check_id": "READ-008",
           "severity": "medium",
           "title": "Informational images lack alternative text"
@@ -2162,6 +2142,11 @@
           "check_id": "TRUST-001",
           "severity": "medium",
           "title": "Time-sensitive content carries no visible date"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
         },
         {
           "check_id": "REACH-017",
@@ -2224,7 +2209,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 11.3,
+      "seconds": 9.4,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -2298,8 +2283,8 @@
         "total_findings": 10,
         "critical": 0,
         "high": 0,
-        "medium": 8,
-        "low": 2,
+        "medium": 7,
+        "low": 3,
         "by_category": {
           "discoverability": 9,
           "engagement": 1
@@ -2324,7 +2309,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.1,
+      "seconds": 2.2,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -2352,11 +2337,6 @@
           "title": "Content pages are excluded from search indexes"
         },
         {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
-        },
-        {
           "check_id": "READ-016",
           "severity": "medium",
           "title": "Corrupted character encoding (mojibake) in page text"
@@ -2365,6 +2345,11 @@
           "check_id": "STAY-014",
           "severity": "medium",
           "title": "Third-party scripts dominate the page"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
         },
         {
           "check_id": "TRUST-008",
@@ -2393,8 +2378,8 @@
         "total_findings": 12,
         "critical": 0,
         "high": 0,
-        "medium": 7,
-        "low": 5,
+        "medium": 6,
+        "low": 6,
         "by_category": {
           "discoverability": 10,
           "engagement": 2
@@ -2418,7 +2403,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.3,
+      "seconds": 2.2,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -2441,11 +2426,6 @@
           "title": "No canonical tags anywhere on the site"
         },
         {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
-        },
-        {
           "check_id": "STAY-009",
           "severity": "medium",
           "title": "Images without dimensions risk layout shift"
@@ -2459,6 +2439,11 @@
           "check_id": "PARSE-010",
           "severity": "low",
           "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
         },
         {
           "check_id": "READ-009",
@@ -2523,7 +2508,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 23.1,
+      "seconds": 18.0,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -2607,8 +2592,8 @@
         "total_findings": 14,
         "critical": 0,
         "high": 0,
-        "medium": 8,
-        "low": 6,
+        "medium": 7,
+        "low": 7,
         "by_category": {
           "discoverability": 11,
           "engagement": 3
@@ -2655,11 +2640,6 @@
           "title": "Content pages are excluded from search indexes"
         },
         {
-          "check_id": "REACH-010",
-          "severity": "medium",
-          "title": "Canonical tags point to a different domain"
-        },
-        {
           "check_id": "REACH-013",
           "severity": "medium",
           "title": "Sitemap pages that nothing links to"
@@ -2673,6 +2653,11 @@
           "check_id": "STAY-013",
           "severity": "medium",
           "title": "Accessibility basics are missing"
+        },
+        {
+          "check_id": "REACH-010",
+          "severity": "low",
+          "title": "Canonical tags point to a regional or legacy edition of this site on another domain"
         },
         {
           "check_id": "READ-008",
@@ -2747,7 +2732,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.2,
+      "seconds": 3.1,
       "findings": [
         {
           "check_id": "REACH-007",
@@ -2850,17 +2835,17 @@
       "pages": 20,
       "discoverability": 48,
       "disc_grade": "D",
-      "engagement_score": 85,
+      "engagement_score": 86,
       "eng_grade": "B",
       "summary": {
-        "total_findings": 19,
+        "total_findings": 18,
         "critical": 0,
         "high": 3,
         "medium": 9,
-        "low": 7,
+        "low": 6,
         "by_category": {
           "discoverability": 14,
-          "engagement": 5
+          "engagement": 4
         },
         "by_mechanism": {
           "reach": 4,
@@ -2868,7 +2853,7 @@
           "parse": 3,
           "quote": 4,
           "trust": 1,
-          "stay": 5
+          "stay": 4
         }
       },
       "skills_run": [
@@ -2882,7 +2867,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 33.6,
+      "seconds": 29.2,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -2965,11 +2950,6 @@
           "title": "Character encoding or language is undeclared"
         },
         {
-          "check_id": "STAY-003",
-          "severity": "low",
-          "title": "No clear next action"
-        },
-        {
           "check_id": "STAY-009",
           "severity": "low",
           "title": "Images without dimensions risk layout shift"
@@ -2990,24 +2970,24 @@
       "pages": 20,
       "discoverability": 65,
       "disc_grade": "C",
-      "engagement_score": 92,
+      "engagement_score": 93,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 17,
+        "total_findings": 16,
         "critical": 0,
         "high": 1,
         "medium": 6,
-        "low": 10,
+        "low": 9,
         "by_category": {
           "discoverability": 11,
-          "engagement": 6
+          "engagement": 5
         },
         "by_mechanism": {
           "reach": 2,
           "read": 4,
           "parse": 4,
           "quote": 1,
-          "stay": 6
+          "stay": 5
         }
       },
       "skills_run": [
@@ -3021,7 +3001,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.7,
+      "seconds": 2.5,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -3089,11 +3069,6 @@
           "title": "Character encoding or language is undeclared"
         },
         {
-          "check_id": "STAY-001",
-          "severity": "low",
-          "title": "The top of the page does not say what this is"
-        },
-        {
           "check_id": "STAY-009",
           "severity": "low",
           "title": "Images without dimensions risk layout shift"
@@ -3151,7 +3126,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.4,
+      "seconds": 4.5,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -3284,7 +3259,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.1,
+      "seconds": 2.0,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -3348,8 +3323,8 @@
         "total_findings": 20,
         "critical": 1,
         "high": 2,
-        "medium": 13,
-        "low": 4,
+        "medium": 12,
+        "low": 5,
         "by_category": {
           "discoverability": 12,
           "engagement": 8
@@ -3374,7 +3349,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.4,
+      "seconds": 2.0,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -3410,11 +3385,6 @@
           "check_id": "REACH-001",
           "severity": "medium",
           "title": "No robots.txt is published"
-        },
-        {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
         },
         {
           "check_id": "READ-009",
@@ -3457,6 +3427,11 @@
           "title": "Content has not been updated within its expected cadence"
         },
         {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
+        },
+        {
           "check_id": "STAY-003",
           "severity": "low",
           "title": "No clear next action"
@@ -3493,8 +3468,8 @@
         "total_findings": 15,
         "critical": 0,
         "high": 1,
-        "medium": 6,
-        "low": 8,
+        "medium": 5,
+        "low": 9,
         "by_category": {
           "discoverability": 13,
           "engagement": 2
@@ -3519,7 +3494,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.7,
+      "seconds": 4.1,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -3547,11 +3522,6 @@
           "title": "The site has none of the page types assistants cite most"
         },
         {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
-        },
-        {
           "check_id": "READ-009",
           "severity": "medium",
           "title": "Heading structure does not describe the page"
@@ -3575,6 +3545,11 @@
           "check_id": "REACH-003",
           "severity": "low",
           "title": "AI training crawlers are blocked (informational)"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
         },
         {
           "check_id": "STAY-007",
@@ -3638,7 +3613,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.7,
+      "seconds": 3.2,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -3733,7 +3708,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.8,
+      "seconds": 3.7,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -3889,17 +3864,17 @@
       "engagement_score": null,
       "eng_grade": "not assessed",
       "summary": {
-        "total_findings": 4,
+        "total_findings": 3,
         "critical": 0,
         "high": 2,
         "medium": 0,
-        "low": 2,
+        "low": 1,
         "by_category": {
-          "discoverability": 4,
+          "discoverability": 3,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 4
+          "reach": 3
         }
       },
       "skills_run": [
@@ -3913,7 +3888,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.6,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -3929,11 +3904,6 @@
           "check_id": "REACH-003",
           "severity": "low",
           "title": "AI training crawlers are blocked (informational)"
-        },
-        {
-          "check_id": "REACH-006",
-          "severity": "low",
-          "title": "No XML sitemap is published or declared"
         }
       ]
     },
@@ -3949,17 +3919,17 @@
       "engagement_score": null,
       "eng_grade": "not assessed",
       "summary": {
-        "total_findings": 2,
+        "total_findings": 1,
         "critical": 1,
         "high": 0,
         "medium": 0,
-        "low": 1,
+        "low": 0,
         "by_category": {
-          "discoverability": 2,
+          "discoverability": 1,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 2
+          "reach": 1
         }
       },
       "skills_run": [
@@ -3973,17 +3943,12 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.6,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-005",
           "severity": "critical",
           "title": "The server blocks AI crawlers even though robots.txt allows them"
-        },
-        {
-          "check_id": "REACH-006",
-          "severity": "low",
-          "title": "No XML sitemap is published or declared"
         }
       ]
     },
@@ -4002,8 +3967,8 @@
         "total_findings": 20,
         "critical": 0,
         "high": 2,
-        "medium": 8,
-        "low": 10,
+        "medium": 7,
+        "low": 11,
         "by_category": {
           "discoverability": 16,
           "engagement": 4
@@ -4066,11 +4031,6 @@
           "title": "Internal links point to pages that error"
         },
         {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
-        },
-        {
           "check_id": "STAY-005",
           "severity": "medium",
           "title": "Visitors cannot tell where they are in the site"
@@ -4104,6 +4064,11 @@
           "check_id": "REACH-007",
           "severity": "low",
           "title": "The sitemap lists URLs that do not resolve"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
         },
         {
           "check_id": "READ-009",
@@ -4173,7 +4138,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 9.1,
+      "seconds": 7.4,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -4313,7 +4278,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.0,
+      "seconds": 3.9,
       "findings": [
         {
           "check_id": "PARSE-004",
@@ -4456,17 +4421,17 @@
       "pages": 20,
       "discoverability": 66,
       "disc_grade": "C",
-      "engagement_score": 95,
+      "engagement_score": 100,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 10,
+        "total_findings": 9,
         "critical": 0,
         "high": 1,
-        "medium": 4,
+        "medium": 3,
         "low": 5,
         "by_category": {
           "discoverability": 8,
-          "engagement": 2
+          "engagement": 1
         },
         "by_mechanism": {
           "reach": 2,
@@ -4474,7 +4439,7 @@
           "parse": 2,
           "quote": 1,
           "trust": 1,
-          "stay": 2
+          "stay": 1
         }
       },
       "skills_run": [
@@ -4488,7 +4453,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 15.2,
+      "seconds": 13.1,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -4509,11 +4474,6 @@
           "check_id": "READ-016",
           "severity": "medium",
           "title": "Corrupted character encoding (mojibake) in page text"
-        },
-        {
-          "check_id": "STAY-007",
-          "severity": "medium",
-          "title": "An interstitial blocks the page on arrival"
         },
         {
           "check_id": "PARSE-011",
@@ -4583,7 +4543,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.7,
+      "seconds": 2.2,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -4733,7 +4693,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 11.2,
+      "seconds": 10.7,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -4877,7 +4837,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.8,
+      "seconds": 2.4,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -5002,7 +4962,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 35.8,
+      "seconds": 28.5,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -5132,7 +5092,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 51.2,
+      "seconds": 46.7,
       "findings": [
         {
           "check_id": "REACH-011",
@@ -5238,25 +5198,25 @@
       "engagement": "high",
       "site_type": "portfolio-brochure",
       "pages": 1,
-      "discoverability": 66,
+      "discoverability": 69,
       "disc_grade": "C",
       "engagement_score": 97,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 12,
+        "total_findings": 11,
         "critical": 0,
         "high": 1,
-        "medium": 5,
+        "medium": 4,
         "low": 6,
         "by_category": {
-          "discoverability": 10,
+          "discoverability": 9,
           "engagement": 2
         },
         "by_mechanism": {
           "reach": 4,
           "read": 2,
           "parse": 1,
-          "quote": 2,
+          "quote": 1,
           "trust": 1,
           "stay": 2
         }
@@ -5272,7 +5232,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "REACH-011",
@@ -5283,11 +5243,6 @@
           "check_id": "QUOTE-001",
           "severity": "medium",
           "title": "Passages do not make sense when retrieved on their own"
-        },
-        {
-          "check_id": "QUOTE-002",
-          "severity": "medium",
-          "title": "The site never states plainly what the organization is"
         },
         {
           "check_id": "REACH-001",
@@ -5377,7 +5332,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 6.1,
+      "seconds": 5.4,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -5631,8 +5586,8 @@
         "total_findings": 23,
         "critical": 1,
         "high": 2,
-        "medium": 15,
-        "low": 5,
+        "medium": 14,
+        "low": 6,
         "by_category": {
           "discoverability": 19,
           "engagement": 4
@@ -5657,7 +5612,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 25.0,
+      "seconds": 17.3,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -5715,11 +5670,6 @@
           "title": "The site did not answer over https"
         },
         {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
-        },
-        {
           "check_id": "READ-009",
           "severity": "medium",
           "title": "Heading structure does not describe the page"
@@ -5748,6 +5698,11 @@
           "check_id": "STAY-013",
           "severity": "medium",
           "title": "Accessibility basics are missing"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
         },
         {
           "check_id": "REACH-018",
@@ -5791,8 +5746,8 @@
         "total_findings": 16,
         "critical": 0,
         "high": 0,
-        "medium": 10,
-        "low": 6,
+        "medium": 9,
+        "low": 7,
         "by_category": {
           "discoverability": 11,
           "engagement": 5
@@ -5817,7 +5772,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 44.6,
+      "seconds": 37.9,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -5838,11 +5793,6 @@
           "check_id": "QUOTE-001",
           "severity": "medium",
           "title": "Passages do not make sense when retrieved on their own"
-        },
-        {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
         },
         {
           "check_id": "READ-009",
@@ -5878,6 +5828,11 @@
           "check_id": "REACH-006",
           "severity": "low",
           "title": "No XML sitemap is published or declared"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
         },
         {
           "check_id": "READ-010",
@@ -5942,7 +5897,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.9,
+      "seconds": 6.3,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -6048,13 +6003,13 @@
       "engagement_score": 87,
       "eng_grade": "B",
       "summary": {
-        "total_findings": 21,
+        "total_findings": 20,
         "critical": 0,
         "high": 3,
-        "medium": 10,
-        "low": 8,
+        "medium": 8,
+        "low": 9,
         "by_category": {
-          "discoverability": 17,
+          "discoverability": 16,
           "engagement": 4
         },
         "by_mechanism": {
@@ -6062,7 +6017,7 @@
           "read": 3,
           "parse": 5,
           "quote": 1,
-          "trust": 4,
+          "trust": 3,
           "stay": 4
         }
       },
@@ -6077,7 +6032,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.1,
+      "seconds": 4.5,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6125,11 +6080,6 @@
           "title": "No canonical tags anywhere on the site"
         },
         {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
-        },
-        {
           "check_id": "STAY-013",
           "severity": "medium",
           "title": "Accessibility basics are missing"
@@ -6140,14 +6090,14 @@
           "title": "Content has not been updated within its expected cadence"
         },
         {
-          "check_id": "TRUST-004",
-          "severity": "medium",
-          "title": "Stale year stamps contradict current content"
-        },
-        {
           "check_id": "PARSE-010",
           "severity": "low",
           "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
         },
         {
           "check_id": "READ-009",
@@ -6201,8 +6151,8 @@
         "total_findings": 15,
         "critical": 0,
         "high": 1,
-        "medium": 10,
-        "low": 4,
+        "medium": 8,
+        "low": 6,
         "by_category": {
           "discoverability": 12,
           "engagement": 3
@@ -6227,7 +6177,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 40.3,
+      "seconds": 38.9,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6260,11 +6210,6 @@
           "title": "robots.txt could not be read"
         },
         {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
-        },
-        {
           "check_id": "READ-009",
           "severity": "medium",
           "title": "Heading structure does not describe the page"
@@ -6280,9 +6225,9 @@
           "title": "Accessibility basics are missing"
         },
         {
-          "check_id": "TRUST-004",
-          "severity": "medium",
-          "title": "Stale year stamps contradict current content"
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
         },
         {
           "check_id": "STAY-009",
@@ -6293,6 +6238,11 @@
           "check_id": "STAY-011",
           "severity": "low",
           "title": "Content is hard to read"
+        },
+        {
+          "check_id": "TRUST-004",
+          "severity": "low",
+          "title": "Stale year stamps contradict current content"
         },
         {
           "check_id": "TRUST-005",
@@ -6318,13 +6268,13 @@
       "engagement_score": 94,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 14,
+        "total_findings": 13,
         "critical": 0,
         "high": 1,
-        "medium": 7,
+        "medium": 6,
         "low": 6,
         "by_category": {
-          "discoverability": 10,
+          "discoverability": 9,
           "engagement": 4
         },
         "by_mechanism": {
@@ -6332,7 +6282,7 @@
           "read": 2,
           "parse": 3,
           "quote": 1,
-          "trust": 2,
+          "trust": 1,
           "stay": 4
         }
       },
@@ -6347,7 +6297,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.5,
+      "seconds": 3.6,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6383,11 +6333,6 @@
           "check_id": "STAY-014",
           "severity": "medium",
           "title": "Third-party scripts dominate the page"
-        },
-        {
-          "check_id": "TRUST-004",
-          "severity": "medium",
-          "title": "Stale year stamps contradict current content"
         },
         {
           "check_id": "PARSE-011",
@@ -6462,7 +6407,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 24.6,
+      "seconds": 20.0,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -6621,7 +6566,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.4,
+      "seconds": 5.1,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6746,7 +6691,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 87.5,
+      "seconds": 78.8,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6891,7 +6836,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 48.6,
+      "seconds": 36.1,
       "findings": [
         {
           "check_id": "REACH-014",
@@ -7034,7 +6979,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.8,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-007",
@@ -7119,7 +7064,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 125.3,
+      "seconds": 89.3,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -7368,7 +7313,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 9.4,
+      "seconds": 8.9,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -7503,7 +7448,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.3,
+      "seconds": 3.4,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -7609,17 +7554,17 @@
       "engagement_score": null,
       "eng_grade": "not assessed",
       "summary": {
-        "total_findings": 3,
+        "total_findings": 2,
         "critical": 1,
         "high": 0,
         "medium": 0,
-        "low": 2,
+        "low": 1,
         "by_category": {
-          "discoverability": 3,
+          "discoverability": 2,
           "engagement": 0
         },
         "by_mechanism": {
-          "reach": 3
+          "reach": 2
         }
       },
       "skills_run": [
@@ -7633,7 +7578,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.6,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -7644,11 +7589,6 @@
           "check_id": "REACH-003",
           "severity": "low",
           "title": "AI training crawlers are blocked (informational)"
-        },
-        {
-          "check_id": "REACH-006",
-          "severity": "low",
-          "title": "No XML sitemap is published or declared"
         }
       ]
     },
@@ -7659,22 +7599,22 @@
       "engagement": "moderate",
       "site_type": "nonprofit-gov",
       "pages": 1,
-      "discoverability": 57,
+      "discoverability": 59,
       "disc_grade": "C",
       "engagement_score": 95,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 13,
+        "total_findings": 12,
         "critical": 0,
         "high": 2,
         "medium": 4,
-        "low": 7,
+        "low": 6,
         "by_category": {
-          "discoverability": 9,
+          "discoverability": 8,
           "engagement": 4
         },
         "by_mechanism": {
-          "reach": 5,
+          "reach": 4,
           "read": 2,
           "parse": 1,
           "trust": 1,
@@ -7692,7 +7632,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "REACH-007",
@@ -7735,11 +7675,6 @@
           "title": "robots.txt contains lines that break parsing"
         },
         {
-          "check_id": "REACH-006",
-          "severity": "low",
-          "title": "No XML sitemap is published or declared"
-        },
-        {
           "check_id": "READ-009",
           "severity": "low",
           "title": "Heading structure does not describe the page"
@@ -7776,8 +7711,8 @@
         "total_findings": 22,
         "critical": 2,
         "high": 2,
-        "medium": 12,
-        "low": 6,
+        "medium": 11,
+        "low": 7,
         "by_category": {
           "discoverability": 16,
           "engagement": 6
@@ -7802,7 +7737,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.1,
+      "seconds": 2.2,
       "findings": [
         {
           "check_id": "REACH-008",
@@ -7850,11 +7785,6 @@
           "title": "Internal links point to pages that error"
         },
         {
-          "check_id": "REACH-015",
-          "severity": "medium",
-          "title": "The server responds slowly enough to limit crawling"
-        },
-        {
           "check_id": "READ-009",
           "severity": "medium",
           "title": "Heading structure does not describe the page"
@@ -7893,6 +7823,11 @@
           "check_id": "PARSE-010",
           "severity": "low",
           "title": "Titles and meta descriptions are missing, duplicated or conflicting"
+        },
+        {
+          "check_id": "REACH-015",
+          "severity": "low",
+          "title": "The server responds slowly enough to limit crawling"
         },
         {
           "check_id": "READ-008",

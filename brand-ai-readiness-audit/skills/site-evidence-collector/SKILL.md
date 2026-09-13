@@ -173,9 +173,12 @@ several are the most severe possible finding:
 
 | Situation | Behaviour |
 |---|---|
-| DNS failure, connection refused | Write a bundle containing only `run.json` and `coverage.json` with `stopped_reason: dns-failure`. The orchestrator reports it as a `critical` finding. |
+| The host does not resolve | Write a bundle containing only `run.json` and `coverage.json` with `stopped_reason: dns-failure` and `coverage.sample: unresolved`. `crawl-access-audit` reports it (REACH-014, confidence low: a resolver problem on the auditing side looks the same). |
+| Every connection times out | `stopped_reason: unreachable-timeout`, `sample: timed-out`. zomato.com answered curl in under a second and timed out every connection from the stdlib client; an edge that holds unrecognised clients open produces this. REACH-015 says so at low confidence. |
+| Every fetch refused (4xx to the audit's user-agent) | `sample: refused`. The probe decides what it means: browser and named agents served → an unknown-crawler rule, informational; named agents refused too → REACH-005; browser refused as well → an address-level refusal, reported at low confidence, never as an AI-agent block. |
+| Every page is a challenge or "unsupported client" stub served with 200 | Skipped with reason `challenge-page`, counted in `coverage.challenge_pages`, `sample: challenged`. canva.com and lemonde.fr served 50-word stubs to the audit's user-agent on every URL while browsers and the AI agents got the page. Never analysed as content. |
 | `robots.txt` disallows everything for our UA | Fetch nothing beyond `robots.txt`; `stopped_reason: site-blocked`. Still run the probe. This is a finding, not a failure. |
-| Every page 403s | Record statuses and challenge signatures. The probe is the evidence. |
+| Every page 403s | Record statuses and challenge signatures. The probe is the evidence; see the `sample` states above. |
 | Time budget exhausted | Stop cleanly, `complete: false`, keep what was collected. |
 | The edge holds every response for tens of seconds | `run.json#hold_ttfb_ms` records the median first-byte time of the origin variants. Above 10 s the sitemap phase reads only the index plus the seed locale's sitemap, and both it and the probe stop at a fixed share of the budget (45% and 70%) so the page sample always gets the rest. The origin variants and the probe's agent tokens are fetched together, not one after another. Rerun with a larger `--budget` (and `--timeout`) for a fuller sample; `REACH-015` names the hold. |
 | Non-HTML content type | Skip with reason `non-html`; record the type. No `Content-Type` at all: sniff the body for markup, and skip a binary the same way. |

@@ -65,7 +65,12 @@ ORIENTATION_NOUN_RE = re.compile(
     r"proxy|engine|kernel|operating system|distribution|interpreter|runtime|"
     r"cms|plugin|utility|program|application|website|headlines|stories|"
     r"standards|specifications?|rfcs?|task force|retailer|furniture|footwear|"
-    r"apparel|clothing|supplies|pharmacy|groceries|scripting|programming)\b", re.I)
+    r"apparel|clothing|supplies|pharmacy|groceries|scripting|programming|"
+    # travel, property and listings: "Holiday rentals in North Myrtle Beach"
+    # names its offering with no verb
+    r"rentals?|stays|homes|apartments?|villas?|properties|listings|flights?|"
+    r"hotels|cars?|tickets|deals|experiences|loans?|accounts?|cards?|policies|"
+    r"vehicles?|doctors?|treatments?|recipes?|games?|templates?|designs?)\b", re.I)
 
 # The first screen is an error or a loading shell, not the site's own words:
 # khanacademy.org served "A required part of this site couldn't load" and
@@ -95,7 +100,7 @@ ENDPOINT_PAGE_TYPES = {"contact", "legal", "thank-you", "thankyou"}
 CONVERSION_PAGE_TYPES = {"home", "pricing", "product", "category", "other"}
 
 CTA_RE = re.compile(
-    r"\b(buy|shop|order|add to (?:cart|bag|basket)|checkout|sign up|signup|"
+    r"\b(buy|shop|order (?:now|online|today)|pre-?order|add to (?:cart|bag|basket)|checkout|sign up|signup|"
     r"get started|start (?:free|now|your)|try (?:it|for) free|book (?:a|now|your)|"
     r"request (?:a|access|demo)|contact (?:us|sales)|subscribe|download|"
     r"register|join|donate|apply now|get a quote|schedule)\b", re.I)
@@ -119,7 +124,9 @@ NOT_AN_INTERSTITIAL_RE = re.compile(
     r"\b(?:mini-?cart|cart-popup|cart-drawer|cart-modal|search-popup|search-modal|"
     r"menu-drawer|mobile-menu|nav-drawer|quick-?view|size-?guide)\b"
     # a consent checkbox inside a signup form is a form field, not a notice
-    r"|form-field|FormControl|type=\"checkbox\")", re.I)
+    r"|form-field|FormControl|type=\"checkbox\""
+    # an empty mount point a framework renders dialogs into later
+    r"|modal-root|portal-root|modal-container\"[^>]*>\s*</|__portal|-portal\b)", re.I)
 
 # "overlay" or "modal" as a modifier of a structural word names a style, not
 # a layer shown on arrival: github.com's page wrapper is class="header-overlay"
@@ -420,6 +427,14 @@ def check_stay_001(b: Bundle) -> list:
         # sentences: "Skip to main content Hey! I'm Julia. Welcome to my blog."
         # split at "Hey!" and the orientation line fell outside the window.
         main_words = ((ex.get("text") or {}).get("main") or "").split()
+        # Guard: a page with almost no text at all (zalando.de's home page
+        # reached us as two words behind a consent wall; tartinebakery.com's
+        # as four words of a JavaScript shell) has nothing to orient with.
+        # That is READ-001's or READ-013's finding, not a missing headline.
+        # (Eight words of slogans is still a hero that says nothing; the
+        # threshold is "empty", not "short".)
+        if len(main_words) < 5:
+            continue
         # A masthead is often an image: lua.org's home page is a logo whose
         # alt text reads "The Programming Language Lua" beside a menu. The
         # visitor sees the logo; count the first two alt texts as on screen.

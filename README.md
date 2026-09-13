@@ -14,18 +14,92 @@ this repo is the harness that proves it works.
 
 ---
 
-## Repo map
+## Try it in five minutes
 
-| Path | What it is |
-|---|---|
-| **`brand-ai-readiness-audit/`** | **THE SUBMISSION.** `marketplace.json` + 8 skills. This is the only directory that gets zipped. |
-| `bench/` | 85 real-site candidates → 64 measured corpus entries across the SEO×GEO quadrants, plus the live/replay runner. |
-| `tests/` | 7 local fixture sites, the bundles built from them, and 406 pytest assertions. |
-| `tools/` | `validate.py`, `package.py`, `check_coverage.py`, `run_audit.py`, `install_local.py`. |
-| `docs/` | `EVIDENCE.md` (what the literature supports, and what it doesn't), `ADOBE-BRAND-VISIBILITY.md` (how our checks map to Adobe's own product), `ROLES.md`, `CONTRIBUTING.md`, `todo/`. |
-| `TODO.md` | Who builds what, in what order. Index into `docs/todo/`. |
-| `docs/examples/` | A real report the marketplace produced, kept as a worked example. |
-| `PLAN.md` | The full architecture and build plan. The shared spec. |
+**As a skill (the product).** Install the eight skills where your agent finds
+them, then ask for an audit in plain words. The orchestrator activates, crawls
+once, dispatches the six analyzers, finishes the model-judged checks, and writes
+`report.json` + `report.md` under `.audit/<domain>/`.
+
+```bash
+python tools/install_local.py            # copies the skills into .claude/skills/
+# then, in Claude Code (or any agent that reads Agent Skills):
+#   audit https://github.com/
+```
+
+**Scripts only (no agent).** Same crawl, same six analyzers, same merge and
+validation; the model-judged checks stay unfinished and the report says so.
+
+```bash
+python tools/run_audit.py https://github.com/ --out .audit/github   # ~1-2 min
+```
+
+Pure stdlib Python 3.10+; nothing to install. Fourteen optional libraries
+(`brand-ai-readiness-audit/requirements-optional.txt`) add evidence when
+present — Playwright renders a six-page sample so JS-dependency is measured, not
+inferred — and change nothing when absent.
+
+**If a site's edge stalls the crawler** (ea.com held every response for 42 s once
+it had seen a burst), the run tells you so and the report says the sample is
+thin. Rerun with `--budget 900 --cap 1500` for a full sample; the collector fetches
+its probes in parallel and reserves budget for pages, but it cannot make a
+42-second response arrive faster.
+
+## What a report looks like
+
+From [`docs/examples/report-github-com.md`](docs/examples/report-github-com.md),
+produced by the agent-driven path on 13 September 2026:
+
+> GitHub lets every AI agent in and tells them so in robots.txt and llms.txt;
+> what it does not do is tell them what it *is* — there is no entity markup on
+> the site, and the h1 on its home page is a slogan.
+>
+> | | Grade | Score |
+> |---|---|---|
+> | **Discoverability** — can AI assistants find, trust and cite you? | C | 68/100 |
+> | **Engagement** — do visitors who arrive stay? | A | 99/100 |
+>
+> | Assistant | Status | What we measured |
+> |---|---|---|
+> | ChatGPT | **reachable** | ChatGPT-User was served the full page |
+> | Claude | **reachable** | Claude-User was served the full page |
+> | Perplexity | **reachable** | PerplexityBot was served the full page |
+>
+> 1. **Add an Organization entity to the shared layout and Offer markup to /pricing** — 23 of 25 pages carry no structured data; plan prices are table text, not data.
+
+Every finding carries its evidence, the bundle files it came from, a
+copy-pasteable verification command, and a fix with an owner and an effort. What
+the audit could not measure is listed under `coverage.limitations`, never
+graded as clean.
+
+More worked examples: [nike.in](docs/examples/report-nike-in.md) (an Akamai edge
+that challenges browsers but serves declared bots), [adobe.com/in](docs/examples/report-adobe-com-in.md),
+[crunchyroll.com](docs/examples/report-crunchyroll-com.md) (a client-rendered app
+shell), [ea.com/sports](docs/examples/report-ea-com-sports.md) (the 42-second hold),
+[vox.com](docs/examples/report-vox-com.md), and [bbc.co.uk](docs/examples/report-bbc-co-uk.md)
+from the scripts-only path.
+
+## Does it measure GEO, or just SEO?
+
+A 64-site corpus, labelled by *measurement* (GEO from the blocking mechanism
+actually observed, SEO from technical hygiene), replayed from snapshots:
+
+```
+                        n   disc   eng
+SEO good / GEO good    24     66     94    control — healthy on both axes
+SEO good / GEO poor    14     51     92    the money quadrant
+SEO poor / GEO good    17     57     76    great content, weak technical SEO
+SEO poor / GEO poor     9     45     83    both, and we name the mechanism
+```
+
+Good-SEO/poor-GEO scores 16 points below good-SEO/good-GEO, with zero false
+positives and zero misses against the corpus's expected checks. Those fourteen
+sites are ones a conventional SEO linter passes clean — perfect sitemaps and
+canonicals — while the edge returns 429 to `ClaudeBot` or robots.txt disallows
+the retrieval crawlers outright. `python bench/run.py --replay` reproduces the
+table.
+
+---
 
 ## The eight skills
 
@@ -57,65 +131,7 @@ properly, and so on -- each imported behind a guard at one call site and each
 recorded in `run.json#extras` when used. Without them the behaviour is exactly
 the stdlib path, which is what the bench and the fixture bundles measure.
 
-## Status
-
-| Skill | Owner | State |
-|---|---|---|
-| `audit-orchestrator` | Aryan | complete |
-| `site-evidence-collector` | Aryan | complete |
-| `crawl-access-audit` | Aryan | complete — the reference implementation |
-| `render-extractability-audit` | Lakshay | complete — 16/16 checks |
-| `structured-data-audit` | Lakshay | complete — 14/14 checks |
-| `answerability-audit` | Mayank | complete — 12/12 checks |
-| `freshness-corroboration-audit` | Mayank | complete — 15/15 checks |
-| `engagement-audit` | Mayank | complete — 16/16 checks |
-
-**All 91 checks are implemented**, plus 18 proactive recommendations. Every
-check has its ID, severity rule, required evidence, human verification step and
-its false-positive guards written down in a registry before it was coded.
-
-`tools/check_coverage.py` guards against the failure that is easy to miss: a
-check that runs but never fires. Two once shipped as dead code with every other
-gate green. A silent check must now either be fixed or declare `rarity` with a
-reason. See [`docs/ROLES.md`](docs/ROLES.md).
-
-## Getting started
-
-```bash
-pip install -r tools/requirements-dev.txt   # dev tooling only, never shipped
-
-python tests/make_fixtures.py               # build the local test websites
-python tests/make_bundles.py                # crawl them into evidence bundles
-
-python -m pytest tests/ -q                  # expect: 406 passed
-python tools/validate.py                    # expect: PASS (0 TODOs)
-python tools/package.py                     # builds dist/ and checks the 50 MB ceiling
-python tools/check_coverage.py              # find checks that never fire anywhere
-python tools/run_audit.py https://example.com   # whole pipeline -> report.json + report.md
-```
-
-Then read [`TODO.md`](TODO.md) for your queue, and the packet it points you at in
-[`docs/todo/`](docs/todo/) — each one ends in a paste-ready prompt for Claude
-Code / Copilot / Antigravity.
-
 ## Why we think this scores
-
-**It is a GEO auditor, not an SEO checker.** The corpus is labelled by
-*measurement*, never assertion — GEO from the actual blocking mechanism observed,
-SEO from technical hygiene. The result:
-
-```
-                        n   disc   eng
-SEO good / GEO good    24     66     92    control — healthy on both axes
-SEO good / GEO poor    14     51     90    the money quadrant
-SEO poor / GEO good    17     57     76    great content, weak technical SEO
-SEO poor / GEO poor     9     44     82    both, and we name the mechanism
-```
-
-Good-SEO/poor-GEO scores 16 points below good-SEO/good-GEO. Those fourteen sites are
-ones a conventional SEO linter passes clean: perfect sitemaps and canonicals,
-while the edge returns 429 to `ClaudeBot` or robots.txt disallows the retrieval
-crawlers outright.
 
 **Independent evidence that these are different problems.** Published audits put
 URL-level Jaccard overlap between Google's SERP and AI engines at **0.11-0.18**,
@@ -161,15 +177,68 @@ rather than dropped (thirteen more were unusable: too few pages to grade). They 
 site-level block from our own address being filtered. Claiming a defect there
 would be exactly the confident false positive the rubric punishes.
 
+## Repo map
+
+| Path | What it is |
+|---|---|
+| **`brand-ai-readiness-audit/`** | **THE SUBMISSION.** `marketplace.json` + 8 skills. This is the only directory that gets zipped. |
+| `bench/` | 85 real-site candidates → 64 measured corpus entries across the SEO×GEO quadrants, plus the live/replay runner. |
+| `tests/` | 7 local fixture sites, the bundles built from them, and 412 pytest assertions. |
+| `tools/` | `validate.py`, `package.py`, `check_coverage.py`, `run_audit.py`, `sweep_audits.py`, `install_local.py`. |
+| `docs/` | `EVIDENCE.md` (what the literature supports, and what it doesn't), `ADOBE-BRAND-VISIBILITY.md` (how our checks map to Adobe's own product), `UNSEEN-SWEEP.md` (the scripts-only pass over fifteen unseen sites), `ROLES.md`, `CONTRIBUTING.md`, `todo/`. |
+| `TODO.md` | Who builds what, in what order. Index into `docs/todo/`. |
+| `docs/examples/` | Real reports the marketplace produced (nike.in, adobe.com/in, crunchyroll.com, ea.com, github.com, vox.com, bbc.co.uk), kept as worked examples. |
+| `PLAN.md` | The full architecture and build plan. The shared spec. |
+
+## Status
+
+| Skill | Owner | State |
+|---|---|---|
+| `audit-orchestrator` | Aryan | complete |
+| `site-evidence-collector` | Aryan | complete |
+| `crawl-access-audit` | Aryan | complete — the reference implementation |
+| `render-extractability-audit` | Lakshay | complete — 16/16 checks |
+| `structured-data-audit` | Lakshay | complete — 14/14 checks |
+| `answerability-audit` | Mayank | complete — 12/12 checks |
+| `freshness-corroboration-audit` | Mayank | complete — 15/15 checks |
+| `engagement-audit` | Mayank | complete — 16/16 checks |
+
+**All 91 checks are implemented**, plus 18 proactive recommendations. Every
+check has its ID, severity rule, required evidence, human verification step and
+its false-positive guards written down in a registry before it was coded.
+
+`tools/check_coverage.py` guards against the failure that is easy to miss: a
+check that runs but never fires. Two once shipped as dead code with every other
+gate green. A silent check must now either be fixed or declare `rarity` with a
+reason. See [`docs/ROLES.md`](docs/ROLES.md).
+
+## Developing and verifying
+
+```bash
+pip install -r tools/requirements-dev.txt   # dev tooling only, never shipped
+
+python tests/make_fixtures.py               # build the local test websites
+python tests/make_bundles.py                # crawl them into evidence bundles
+
+python -m pytest tests/ -q                  # expect: 412 passed
+python tools/validate.py                    # expect: PASS (0 TODOs)
+python tools/package.py                     # builds dist/ and checks the 50 MB ceiling
+python tools/check_coverage.py              # find checks that never fire anywhere
+python bench/run.py --replay                # the quadrant table above, from snapshots
+python tools/sweep_audits.py                # every snapshot end to end, for triage
+```
+
+Every real-site audit so far has exposed analyzer misreadings before review —
+a footer `<time>2026</time>` read as a dateline, a closed `<dialog>` read as an
+interstitial, a `/owner/repo` URL space sampled alphabetically. Each fix carries
+a regression test and is checked against the bench before it lands;
+[`docs/ROLES.md`](docs/ROLES.md) records the working rules that came out of it,
+and [`docs/UNSEEN-SWEEP.md`](docs/UNSEEN-SWEEP.md) records the scripts-only
+pass over fifteen sites we had never touched — seven of which refused the
+crawler outright, which is now reported as an empty sample rather than a grade.
+
 ## Team
 
 **Aryan** — contracts, collector, orchestrator, the reference implementation,
 tooling and the bench. **Lakshay** — READ and PARSE. **Mayank** — QUOTE, TRUST
 and STAY.
-
-See [`docs/examples/report-vox-com.md`](docs/examples/report-vox-com.md) for
-what the marketplace produces when an agent drives it end to end, and
-[`report-bbc-co-uk.md`](docs/examples/report-bbc-co-uk.md) for the scripts-only
-harness output. [`report-ea-com-sports.md`](docs/examples/report-ea-com-sports.md)
-is the audit of a site whose edge held every response for 42 seconds: what the
-collector does under a hold, and how the report says so.

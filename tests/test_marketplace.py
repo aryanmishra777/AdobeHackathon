@@ -1408,3 +1408,74 @@ def test_collector_shape_rule_needs_a_dateline_not_a_copyright_year():
     assert mod.classify_page_type(ex["url"], ex) == "other"
     ex["dates"].append({"value": "2026-03-04", "iso": "2026-03-04", "source": "time-element"})
     assert mod.classify_page_type(ex["url"], ex) == "article"
+
+
+def test_collector_recognises_challenge_stubs_and_gzipped_sitemaps():
+    """canva.com answered every URL with a 58-word 'Unsupported client' page and
+    lemonde.fr with a 48-word 'Client Challenge'; forty findings were written
+    about the stubs. airbnb.com's sitemap index is a .xml.gz that was stored
+    as mojibake and reported as unparseable."""
+    import gzip
+    mod = _collect_module()
+    assert mod._is_challenge_page("<html><title>Unsupported client</title><body>Please update your browser. "
+                                  "It seems you are using an old or unsupported browser.</body></html>")
+    assert mod._is_challenge_page("<html><title>Client Challenge</title><body>JavaScript is disabled in your "
+                                  "browser. Please enable JavaScript to proceed.</body></html>")
+    real = "<html><title>Client Challenge</title><body>" + "<p>real paragraph text here</p>" * 60 + "</body></html>"
+    assert not mod._is_challenge_page(real)          # a long page is a page
+    body = gzip.compress(b"<?xml version='1.0'?><urlset><url><loc>https://x.test/a</loc></url></urlset>")
+    text = mod._decode_body(body, {"Content-Type": "application/x-gzip"})
+    kind, entries, _ = mod.parse_sitemap(text)
+    assert kind == "urlset" and entries[0]["loc"] == "https://x.test/a"
+    kind, _, errors = mod.parse_sitemap("<!DOCTYPE html><html><body>home</body></html>")
+    assert kind == "invalid" and "HTML" in errors[0]
+
+
+def test_access_reports_an_empty_sample_honestly(tmp_path):
+    """Seven of fifteen unseen sites refused, challenged or timed out every
+    fetch; the reports graded them 83-100 from nothing and called etsy.com
+    'small enough that crawling reaches everything'."""
+    import shutil
+    src = bundle("clean")
+    dst = tmp_path / "b"
+    shutil.copytree(src, dst)
+    man = json.loads((dst / "MANIFEST.json").read_text(encoding="utf-8"))
+    man["pages"] = [{"page_id": "p000", "url": man["run"]["origin"] + "/", "status": 403,
+                     "role": "home", "page_type": "other"}]
+    man["sitemaps"] = [{"url": man["run"]["origin"] + "/sitemap.xml", "status": 403, "kind": "unreachable",
+                        "parse_errors": [], "entry_count": 0, "entries": []}]
+    probe = man.get("ua_probe") or json.loads((dst / "ua_probe.json").read_text(encoding="utf-8"))
+    probe["baseline"].update({"status": 403, "bytes": 300, "text_bytes": 200})
+    for a in list(probe["agents"].values()) + list((probe.get("controls") or {}).values()):
+        a.update({"status": 403, "bytes": 300, "text_bytes": 200})
+    man["ua_probe"] = probe
+    (dst / "MANIFEST.json").write_text(json.dumps(man), encoding="utf-8")
+    (dst / "ua_probe.json").write_text(json.dumps(probe), encoding="utf-8")
+    cov = json.loads((dst / "coverage.json").read_text(encoding="utf-8"))
+    cov.update({"pages_fetched": 0, "sample": "refused", "stopped_reason": "completed"})
+    (dst / "coverage.json").write_text(json.dumps(cov), encoding="utf-8")
+    man["coverage"] = cov
+    (dst / "MANIFEST.json").write_text(json.dumps(man), encoding="utf-8")
+    proc = run(CHECK_ACCESS, str(dst), "--stdout")
+    assert proc.returncode == 0, proc.stderr
+    doc = json.loads(proc.stdout)
+    ids = [(f["check_id"], f["severity"], f["confidence"]) for f in doc["findings"]]
+    assert ("REACH-005", "medium", "low") in ids
+    assert not any(f["check_id"] in ("REACH-006", "REACH-012") for f in doc["findings"])
+    assert any(s["check_id"] == "REACH-006" for s in doc["checks_skipped"])
+    sample = next(f for f in doc["findings"] if f["check_id"] == "REACH-005")
+    assert "browser user-agent included" in sample["title"] and sample.get("severity_locked")
+
+
+def test_reach_010_grades_a_sister_edition_canonical_low(tmp_path):
+    """airbnb.com pointed twelve canonicals at airbnb.co.in from India and
+    hdfc.bank.in one at hdfcbank.com: the same brand's regional or legacy
+    edition, not another site taking its credit."""
+    import importlib
+    sys.path.insert(0, os.path.dirname(CHECK_ACCESS))
+    mod = importlib.import_module("check_access")
+    assert mod._same_brand("www.airbnb.co.in", "www.airbnb.com")
+    assert mod._same_brand("hdfc.bank.in", "www.hdfcbank.com")
+    assert not mod._same_brand("www.nykaa.com", "www.nike.in")
+    src = open(CHECK_ACCESS, encoding="utf-8").read()
+    assert 'sev = "low" if sibling else "high"' in src

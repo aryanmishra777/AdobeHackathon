@@ -345,7 +345,7 @@ class Bundle:
         # the logo's alt text leaking into the title. Strip that class of
         # suffix so the candidate merges with the declared name.
         def _clean(name: str) -> str:
-            name = OFFICIAL_SITE_RE.sub(r"", name.strip())
+            name = OFFICIAL_SITE_RE.sub(r"\1", name.strip())
             return re.sub(r"\s+(logo|icon|homepage|home page|home|official site)$",
                           "", name.strip(), flags=re.I).strip() or name.strip()
         declared = Counter({_clean(k): v for k, v in declared.items()
@@ -758,6 +758,14 @@ def check_quote_002(b: Bundle) -> list:
     whether what exists is quotable enough."""
     content_pages = b.content_pages
     if not content_pages:
+        return []
+    if len(content_pages) < 3:
+        # lemonde.fr had one content page in a 25-page sample (the rest were
+        # challenge stubs) and was told it never says what it is. A site-wide
+        # absence needs a sample: the merge's own floor is three pages.
+        b.skip_check("QUOTE-002", f"only {len(content_pages)} content page(s) in the sample; "
+                                  "an identity statement's absence cannot be claimed site-wide "
+                                  "from fewer than three")
         return []
 
     # The subject of an identity sentence may be the declared name, the host
@@ -1321,8 +1329,11 @@ def check_quote_010(b: Bundle) -> list:
     # reported as a second name for Electronic Arts.
     recur = max(2, len(b.ok_pages) // 4)
     for seg, c in seg_counter.items():
-        if c >= recur:
-            names[_norm_name(OFFICIAL_SITE_RE.sub(r"", seg))] += c
+        # a segment of six or more words is a tagline, not a name: airbnb.com's
+        # "Holiday rentals, cabins, beach houses, unique homes & experiences"
+        # recurred on eight titles
+        if c >= recur and len(seg.split()) <= 5:
+            names[_norm_name(OFFICIAL_SITE_RE.sub(r"\1", seg))] += c
 
     distinct = sorted({n for n in names if n})
     # Guard: capitalisation, punctuation and legal suffixes already normalised.
@@ -1335,8 +1346,17 @@ def check_quote_010(b: Bundle) -> list:
         return x.replace(" ", "")
     rf = _optional("rapidfuzz")
 
+    def initials(x):
+        return "".join(w[0] for w in x.split() if w)
+
     def alike(x, y):
         if x in y or y in x or squash(x) in squash(y) or squash(y) in squash(x):
+            return True
+        # an initialism beside its expansion: "mit" and "massachusetts
+        # institute of technology" are one name
+        if len(x.split()) == 1 and len(x) >= 2 and x == initials(y):
+            return True
+        if len(y.split()) == 1 and len(y) >= 2 and y == initials(x):
             return True
         if rf is not None:
             try:

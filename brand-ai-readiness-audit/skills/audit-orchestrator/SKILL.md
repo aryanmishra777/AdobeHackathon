@@ -137,9 +137,15 @@ Follow `../site-evidence-collector/SKILL.md`. It writes an evidence bundle to
 **Do not let any analysis skill fetch anything.** One crawl, six analyses. This
 is what keeps the audit polite, fast, and deterministic.
 
-If collection fails outright (DNS failure, connection refused, whole-site
-block), stop and emit a report whose single finding explains the block — that is
-the most severe possible discoverability defect, not an audit error.
+If collection fails outright — `coverage.sample` is `refused`, `challenged`,
+`timed-out` or `unresolved` rather than `pages` — run `crawl-access-audit`
+only. It emits the one finding that explains what happened and, from the probe,
+whether the named AI agents are affected (a verified agent block is the most
+severe discoverability defect there is; an address-level refusal is not a
+defect at all, and is reported at low confidence). Both axes are then
+**not assessed**: grading five mechanisms from an empty sample is the confident
+false positive the rubric punishes hardest. Say in `coverage.limitations` what
+was refused and suggest a rerun from another network or with a browser.
 
 ### 3. Profile the site
 

@@ -403,3 +403,15 @@ def test_title_segments_drop_label_prefixes():
     mod = _quote_module()
     assert mod._title_segments("Collection: Game Engines · GitHub") == ["Game Engines", "GitHub"]
     assert mod._title_segments("Nike Air Max - Men's Shoes | Nike IN") == ["Nike Air Max", "Men's Shoes", "Nike IN"]
+
+
+def test_quote_010_ignores_taglines_and_treats_an_initialism_as_the_same_name():
+    """airbnb.com's eight-word title tagline and mit.edu's 'MIT' beside
+    'Massachusetts Institute of Technology' were second names."""
+    mod = _quote_module()
+    src = open(CHECK_QUOTE, encoding="utf-8").read()
+    assert "len(seg.split()) <= 5" in src
+    assert 'x == initials(y)' in src
+    assert mod.OFFICIAL_SITE_RE.sub(r"\1", "Official EA Site") == "EA"
+    # the backreference itself, since a heredoc once turned it into a control byte
+    assert 'OFFICIAL_SITE_RE.sub(r"' + chr(92) + '1"' in src

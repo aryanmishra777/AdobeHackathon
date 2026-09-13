@@ -349,3 +349,13 @@ def test_stay_007_ignores_popovers_closed_details_and_structural_overlay_classes
     shown = '<details open class="details-overlay"><div class="newsletter-modal">'
     m = list(mod.INTERSTITIAL_RE.finditer(shown))[-1]
     assert "newsletter" in m.group(0) and not mod._never_shown_on_arrival(shown, m)
+
+
+def test_stay_001_and_003_read_listings_and_tables_of_contents_correctly():
+    """airbnb.com's 'Holiday rentals in North Myrtle Beach' named no offering
+    and docs.python.org's table of contents had eighteen calls to action
+    because '6.16. Evaluation order' contains 'order'."""
+    mod = _stay_module()
+    assert mod.ORIENTATION_NOUN_RE.search("Holiday rentals in North Myrtle Beach")
+    assert not mod.CTA_RE.search("6.16. Evaluation order")
+    assert mod.CTA_RE.search("Order now") and mod.CTA_RE.search("Pre-order today")
