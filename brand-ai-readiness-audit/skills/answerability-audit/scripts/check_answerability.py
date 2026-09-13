@@ -144,6 +144,22 @@ SUMMARY_HINT_RE = re.compile(
     r"\b(summary|tl;?dr|key\s+takeaways?|in\s+short|at\s+a\s+glance|overview)\b", re.I)
 
 TITLE_SPLIT_RE = re.compile(r"\s+[|–—·•]\s+|\s+-\s+|(?<=\S):\s+")
+
+
+def _title_segments(title: str) -> list:
+    """The title split into its segments, minus label prefixes: in
+    "Collection: Game Engines · GitHub" the word before the colon names the
+    kind of page, not a brand or a subject. Six such titles on github.com made
+    "Collection" a second name for the organisation."""
+    out = []
+    for seg in TITLE_SPLIT_RE.split(title or ""):
+        seg = seg.strip()
+        if not seg:
+            continue
+        if len(seg.split()) <= 2 and re.search(r"(?:^|\s)" + re.escape(seg) + r":\s", title):
+            continue
+        out.append(seg)
+    return out
 # Title text that names nothing. who.int's <title> is "Home" on 10 of 20
 # pages; rfc-editor.org's is "Expand sidebar" on all 20 -- a button label.
 GENERIC_NAME_RE = re.compile(
@@ -317,7 +333,7 @@ class Bundle:
                     page_names.add(str(meta[key]).strip())
             for n in page_names:
                 declared[n] += 1
-            for seg in TITLE_SPLIT_RE.split(ex.get("title") or ""):
+            for seg in _title_segments(ex.get("title") or ""):
                 seg = _unspace_letters(seg.strip())
                 if len(seg) >= 3 and not GENERIC_NAME_RE.match(seg):
                     titled[seg] += 1
@@ -444,6 +460,22 @@ class Bundle:
                     locs.append(entry["loc"])
         return locs
 
+    def known_urls(self) -> list:
+        """Every URL the bundle knows of: sampled pages, sitemap entries and
+        the internal links the sampled pages carry. github.com links to
+        /pricing from every page's navigation; the sample of 25 never reached
+        it and the sitemap is refused, and QUOTE-005 said the site had no
+        pricing page."""
+        urls = [_page_url(p) for p in self.ok_pages] + self.sitemap_locs()
+        seen = set(urls)
+        for p in self.ok_pages:
+            for link in self.extracted(p["page_id"]).get("links") or []:
+                href = link.get("href")
+                if link.get("internal") and href and href not in seen:
+                    seen.add(href)
+                    urls.append(href)
+        return urls
+
 
 # --------------------------------------------------------------------------
 # helpers (finding() and act() are copied verbatim from the reference impl)
@@ -541,6 +573,33 @@ def _chunk_resolves_subject(chunk: dict, terms: set) -> bool:
     return _has_term(" ".join(chunk.get("heading_path") or []), terms)
 
 
+GENERIC_HEADING_WORDS = {
+    "overview", "features", "details", "description", "summary", "introduction", "about",
+    "trending", "news", "latest", "popular", "related", "more", "resources", "faq", "faqs",
+    "highlights", "benefits", "pricing", "plans", "specifications", "specs", "reviews",
+    "gallery", "contact", "support", "help", "home", "menu", "products", "services", "blog",
+}
+
+
+def _heading_names_a_thing(heading: str) -> bool:
+    """Whether a heading names a specific subject rather than a section: a
+    repository ("bilawalsidhu / gods-eye-v"), a product, a person. A figure
+    under such a heading is labelled by it. github.com/trending's repository
+    descriptions ("operates across 1000+ markets") each sit under the
+    repository's own name and were counted as bare figures."""
+    text = (heading or "").strip()
+    if not text:
+        return False
+    if re.search(r"\S+\s*/\s*\S+", text):
+        return True
+    tokens = [t for t in re.findall(r"[A-Za-z][A-Za-z0-9_.'-]*", text)]
+    proper = [t for t in tokens if t[0].isupper() and t.lower() not in GENERIC_HEADING_WORDS]
+    # one Title-Case word is a section ("Premise", "Overview"); a name is two
+    # or more, or a token with digits or mixed case inside it (CloddsBot)
+    coined = [t for t in tokens if re.search(r"[a-z][A-Z]|\d", t)]
+    return len(tokens) <= 8 and (len(proper) >= 2 or bool(coined))
+
+
 def _chunk_fails_standalone(chunk: dict, terms: set) -> bool:
     sig = chunk.get("signals") or {}
     if (chunk.get("word_count") or 0) < MIN_CHUNK_WORDS:
@@ -555,7 +614,8 @@ def _chunk_fails_standalone(chunk: dict, terms: set) -> bool:
     # and carries three figures is self-contained even though it never says
     # "Wikimedia". A pronoun or "this one" at the opening still fails: the
     # subject named later does not rescue the first sentence.
-    numbers_bare = (sig.get("bare_numbers") or 0) >= BARE_NUMBER_TRIGGER and not sig.get("names_subject")
+    numbers_bare = ((sig.get("bare_numbers") or 0) >= BARE_NUMBER_TRIGGER and not sig.get("names_subject")
+                    and not _heading_names_a_thing((chunk.get("heading_path") or [""])[-1]))
     trigger = (sig.get("leading_pronoun")
                or len(sig.get("deictic_terms") or []) >= 1
                or numbers_bare)
@@ -986,8 +1046,7 @@ def check_quote_005(b: Bundle) -> list:
 
     url_re = re.compile(r"/(faq|faqs|pricing|plans|price|compare|comparison|"
                         r"how-it-works|how-we-work|vs-|-vs-)", re.I)
-    all_urls = [_page_url(p) for p in b.ok_pages] + b.sitemap_locs()
-    if any(url_re.search(u) for u in all_urls):
+    if any(url_re.search(u) for u in b.known_urls()):
         return []
 
     sampled = len(b.ok_pages)
@@ -1032,7 +1091,7 @@ def check_quote_006(b: Bundle) -> list:
     if {"faq", "pricing"} & have_types:
         return []
     url_re = re.compile(r"/(faq|faqs|pricing|plans|price)", re.I)
-    if any(url_re.search(u) for u in [_page_url(p) for p in b.ok_pages] + b.sitemap_locs()):
+    if any(url_re.search(u) for u in b.known_urls()):
         return []
     content_pages = b.content_pages
     if not content_pages:
@@ -1254,8 +1313,7 @@ def check_quote_010(b: Bundle) -> list:
     # the recurring title segment is the brand candidate from titles
     seg_counter = Counter()
     for p in b.ok_pages:
-        for seg in TITLE_SPLIT_RE.split(b.extracted(p["page_id"]).get("title") or ""):
-            seg = seg.strip()
+        for seg in _title_segments(b.extracted(p["page_id"]).get("title") or ""):
             if len(seg) >= 3:
                 seg_counter[seg] += 1
     # A segment is a brand candidate when it recurs across the sample, not

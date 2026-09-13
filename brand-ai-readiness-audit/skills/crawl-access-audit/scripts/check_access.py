@@ -908,7 +908,11 @@ def check_reach_015(b: Bundle) -> list[dict]:
     median = statistics.median(ttfbs)
     if median < SLOW_TTFB_MEDIUM_MS:
         return []
-    severity = "high" if median >= SLOW_TTFB_HIGH_MS else "medium"
+    # Registry guard: never above medium from timing alone -- one location,
+    # one shot. Locked, because breadth is the nature of the measurement
+    # and the merge's site-wide escalation would turn it critical (it did,
+    # on two corpus sites, once the slow pages were listed as affected).
+    severity = "medium"
     title = "The server responds slowly enough to limit crawling"
     caveat = ("This figure is a single measurement from one location and includes "
               "network latency.")
@@ -918,7 +922,7 @@ def check_reach_015(b: Bundle) -> list[dict]:
                   "that rate-limits or holds unrecognised clients produces it, and every "
                   "AI crawler is such a client. Confirm with the verification command, "
                   "which uses a different TLS client, and compare.")
-    return [finding(
+    result = finding(
         "REACH-015", title,
         severity,
         f"Median time to first byte across {len(ttfbs)} sampled pages was "
@@ -940,7 +944,9 @@ def check_reach_015(b: Bundle) -> list[dict]:
                    "Crawlers allocate a limited time budget per site; slow "
                    "responses reduce how many pages are fetched per visit and "
                    "how promptly changes are picked up.",
-                   owner="infrastructure"))]
+                   owner="infrastructure"))
+    result["severity_locked"] = True
+    return [result]
 
 
 def _is_development_origin(host: str) -> bool:

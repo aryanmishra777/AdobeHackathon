@@ -170,6 +170,16 @@ ATTRIBUTION_RE = re.compile(
     r"published in|cite|citation|methodology|our research|our survey|our data|"
     r"we surveyed|we analysed|we analyzed|we measured)", re.I)
 OWN_OPS_SUBJECT_RE = re.compile(r"\b(we|our|us)\b", re.I)
+# A metrics strip -- "225M+ Developers 4M+ Organizations 800M+ Repositories"
+# on github.com/about -- is the company's own count of its own operations,
+# written without a subject, so the we/our test above never sees it.
+OWN_METRICS_STRIP_RE = re.compile(r"(?:\d[\d,.]*\s?[MKBmkb]?(?:\+|%)\s+[A-Za-z][A-Za-z0-9 ]{2,30}?\s+(?=\d)){2}")
+# A person or organisation named as the source of the figure: "Burket
+# estimates at least a 25% increase", "Gartner reports", "the CTO says".
+NAMED_SOURCE_RE = re.compile(
+    r"\b(?:[A-Z][a-zA-Z.'-]+(?:\s+[A-Z][a-zA-Z.'-]+){0,3}|the\s+[A-Za-z]{2,20})\s+"
+    r"(?:estimates?|estimated|says|said|reports?|reported|found|notes|noted|explains|"
+    r"explained|told|calculates|measured|puts?|cites?)\b")
 CITATION_MARK_RE = re.compile(r"(?:\[\s*(?:\d+|[a-z]|note \d+|citation needed)\s*\]\s*)+$|^\s*(?:\[\s*(?:\d+|[a-z]|note \d+|citation needed)\s*\]\s*)+")
 # Sentences the statistic regex matches that are not claims about the world:
 # offers and pricing, material composition, negated idioms, code and config,
@@ -179,6 +189,8 @@ NOT_A_CLAIM_RE = re.compile(
     r"apr|interest|elastane|spandex|cotton|polyester|nylon|wool|linen|silk|"
     r"recycled|organic|rayon|viscose|lyocell|leather|alcohol|abv|vol)\b"
     r"|\b(?:not|isn't|isn.t|no|never|nothing)\s+(?:\w+\s+){0,3}100\s?%"
+    r"|\b1[01]0\s?%\s+(?:sure|certain|committed|focused|confident|guaranteed?)\b"
+    r"|\b(?:that|the)\s+(?:last|final|extra)\s+\d{1,2}\s?%"
     r"|\b(?:save|earn|get|receive|enjoy)\s+(?:up\s+to\s+)?\$?\d[\d,.]*\s?%?"
     r"|\b(?:commissions?|affiliate|referrals?|promo(?:tion)?s?|vouchers?)\b"
     r"|https?://|www\.|\bskip to (?:main )?content\b"
@@ -372,6 +384,17 @@ class Bundle:
                         types_seen.add(t.lower())
             if p.get("page_type") == "article":
                 article_count += 1
+            # what the sampled pages link to is part of what the site is:
+            # github.com's navigation carries /pricing on every page while
+            # the 25-page sample never reached it
+            for link in ex.get("links") or []:
+                if not link.get("internal"):
+                    continue
+                lp = urlparse(link.get("href") or "").path.lower()
+                if any(pr in lp for pr in ("/pricing", "/plans")):
+                    has_pricing = True
+                if "/docs" in lp or "/reference" in lp or "/api" in lp:
+                    has_docs = True
         if "product" in types_seen or has_cart or any(
                 "/product" in x or "/shop" in x for x in paths):
             self._site_type = "ecommerce"
@@ -381,10 +404,17 @@ class Bundle:
                 t.endswith("business") or t in ("restaurant", "store", "cafeorcoffeeshop")
                 for t in types_seen):
             self._site_type = "local-business"
-        elif article_count >= 2 or "newsarticle" in types_seen:
+        elif "newsarticle" in types_seen or article_count >= max(2, len(self.ok_pages) // 2):
+            # a publisher is a site that is mostly articles; two blog posts
+            # in a 25-page sample of a SaaS site made github.com a publisher
+            # and held its marketing pages to a 30-day cadence
             self._site_type = "media-publisher"
         elif has_docs:
             self._site_type = "docs"
+        elif article_count >= max(2, len(self.ok_pages) // 3):
+            # a blog whose posts are a third of the sample, with no docs
+            # section to say otherwise
+            self._site_type = "media-publisher"
         elif len(self.ok_pages) < 20 and not has_pricing and not has_cart:
             self._site_type = "portfolio-brochure"
         else:
@@ -1272,6 +1302,10 @@ def check_trust_015(b: Bundle) -> list:
                      "unattributed claims")
         return []
     out = []
+    brand_re = None
+    names = [ph for ph in (b.brand_phrases or []) if len(ph) >= 3 and len(ph.split()) <= 3]
+    if names:
+        brand_re = re.compile(r"\b(?:" + "|".join(re.escape(n) for n in names) + r")\b", re.I)
     for p in b.content_pages:
         # Guard: an index page lists titles; it does not make claims. danluu.com's
         # home page was reported for "95%-ile isn't that good" -- a post title in
@@ -1309,7 +1343,9 @@ def check_trust_015(b: Bundle) -> list:
                 continue
             if not STAT_CLAIM_RE.search(sent):
                 continue
-            if ATTRIBUTION_RE.search(sent):
+            if ATTRIBUTION_RE.search(sent) or NAMED_SOURCE_RE.search(sent):
+                continue
+            if OWN_METRICS_STRIP_RE.search(sent):
                 continue
             # Guard: "5% rewards", "7% elastane", "isn't 100%", a sysctl(8)
             # manual, a sentence that already links its source.
@@ -1318,6 +1354,8 @@ def check_trust_015(b: Bundle) -> list:
             # Guard: a claim about the company's own operations needs no external
             # source. Only a claim about the wider world does.
             if OWN_OPS_SUBJECT_RE.search(sent) and not WORLD_CLAIM_NOUN_RE.search(sent):
+                continue
+            if brand_re and brand_re.search(sent) and not WORLD_CLAIM_NOUN_RE.search(sent):
                 continue
             flagged.append(sent.strip())
         if not flagged:

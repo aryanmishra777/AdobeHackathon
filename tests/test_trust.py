@@ -327,3 +327,33 @@ def test_trust_005_skips_interface_state_uses_of_current():
     assert mod._currency_match("Optional Cookies are currently disabled based on Your Privacy Choices") is None
     assert mod._currency_match("Our current pricing is listed below").group(0).lower() == "current"
     assert mod._currency_match("Bejeweled Stars is available now from EA").group(0) == "available now"
+
+
+def test_trust_015_reads_metrics_strips_named_sources_idioms_and_the_brand_as_own_claims():
+    """github.com: '225M+ Developers 4M+ Organizations 800M+ Repositories' is
+    the company counting itself; 'Burket estimates at least a 25% increase'
+    names its source; '100% sure' and 'that last 10%' are idioms; 'GitHub
+    helps millions of developers' is a claim about its own product."""
+    mod = _trust_module()
+    assert mod.OWN_METRICS_STRIP_RE.search("225M+ Developers 4M+ Organizations 800M+ Repositories 90% Fortune 100")
+    assert mod.OWN_METRICS_STRIP_RE.search("180M+ Developers 90% Fortune 100 4M+ Organizations")
+    assert not mod.OWN_METRICS_STRIP_RE.search("Studies show 40% of teams fail and 30% of managers agree.")
+    assert mod.NAMED_SOURCE_RE.search("for example, Burket estimates at least a 25% increase in developer speed")
+    assert not mod.NAMED_SOURCE_RE.search("Studies show 40% of teams fail.")
+    assert mod.NOT_A_CLAIM_RE.search("committing code that is 100% sure to succeed")
+    assert mod.NOT_A_CLAIM_RE.search("or that last 10%, hold you back")
+    src = open(CHECK_TRUST, encoding="utf-8").read()
+    assert "if brand_re and brand_re.search(sent) and not WORLD_CLAIM_NOUN_RE.search(sent)" in src
+
+
+def test_site_profile_needs_a_majority_of_articles_and_reads_pricing_from_links():
+    """Two blog posts in a 25-page SaaS sample made github.com a
+    media-publisher with a 30-day cadence; its navigation links /pricing on
+    every page while the sample never reached it."""
+    src = open(CHECK_TRUST, encoding="utf-8").read()
+    assert 'article_count >= max(2, len(self.ok_pages) // 2)' in src
+    assert 'for link in ex.get("links") or []' in src
+    for path in (os.path.join(os.path.dirname(CHECK_TRUST), "..", "..", "engagement-audit", "scripts", "check_engagement.py"),
+                 os.path.join(os.path.dirname(CHECK_TRUST), "..", "..", "structured-data-audit", "scripts", "check_structured_data.py")):
+        other = open(path, encoding="utf-8").read()
+        assert 'article_count >= max(2, len(self.ok_pages) // 2)' in other, path

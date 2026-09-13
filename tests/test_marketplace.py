@@ -868,7 +868,7 @@ def test_collector_classifies_an_itemlist_page_as_category_not_article():
     mod = _collect_module()
     ex = {"jsonld": [{"parsed_ok": True, "value": {"@type": "ItemList", "itemListElement": []}}],
           "text": {"main_word_count": 900},
-          "dates": [{"source": "meta", "value": "2026"}],
+          "dates": [{"source": "meta", "value": "2026-03-04", "iso": "2026-03-04"}],
           "headings": [{"level": 1, "text": "Running (50)"}]}
     assert mod.classify_page_type("https://x.test/nike-running/c/94958", ex) == "category"
     ex["jsonld"] = []
@@ -932,9 +932,9 @@ def test_collector_diversifies_below_the_include_prefix():
     round-robin on it put 17 of 25 pages inside /in/products/pdfprintengine/."""
     mod = _collect_module()
     seg = mod.Collector._segment
-    assert seg("https://a.test/in/products/pdfprintengine/faq.html", ["/in/"]) == "products/pdfprintengine"
-    assert seg("https://a.test/in/acrobat/pro.html", ["/in/"]) == "acrobat/pro.html"
-    assert seg("https://a.test/in/products/x.html", []) == "in/products"
+    assert seg("https://a.test/in/products/pdfprintengine/faq.html", ["/in/"]) == ("products", "products/pdfprintengine")
+    assert seg("https://a.test/in/acrobat/pro.html", ["/in/"]) == ("acrobat", "acrobat/pro.html")
+    assert seg("https://a.test/in/products/x.html", []) == ("in", "in/products")
 
 
 def test_collector_samples_the_seed_locale_before_the_alphabet():
@@ -970,8 +970,35 @@ def test_collector_samples_the_seed_locale_before_the_alphabet():
                 ("https://www.ea.com/games/fc", "sitemap"),
                 ("https://www.ea.com/en-gb/games/fc", "sitemap")]
     ordered = [u for u, _ in c._diversify(frontier)]
-    assert ordered[:2] == ["https://www.ea.com/en-gb/games/fc", "https://www.ea.com/games/fc"]
+    assert set(ordered[:2]) == {"https://www.ea.com/en-gb/games/fc", "https://www.ea.com/games/fc"}
     assert set(ordered[2:]) == {"https://www.ea.com/ar-sa/games/fc", "https://www.ea.com/cs-cz/games/fc"}
+
+
+def test_collector_samples_sections_before_subsections_and_navigation_before_listings():
+    """github.com: keying sections on two path segments made every
+    /collections/x its own section, and alphabetical tie-breaks put the
+    uppercase repository owners listed at the foot of the home page ahead of
+    /pricing and /features in its navigation. The sample had seven
+    collections and eight repositories and no pricing page."""
+    import argparse
+    mod = _collect_module()
+    args = argparse.Namespace(target="https://github.com/", out=tempfile.mkdtemp(), max_pages=5,
+                              timeout=10.0, budget=60.0, concurrency=8, delay=0.0, include=[],
+                              exclude=[], renderer="none", render_pages=0, no_probe=True)
+    c = mod.Collector(args)
+    c.pages = [{"url": "https://github.com/collections"}]
+    frontier = [(u, "crawl-discovered") for u in (
+        "https://github.com/features/copilot",      # the menu lists the feature before its landing page
+        "https://github.com/features", "https://github.com/pricing",
+        "https://github.com/collections/game-engines", "https://github.com/collections/devops-tools",
+        "https://github.com/CSSLint/csslint", "https://github.com/4ian/GDevelop")]
+    ordered = [u.replace("https://github.com", "") for u, _ in c._diversify(frontier)]
+    # untouched sections first, in navigation order; the listed repositories
+    # (each its own section) after them; then the second collection, which
+    # already has one page, and the second features page
+    assert ordered[:4] == ["/features", "/pricing", "/CSSLint/csslint", "/4ian/GDevelop"]
+    assert ordered.index("/collections/game-engines") < ordered.index("/collections/devops-tools")
+    assert ordered.index("/features/copilot") > ordered.index("/4ian/GDevelop")
 
 
 def test_collector_resolves_origin_variants_together(monkeypatch):
@@ -1345,3 +1372,39 @@ def test_read_001_falls_back_to_inference_when_the_render_is_inconclusive(tmp_pa
     after = json.loads(run(CHECK_RENDER, str(dst), "--stdout").stdout)["findings"]
     hit2 = next((f for f in after if f["check_id"] == "READ-001"), None)
     assert hit2 is not None and "proves nothing" in hit2["evidence"]
+
+
+def test_collector_ignores_text_under_the_hidden_attribute():
+    """github.com keeps 'You signed in with another tab or window. Reload to
+    refresh your session.' in a hidden flash on every page; STAY-001 read
+    it as the first thing on three collection pages. hidden="until-found"
+    content is what a find-in-page reveals and is kept."""
+    mod = _collect_module()
+    html = ('<html><body><div hidden="hidden" class="flash"><span hidden>You signed in with another tab '
+            'or window.</span><h2>Stale</h2></div><main><h1>Game engines</h1><p>' + "word " * 30 +
+            '</p><div hidden="until-found">findable text</div></main></body></html>')
+    ex = mod.extract_page("p", "https://github.com/collections/game-engines", html, "https://github.com")
+    assert "signed in" not in ex["text"]["full"]
+    assert [h["text"] for h in ex["headings"]] == ["Game engines"]
+    assert ex["text"]["main"].startswith("Game engines")
+    assert "findable text" in ex["text"]["full"]
+    # a <template>'s subtree is inert however deep: the flash template's
+    # "{{ message }}" reached the page text through a nested <div>
+    html = ('<html><body><template class="js-flash-template"><div class="flash"><div>{{ message }}</div>'
+            '</div></template><main><h1>Topics</h1><p>' + "word " * 30 + '</p></main></body></html>')
+    ex = mod.extract_page("p", "https://github.com/topics", html, "https://github.com")
+    assert "{{" not in ex["text"]["full"]
+
+
+def test_collector_shape_rule_needs_a_dateline_not_a_copyright_year():
+    """github.com's footer carries <time>2026</time> on every page; twelve
+    marketing pages classified as articles and PARSE-014 asked each for an
+    author. A bare year is not a dateline."""
+    mod = _collect_module()
+    ex = {"url": "https://github.com/features", "text": {"main_word_count": 1600},
+          "headings": [{"level": 1, "text": "Features"}], "jsonld": [], "meta": {},
+          "dates": [{"value": "2026", "iso": None, "source": "time-element"},
+                    {"value": "© 2026", "iso": "2026-01-01", "source": "copyright"}]}
+    assert mod.classify_page_type(ex["url"], ex) == "other"
+    ex["dates"].append({"value": "2026-03-04", "iso": "2026-03-04", "source": "time-element"})
+    assert mod.classify_page_type(ex["url"], ex) == "article"

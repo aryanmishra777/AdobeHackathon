@@ -356,3 +356,50 @@ def test_quote_002_accepts_the_host_label_initialism(tmp_path):
     b.site = "www.nike.in"
     b._brand_phrases = ["Nike"]
     assert b.brand_initialism is None
+
+
+def test_quote_001_lets_a_heading_that_names_a_thing_label_the_figures_beneath_it():
+    """github.com/trending: each repository description ('operates across
+    1000+ markets') sits under the repository's own name; seven were counted
+    as passages with bare figures and no subject."""
+    mod = _quote_module()
+    assert mod._heading_names_a_thing("bilawalsidhu / gods-eye-v")
+    assert mod._heading_names_a_thing("Nike Air Max Plus")
+    assert mod._heading_names_a_thing("Adrian Stone, Sr. Director")
+    assert not mod._heading_names_a_thing("Trending")
+    assert not mod._heading_names_a_thing("Premise")
+    assert not mod._heading_names_a_thing("Key features")
+    chunk = {"word_count": 40, "heading_path": ["Trending", "alsk1992 / CloddsBot"],
+             "text": "Open source AI trading agent that operates autonomously across 1000+ markets with 3 modes and 24/7 uptime.",
+             "signals": {"bare_numbers": 4}}
+    assert not mod._chunk_fails_standalone(chunk, {"github"})
+    chunk["heading_path"] = ["Trending"]
+    assert mod._chunk_fails_standalone(chunk, {"github"})
+
+
+def test_quote_005_and_006_count_pages_the_sample_links_to(tmp_path):
+    """github.com links /pricing from every page's navigation; the 25-page
+    sample never reached it and the sitemap is refused, and QUOTE-005 said
+    the site had no pricing page."""
+    mod = _quote_module()
+    src = open(CHECK_QUOTE, encoding="utf-8").read()
+    assert src.count("b.known_urls()") >= 2
+    class Stub(mod.Bundle):
+        def __init__(self):
+            self.sitemaps = []
+        ok_pages = property(lambda self: [{"page_id": "p000", "url": "https://x.test/", "status": 200}])
+
+        def extracted(self, pid):
+            return {"links": [{"href": "https://x.test/pricing", "internal": True},
+                              {"href": "https://other.test/", "internal": False}]}
+    b = Stub()
+    assert "https://x.test/pricing" in b.known_urls()
+    assert "https://other.test/" not in b.known_urls()
+
+
+def test_title_segments_drop_label_prefixes():
+    """'Collection: Game Engines · GitHub' on six pages made 'Collection' a
+    second name for the organisation."""
+    mod = _quote_module()
+    assert mod._title_segments("Collection: Game Engines · GitHub") == ["Game Engines", "GitHub"]
+    assert mod._title_segments("Nike Air Max - Men's Shoes | Nike IN") == ["Nike Air Max", "Men's Shoes", "Nike IN"]

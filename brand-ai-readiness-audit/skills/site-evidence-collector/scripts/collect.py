@@ -547,6 +547,13 @@ class PageParser(HTMLParser):
         self._capture: list[str] | None = None  # active capture buffer
         self._capture_tag = None
         self._boilerplate_depth = 0
+        # Stack depths at which an element carrying the `hidden` attribute
+        # opened. The attribute means "not rendered" by specification; text
+        # under it is not what any reader sees. github.com keeps its
+        # stale-session notices ("You signed in with another tab or window")
+        # in a hidden flash on every page, and STAY-001 read them as the
+        # first thing on the page.
+        self._hidden_at: list[int] = []
         self._current_heading = None
         self._current_link = None
         self._link_capture: list[str] | None = None  # link text paused by a heading
@@ -588,6 +595,16 @@ class PageParser(HTMLParser):
 
         if tag in BOILERPLATE:
             self._boilerplate_depth += 1
+        # hidden="until-found" is content a find-in-page reveals; keep it
+        if tag not in VOID and any(k.lower() == "hidden" and (v or "").lower() != "until-found"
+                                   for k, v in attrs):
+            self._hidden_at.append(len(self._stack))
+        # A <template>'s subtree is inert markup, however deep: the parent
+        # check in handle_data only sees the immediate element, and
+        # github.com's flash template ("{{ message }}") reached the page text
+        # through a <div> inside it.
+        if tag in ("template", "svg", "canvas"):
+            self._hidden_at.append(len(self._stack))
 
         if tag == "html":
             self.lang = self._attr(attrs, "lang")
@@ -772,6 +789,8 @@ class PageParser(HTMLParser):
             while self._stack:
                 if self._stack.pop() == tag:
                     break
+        while self._hidden_at and self._hidden_at[-1] > len(self._stack):
+            self._hidden_at.pop()
 
     def handle_data(self, data):
         # Text directly inside a non-text element is never content, even when a
@@ -783,6 +802,8 @@ class PageParser(HTMLParser):
         # captures allowed to read a non-text tag are the ones that opened it.
         if (self._stack and self._stack[-1] in NON_TEXT
                 and self._capture_tag not in ("ld+json", "script", "noscript")):
+            return
+        if self._hidden_at and self._capture_tag not in ("ld+json", "script"):
             return
         if self._capture is not None:
             self._capture.append(data)
@@ -1384,7 +1405,10 @@ def classify_page_type(url: str, extracted: dict | None) -> str:
         # of the page type they key on. Shape is evidence too.
         text = extracted.get("text") or {}
         words = text.get("main_word_count") or 0
+        # a bare year is a copyright line, not a dateline: github.com's
+        # footer <time>2026</time> made twelve landing pages "articles"
         dated = any(d.get("source") in ("jsonld", "time-element", "meta")
+                    and len(str(d.get("iso") or "")) >= 7
                     for d in (extracted.get("dates") or []))
         has_heading = any(h.get("level") == 1 for h in (extracted.get("headings") or []))
         if words >= 300 and dated and has_heading:
@@ -1742,11 +1766,13 @@ class Collector:
                 continue
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=len(batch)) as pool:
-                futures = {pool.submit(fetch, url, AUDIT_UA, self.args.timeout,
-                                       self.args.max_bytes): (url, role)
+                futures = {(url, role): pool.submit(fetch, url, AUDIT_UA, self.args.timeout,
+                                                    self.args.max_bytes)
                            for url, role in batch}
-                for fut in concurrent.futures.as_completed(futures):
-                    url, role = futures[fut]
+                # Results are read in batch order, not completion order, so
+                # the order links are discovered in -- which ranks the
+                # frontier -- is a function of the pages, not of the network.
+                for (url, role), fut in futures.items():
                     try:
                         r = fut.result()
                     except Exception as exc:
@@ -1778,19 +1804,23 @@ class Collector:
         self.stopped = "max-pages" if fetched >= self.args.max_pages else "completed"
 
     @staticmethod
-    def _segment(url: str, include=()) -> str:
-        """The site section a URL belongs to, for round-robin sampling. When
-        the audit is scoped with --include, the section is the segment *after*
-        the scope: under /in/ every URL shares "in", and keying on it put 17
-        of adobe.com's 25 sampled pages inside /in/products/pdfprintengine/.
-        Two segments are used so a large sub-tree cannot do the same."""
+    def _segment(url: str, include=()) -> tuple:
+        """The site section a URL belongs to, for round-robin sampling, as
+        (first segment, first two segments). When the audit is scoped with
+        --include, the section is the segment *after* the scope: under /in/
+        every URL shares "in", and keying on it put 17 of adobe.com's 25
+        sampled pages inside /in/products/pdfprintengine/. The second level
+        keeps a large sub-tree from doing the same once its section's turn
+        comes round; keying on two segments alone made every /collections/x
+        on github.com its own section and took seven of them before
+        /pricing."""
         path = urlparse(url).path
         for prefix in include:
             if path.startswith(prefix):
                 path = path[len(prefix):]
                 break
         parts = [p for p in path.split("/") if p]
-        return "/".join(parts[:2]) if parts else ""
+        return ("/".join(parts[:1]), "/".join(parts[:2]))
 
     @staticmethod
     def _boilerplate_rank(url: str) -> int:
@@ -1816,21 +1846,40 @@ class Collector:
         """
         taken = {}
         for page in self.pages:
-            seg = self._segment(page.get("url", ""), self.args.include)
-            taken[seg] = taken.get(seg, 0) + 1
+            for seg in self._segment(page.get("url", ""), self.args.include):
+                taken[seg] = taken.get(seg, 0) + 1
 
+        # Ties between sections break on depth, then on the order the URLs
+        # were first seen -- a home page's navigation before the repositories
+        # it lists further down. Alphabetical order put github.com's
+        # uppercase repository owners ahead of /pricing and /features.
+        order = getattr(self, "_seen_order", None)
+        if order is None:
+            order = self._seen_order = {}
+        for url, _ in frontier:
+            if url not in order:
+                order[url] = len(order)
+        # Positions within a section are assigned shallowest-and-earliest
+        # first, so a section's own landing page is its first candidate:
+        # ranked in frontier order, /features sat behind the seven
+        # /features/* links github.com's menu lists before it.
         seen_in_frontier = {}
         ranked = []
-        for url, role in frontier:
-            seg = self._segment(url, self.args.include)
-            position = seen_in_frontier.get(seg, 0)
-            seen_in_frontier[seg] = position + 1
+        for url, role in sorted(frontier, key=lambda t: (
+                len([p for p in urlparse(t[0]).path.split("/") if p]), order[t[0]])):
+            seg1, seg2 = self._segment(url, self.args.include)
+            pos1 = seen_in_frontier.get(seg1, 0)
+            pos2 = seen_in_frontier.get(seg2, 0)
+            seen_in_frontier[seg1] = pos1 + 1
+            seen_in_frontier[seg2] = pos2 + 1
             role_rank = 0 if role == "sitemap-priority" else 1
             locale_rank = _locale_rank(self.seed_locale, _locale_of_path(urlparse(url).path))
-            ranked.append((self._boilerplate_rank(url), locale_rank,
-                           (taken.get(seg, 0) + position), role_rank, url, (url, role)))
-        ranked.sort(key=lambda t: (t[0], t[1], t[2], t[3], t[4]))
-        return [item for _, _, _, _, _, item in ranked]
+            depth = len([p for p in urlparse(url).path.split("/") if p])
+            ranked.append(((self._boilerplate_rank(url), locale_rank,
+                            taken.get(seg1, 0) + pos1, taken.get(seg2, 0) + pos2,
+                            role_rank, depth, order[url]), (url, role)))
+        ranked.sort(key=lambda t: t[0])
+        return [item for _, item in ranked]
 
     def save_page(self, r: Fetched, url: str, role: str, origin: str):
         if r.error:

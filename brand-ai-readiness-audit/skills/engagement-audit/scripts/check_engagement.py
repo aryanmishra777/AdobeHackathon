@@ -117,7 +117,17 @@ NOT_AN_INTERSTITIAL_RE = re.compile(
     r"data-conf-display=\"on(?:hash)?change\"|aria-label=\"[^\"]*\bvideo\b|"
     # a cart, mini-cart, search or menu drawer opens on a click, not on arrival
     r"\b(?:mini-?cart|cart-popup|cart-drawer|cart-modal|search-popup|search-modal|"
-    r"menu-drawer|mobile-menu|nav-drawer|quick-?view|size-?guide)\b)", re.I)
+    r"menu-drawer|mobile-menu|nav-drawer|quick-?view|size-?guide)\b"
+    # a consent checkbox inside a signup form is a form field, not a notice
+    r"|form-field|FormControl|type=\"checkbox\")", re.I)
+
+# "overlay" or "modal" as a modifier of a structural word names a style, not
+# a layer shown on arrival: github.com's page wrapper is class="header-overlay"
+# and its dropdowns are "details-overlay" and "SelectMenu-modal".
+STRUCTURAL_LAYER_RE = re.compile(
+    r"\b(?:header|footer|page|details|color-bg|select-?menu|nav|layout|site|app|body|"
+    r"sidebar|menu|dropdown|tooltip|select|search|filter|sort|share|video|image|img)"
+    r"-?(?:overlay|modal|popup)\b", re.I)
 
 SEARCH_FORM_RE = re.compile(
     r"(<input[^>]+type=\"search\"|role=\"search\"|name=\"(?:q|query|s|search|"
@@ -245,7 +255,8 @@ class Bundle:
                 has_pricing = True
             if "/docs" in path or "/reference" in path or "/api" in path:
                 has_docs = True
-            for block in self.extracted(p["page_id"]).get("jsonld") or []:
+            ex = self.extracted(p["page_id"])
+            for block in ex.get("jsonld") or []:
                 if block.get("parsed_ok"):
                     for t in _jsonld_types(block.get("value")):
                         types.add(t.lower())
@@ -253,6 +264,17 @@ class Bundle:
                 article_count += 1
             if p.get("page_type") == "product":
                 product_pages += 1
+            # what the sampled pages link to is part of what the site is:
+            # github.com's navigation carries /pricing on every page while
+            # the 25-page sample never reached it
+            for link in ex.get("links") or []:
+                if not link.get("internal"):
+                    continue
+                lp = urlparse(link.get("href") or "").path.lower()
+                if any(pr in lp for pr in ("/pricing", "/plans")):
+                    has_pricing = True
+                if "/docs" in lp or "/reference" in lp or "/api" in lp:
+                    has_docs = True
         # A single Product JSON-LD block on one page is not an ecommerce site;
         # require a cart, product URLs, or several product pages.
         if has_cart or any("/product" in x or "/shop" in x for x in paths) or product_pages >= 2:
@@ -261,10 +283,13 @@ class Bundle:
             self._site_type = "saas"
         elif "localbusiness" in types or any(t.endswith("business") for t in types):
             self._site_type = "local-business"
-        elif article_count >= 2 or "newsarticle" in types:
+        elif "newsarticle" in types or article_count >= max(2, len(self.ok_pages) // 2):
+            # a publisher is mostly articles; two posts in a SaaS sample are not
             self._site_type = "media-publisher"
         elif has_docs:
             self._site_type = "docs"
+        elif article_count >= max(2, len(self.ok_pages) // 3):
+            self._site_type = "media-publisher"
         elif len(self.ok_pages) < 20 and not has_pricing and not has_cart:
             self._site_type = "portfolio-brochure"
         else:
@@ -529,8 +554,10 @@ def check_stay_003(b: Bundle) -> list:
     out = []
     for p in b.content_pages:
         pt = p.get("page_type")
-        # Guard: editorial, documentation and legal pages need no CTA.
-        if pt in ("article", "docs", "legal", "faq", "about", "contact"):
+        # Guard: editorial, documentation and legal pages need no CTA. A
+        # pricing page carries one action per plan by design (github.com's
+        # lists seven), so "no single primary action" is its normal shape.
+        if pt in ("article", "docs", "legal", "faq", "about", "contact", "pricing"):
             continue
         ex = b.extracted(p["page_id"])
         links = ex.get("links") or []
@@ -757,6 +784,57 @@ def check_stay_006(b: Bundle) -> list:
 
 
 _ID_IN_MATCH_RE = re.compile(r'id="([^"]+)"', re.I)
+# Elements that are never an interstitial whatever their class says:
+# github.com's <body class="header-overlay ..."> styles the header, and its
+# <li class="color-bg-overlay"> is a utility colour on a list item.
+_NOT_A_LAYER_TAGS = {"body", "html", "li", "ul", "ol", "span", "a", "button", "p", "img",
+                     "svg", "path", "input", "label", "table", "tr", "td", "th", "nav",
+                     "header", "footer", "main", "h1", "h2", "h3", "h4", "h5", "h6"}
+
+
+def _element_of(raw: str, pos: int):
+    """The (tag name, opening tag text) of the element whose attribute the
+    match at `pos` sits in, or (None, "") when it cannot be found."""
+    start = raw.rfind("<", 0, pos)
+    if start < 0:
+        return None, ""
+    end = raw.find(">", pos)
+    tag_text = raw[start:end + 1 if end >= 0 else pos + 200]
+    m = re.match(r"<([a-zA-Z][a-zA-Z0-9-]*)", tag_text)
+    return (m.group(1).lower() if m else None), tag_text
+
+
+def _inside_closed_container(raw: str, pos: int) -> bool:
+    """Whether the match sits inside a <details> or <dialog> that is not open,
+    or an element with the popover attribute: all three are hidden until a
+    control opens them. Approximate: the nearest such opening tag in the
+    preceding 4 KB whose closing tag has not appeared since."""
+    window = raw[max(0, pos - 4000):pos]
+    for m in reversed(list(re.finditer(r"<(details|dialog|[a-zA-Z][a-zA-Z0-9-]*)\b([^>]*)>", window))):
+        tag, attrs = m.group(1).lower(), m.group(2)
+        is_popover = re.search(r"\spopover(?:=|\s|$)", attrs) is not None
+        if tag not in ("details", "dialog") and not is_popover:
+            continue
+        if re.search(r"\sopen(?:\s|=|>|/|$)", attrs):
+            return False
+        if f"</{tag}>" in window[m.end():].lower():
+            continue
+        return True
+    return False
+
+
+def _never_shown_on_arrival(raw: str, match) -> bool:
+    tag, tag_text = _element_of(raw, match.start())
+    if tag in _NOT_A_LAYER_TAGS:
+        return True
+    # a <dialog> or <details> is closed until something opens it; github.com's
+    # leadership page carries one dialog per executive, all aria-modal="true",
+    # none open, and its language pickers are closed <details> menus
+    if tag in ("dialog", "details") and not re.search(r"\sopen(?:\s|=|>|/)", tag_text):
+        return True
+    if STRUCTURAL_LAYER_RE.search(match.group(0)):
+        return True
+    return _inside_closed_container(raw, match.start())
 
 
 def _opened_by_a_control(raw: str, match_text: str) -> bool:
@@ -768,7 +846,7 @@ def _opened_by_a_control(raw: str, match_text: str) -> bool:
         return False
     ident = re.escape(m.group(1))
     trigger = re.compile(
-        r'(?:modal-id|data-target|data-modal|data-toggle-target|data-open|'
+        r'(?:modal-id|data-target|data-modal|data-toggle-target|data-open|popovertarget|'
         r'aria-controls|data-bs-target|data-micromodal-trigger)="#?' + ident + r'"'
         r'|href="#' + ident + r'"', re.I)
     return bool(trigger.search(raw))
@@ -795,6 +873,8 @@ def check_stay_007(b: Bundle) -> list:
             # id="recruitment-modal"> behind a "Learn More" button carrying
             # modal-id="recruitment-modal".
             if _opened_by_a_control(raw, cand.group(0)):
+                continue
+            if _never_shown_on_arrival(raw, cand):
                 continue
             m = cand
             break

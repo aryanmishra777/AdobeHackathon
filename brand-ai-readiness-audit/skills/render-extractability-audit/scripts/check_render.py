@@ -60,7 +60,7 @@ UTILITY_PATH_HINTS = (
 
 # Known video/audio embed hostnames
 VIDEO_HOST_PATTERNS = (
-    "youtube.com", "youtu.be", "vimeo.com", "wistia.com",
+    "youtube.com", "youtube-nocookie.com", "youtu.be", "vimeo.com", "wistia.com",
     "loom.com", "spotify.com", "soundcloud.com", "dailymotion.com",
     "player.twitch.tv"
 )

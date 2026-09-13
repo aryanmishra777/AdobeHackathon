@@ -176,6 +176,17 @@ class Bundle:
             pt = p.get("page_type")
             if pt == "article" or "article" in types_seen or "newsarticle" in types_seen:
                 article_count += 1
+            # what the sampled pages link to is part of what the site is:
+            # github.com's navigation carries /pricing on every page while
+            # the 25-page sample never reached it
+            for link in ext.get("links") or []:
+                if not link.get("internal"):
+                    continue
+                lp = urlparse(link.get("href") or "").path.lower()
+                if any(pr in lp for pr in ("/pricing", "/plans")):
+                    has_pricing = True
+                if "/docs" in lp or "/reference" in lp or "/api" in lp:
+                    has_docs = True
 
         if "product" in types_seen or has_cart or any("/product" in path or "/shop" in path for path in paths):
             self._site_type = "ecommerce"
@@ -183,10 +194,13 @@ class Bundle:
             self._site_type = "saas"
         elif "localbusiness" in types_seen:
             self._site_type = "local-business"
-        elif article_count >= 2 or "newsarticle" in types_seen:
+        elif "newsarticle" in types_seen or article_count >= max(2, len(self.ok_pages) // 2):
+            # a publisher is mostly articles; two posts in a SaaS sample are not
             self._site_type = "media-publisher"
         elif has_docs:
             self._site_type = "docs"
+        elif article_count >= max(2, len(self.ok_pages) // 3):
+            self._site_type = "media-publisher"
         elif len(self.ok_pages) < 20 and not has_pricing and not has_cart:
             self._site_type = "portfolio-brochure"
         else:

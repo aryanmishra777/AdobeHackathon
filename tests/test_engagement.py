@@ -307,3 +307,45 @@ def test_stay_014_counts_a_repeated_src_once_and_stay_011_reads_the_main_text():
     src = open(CHECK_STAY, encoding="utf-8").read()
     assert 's.get("src") not in seen' in src
     assert 'clean = text.get("main_clean")' in src
+
+
+def test_stay_007_ignores_the_body_class_a_list_item_and_a_closed_dialog():
+    """github.com: <body class="header-overlay ...">, an <li
+    class="color-bg-overlay"> and one closed <dialog aria-modal="true"> per
+    executive on the leadership page were three interstitials."""
+    mod = _stay_module()
+    for html in ('<body class="logged-out page-responsive header-overlay header-overlay-fixed">',
+                 '<li class="d-flex color-bg-overlay border rounded">',
+                 '<dialog id="jay-parikh" aria-modal="true" class="Overlay Overlay--size-medium">'):
+        m = mod.INTERSTITIAL_RE.search(html)
+        assert m and mod._never_shown_on_arrival(html, m), html
+    for html in ('<div class="newsletter-modal is-open">', '<dialog open aria-modal="true" id="promo">'):
+        m = mod.INTERSTITIAL_RE.search(html)
+        assert m and not mod._never_shown_on_arrival(html, m), html
+
+
+def test_stay_007_ignores_popovers_closed_details_and_structural_overlay_classes():
+    """github.com: a filter menu inside popover="auto", a language picker
+    that is a closed <details class="details-overlay">, a currency
+    <div class="SelectMenu-modal"> inside a closed <details>, the page
+    wrapper <div class="header-overlay">, and a signup form's consent
+    checkbox <section id="...-consent-experience"> were six interstitials."""
+    mod = _stay_module()
+    pop = ('<button popovertarget="menu-1-overlay">Industry</button>'
+           '<anchored-position id="menu-1-overlay" popover="auto">'
+           '<div class="Overlay Overlay--size-auto"><ul><li>All</li></ul></div></anchored-position>')
+    m = mod.INTERSTITIAL_RE.search(pop)
+    assert m and mod._never_shown_on_arrival(pop, m)
+    det = '<details class="details-reset details-overlay select-menu"><summary>Language</summary><div class="SelectMenu-modal">'
+    for m in mod.INTERSTITIAL_RE.finditer(det):
+        assert mod._never_shown_on_arrival(det, m), m.group(0)
+    wrap = '<div data-turbo-body class="logged-out env-production page-responsive header-overlay">'
+    m = mod.INTERSTITIAL_RE.search(wrap)
+    assert m and mod._never_shown_on_arrival(wrap, m)
+    consent = '<section id="FormControl--form-field-consent-experience" class="FormControl"><input type="checkbox">'
+    m = mod.INTERSTITIAL_RE.search(consent)
+    assert m and mod.NOT_AN_INTERSTITIAL_RE.search(consent)
+    # an open details or a real modal still counts
+    shown = '<details open class="details-overlay"><div class="newsletter-modal">'
+    m = list(mod.INTERSTITIAL_RE.finditer(shown))[-1]
+    assert "newsletter" in m.group(0) and not mod._never_shown_on_arrival(shown, m)
