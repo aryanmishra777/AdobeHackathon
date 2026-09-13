@@ -452,7 +452,7 @@ def check_reach_005(b: Bundle) -> list[dict]:
 
     matrix = b.robots.get("agent_matrix") or {}
     base_bytes = baseline.get("bytes") or 0
-    hard, soft = [], []
+    hard, soft, stalled = [], [], []
 
     for token, res in sorted(agents.items()):
         # Guard: if robots.txt already disallows the agent, the CDN is enforcing
@@ -462,6 +462,10 @@ def check_reach_005(b: Bundle) -> list[dict]:
         status = res.get("status")
         if res.get("challenge_detected") or (status in (401, 403, 429)):
             hard.append((token, status, "challenge" if res.get("challenge_detected") else status))
+        elif status is None and res.get("error"):
+            # never answered: named in the evidence beside the refusals, never
+            # counted as a refusal (a stall cannot be attributed from here)
+            stalled.append(token)
         elif status == 200 and base_bytes:
             ratio = (res.get("bytes") or 0) / base_bytes
             # Guard: differences under 10% are normal personalisation.
@@ -488,6 +492,8 @@ def check_reach_005(b: Bundle) -> list[dict]:
             f"{b.probe.get('url')} returns {baseline.get('status')} "
             f"({base_bytes} bytes) with a browser user-agent, but "
             + "; ".join(f"{t} receives {d}" for t, _, d in hard)
+            + (f"; {', '.join(stalled)} never received an answer (dropped or timed out)"
+               if stalled else "")
             + ". robots.txt permits these agents, so the block is being applied "
               "by a CDN, WAF or bot-management rule."
             + (f" {control_sentence}" if control_sentence else
@@ -1631,260 +1637,232 @@ def engine_reachability(b: Bundle) -> list[dict]:
     return rows
 
 def check_sample_state(b: Bundle) -> list[dict]:
-    """What to say when nothing could be sampled. Seven of fifteen unseen sites
-    refused, challenged or timed out every fetch from the audit's address;
-    the reports graded them 83-100 on discoverability from an empty sample.
+    """What to say when nothing could be sampled.
 
-    A verified block of named AI agents is REACH-005's job and fires from the
-    probe on its own. This covers the rest: every client refused (browser
-    baseline too), a challenge stub served to the audit's own user-agent,
-    connections that time out, a host that does not resolve. None of those
-    is a confident defect -- an address-level refusal cannot be told from an
-    agent-level one -- so severity is capped, locked, and the wording says
-    what was and was not observed."""
+    Seven of fifteen unseen sites refused, challenged or timed out every fetch
+    from the audit's address, and the reports graded them 83-100 from an empty
+    sample. Four code reviews then found, one after another, that this check
+    mirrored other checks' guards to decide when to stay silent and got a
+    combination wrong each time. It no longer mirrors anything:
+
+      * one invariant -- an empty sample always yields exactly one finding
+        from somewhere. This check ASKS REACH-005 and REACH-002 whether they
+        fire on this bundle and stands down only if one does;
+      * one description -- the sentence about the probe is built from what the
+        probe recorded (baseline status, agents served, refused, stalled,
+        control names), never from a fixed template that assumes an outcome;
+      * one confidence -- low or locked-low everywhere, because from a single
+        address an address-level refusal cannot be told from an agent-level
+        one. The only confident block is the one REACH-005 verifies itself.
+    """
     state = b.sample
     if state == "pages":
         return []
-    probe = b.probe or {}
-    baseline = probe.get("baseline") or {}
-    agents = probe.get("agents") or {}
-    served = [a for a, r in agents.items() if r.get("status") == 200]
-    # the same definition _control_verdict uses: an agent whose connection was
-    # dropped or timed out (status None with an error) was refused too
-    refused = [a for a, r in agents.items()
-               if r.get("status") in (401, 403, 429) or r.get("challenge_detected")
-               or (r.get("status") is None and r.get("error"))]
-    refs = ["MANIFEST.json", "coverage.json"] + (["ua_probe.json"] if probe else [])
-    if state in ("refused", "challenged") and (not probe or not baseline):
-        # --no-probe, or a probe that never ran: the browser baseline and the
-        # named agents were not tried, so nothing about them can be asserted
-        return [_locked(finding(
-            "REACH-005",
-            f"The crawl fetched no pages ({state}) and no user-agent probe ran",
-            "low",
-            (f"Every fetch under the audit's user-agent answered {_statuses(b)} or nothing "
-             f"(sample: {state}), and the user-agent probe did not run, so whether a browser "
-             f"or the named AI agents are served was not observed. Nothing beyond robots.txt "
-             f"could be examined; rerun with the probe enabled."),
-            refs, confidence="low", scope="site-wide", checked=0,
-            verification=f"curl -s -o /dev/null -w '%{{http_code}}' -A 'Mozilla/5.0' {b.origin}/",
-            action=act("Rerun the audit with the user-agent probe", "low",
-                       ["Run the collector without --no-probe so the browser baseline and the "
-                        "named agents are compared"],
-                       "S", "An empty sample with no probe measures nothing.",
-                       owner="infrastructure")))]
-    if state == "refused":
-        if baseline.get("status") == 200 and refused:
-            # REACH-005 says it, verified against the browser baseline -- unless
-            # its own guards withhold it: agents robots.txt disallows (REACH-002
-            # then explains the refusal) or an impersonation verdict from the
-            # controls. In the second case nothing else would say why zero
-            # pages were sampled, so the informational finding below does.
-            matrix = b.robots.get("agent_matrix") or {}
-            allowed_refused = [a for a in refused if (matrix.get(a) or {}).get("root_allowed") is not False]
-            # REACH-005 reports only answered refusals (4xx or a challenge); an
-            # agent whose connection stalled is invisible to it, so the
-            # deferral is sound only when at least one agent answered
-            answered = [a for a in allowed_refused
-                        if (agents.get(a) or {}).get("status") in (401, 403, 429)
-                        or (agents.get(a) or {}).get("challenge_detected")]
-            stalled_only = [a for a in allowed_refused if a not in answered]
-            kind, _ = _control_verdict(b)
-            if answered and kind != "impersonation":
-                return []
-            if not allowed_refused:
-                return []   # REACH-002 carries it
-            if not answered and kind != "impersonation":
-                # every named agent's connection stalled while the browser was
-                # served: nothing else would say why zero pages were sampled
-                return [_locked(finding(
-                    "REACH-005",
-                    "Every named AI agent's connection stalled while the browser baseline was served",
-                    "medium",
-                    (f"The crawl fetched no pages: every request under the audit's user-agent answered "
-                     f"{_statuses(b)}, and the probe's requests as {', '.join(stalled_only)} never "
-                     f"received an answer (dropped or timed out) while the browser baseline got the "
-                     f"full page. An edge that holds unrecognised or named crawlers open until they "
-                     f"give up produces this; so does a network path problem on one address. Whether "
-                     f"it is a policy against these agents could not be verified from here."),
-                    refs, confidence="low", scope="site-wide", checked=0,
-                    verification=(f"curl -s -o /dev/null -m 30 -w '%{{http_code}} %{{time_total}}' "
-                                  f"-A 'Mozilla/5.0 (compatible; GPTBot/1.0)' {b.origin}/  from a second network"),
-                    action=act("Check what the edge does with connections from the named AI agents", "medium",
-                               ["Compare a browser, curl and the named agent strings against the home page "
-                                "from two networks",
-                                "If the agents are held rather than answered, exempt the retrieval agents "
-                                "robots.txt permits"],
-                               "M", "A crawler that never gets a byte indexes nothing.",
-                               owner="infrastructure")))]
-            # Impersonation verdict: the browser and both control names were
-            # served, every named agent was refused, and REACH-005 withheld
-            # itself because a refusal of verified-bot names that genuine
-            # agents pass by IP range cannot be told from a block. Say that,
-            # not the "agents are served" wording below.
-            return [_locked(finding(
-                "REACH-005",
-                "Every named AI agent and the audit's own user-agent were refused; the browser and two control names were served",
-                "medium",
-                (f"The crawl fetched no pages: every request under the audit's user-agent answered "
-                 f"{_statuses(b)}, and the probe found {', '.join(refused)} refused or challenged, "
-                 f"while the browser baseline and both control names (an unknown crawler name and "
-                 f"Bytespider) were served. A rule that spares unknown names but refuses the named "
-                 f"agents is what impersonation defence on verified-bot names looks like -- genuine "
-                 f"GPTBot or ClaudeBot traffic passes by published IP range, and this audit's address "
-                 f"is not on one -- so the refusal cannot be attributed to an AI-crawler policy from "
-                 f"here. It can equally be a block. Nothing beyond robots.txt could be examined."),
-                refs, confidence="low", scope="site-wide", checked=0,
-                verification=(f"curl -s -o /dev/null -w '%{{http_code}}' -A 'Mozilla/5.0 (compatible; "
-                              f"GPTBot/1.0)' {b.origin}/  from a network on OpenAI's published ranges, "
-                              f"or read the edge's bot-verification logs"),
-                action=act("Confirm whether verified AI agents pass the rule that refused their names", "medium",
-                           ["Check the bot-management rule for the named agents: verification by IP range "
-                            "(genuine agents pass) or a plain deny (they do not)",
-                            "If it is a plain deny, allow-list the retrieval agents robots.txt permits"],
-                           "S", "If the rule is a deny, every AI agent robots.txt welcomes is turned "
-                           "away at the edge; if it is verification, nothing is wrong.",
-                           owner="infrastructure")))]
-        if baseline.get("status") == 200:
-            # apollohospitals.com: the browser and every named agent served,
-            # only the audit's own user-agent refused. Not an AI-discoverability
-            # defect; the reason nothing could be sampled.
-            return [_locked(finding(
-                "REACH-005",
-                "The edge refused the audit's own user-agent while serving browsers and the named AI agents",
-                "low",
-                (f"The crawl fetched no pages: every request under the audit's user-agent answered "
-                 f"{_statuses(b)}, while the browser baseline and {', '.join(served)} received the "
-                 f"full page. The rule keys on unknown crawler names and spares the agents robots.txt "
-                 f"permits, so it is not a defect for AI discoverability -- it is why this audit "
-                 f"could sample no content. Informational."),
-                refs, confidence="medium", scope="site-wide", checked=0,
-                verification=f"curl -s -o /dev/null -w '%{{http_code}}' -A 'SomeUnknownBot/1.0' {b.origin}/",
-                action=act("Decide whether unknown crawlers should be refused", "low",
-                           ["Keep the rule if it is intended; allow-list partner or audit crawlers "
-                            "by name when they should see content"],
-                           "S", "Unknown crawlers include the next AI agent that has not published "
-                           "a name yet.", owner="infrastructure")))]
-        base = baseline.get("status")
-        return [_locked(finding(
-            "REACH-005",
-            "Every request from the audit's address was refused, browser user-agent included",
-            "medium",
-            (f"The crawl fetched no pages: the origin answered {_statuses(b)} to every request, "
-             f"and the browser-user-agent baseline received {base or 'no answer'} as well"
-             + (f" while {', '.join(served)} were served" if served else "")
-             + ". A refusal that does not spare a browser is keyed on the address or the "
-             "network, not on the agent name, so it cannot be attributed to an AI-crawler "
-             "policy; it can equally be bot management challenging an unfamiliar address. "
-             "Nothing beyond robots.txt could be examined. Re-run from another network, or "
-             "a browser, before drawing a conclusion."),
-            refs, confidence="low", scope="site-wide", checked=0,
-            verification=(f"curl -s -o /dev/null -w '%{{http_code}}' -A 'Mozilla/5.0' {b.origin}/  "
-                          f"from a second network"),
-            action=act("Confirm the edge's rule for unfamiliar clients", "medium",
-                       ["Check the bot-management rule that answered this address and whether it "
-                        "distinguishes named AI retrieval agents from unknown clients",
-                        "Allow-list the retrieval agents robots.txt permits, by verified network",
-                        "Re-test from a plain HTTP client on a residential and a datacenter address"],
-                       "S",
-                       "A site that turns away every unfamiliar client is, for a crawler that has "
-                       "not been allow-listed, a site that does not exist; whether the named AI "
-                       "agents are among them could not be observed from here.",
-                       owner="infrastructure")))]
-    if state == "challenged":
-        n = b.coverage.get("challenge_pages") or 0
-        if served and not refused:
-            return [_locked(finding(
-                "REACH-005",
-                "The edge serves a challenge page to unrecognised crawlers; the named AI agents are served",
-                "low",
-                (f"Every one of the {n} URLs the crawl fetched came back as a challenge or "
-                 f"'unsupported client' stub for the audit's user-agent, while the browser "
-                 f"baseline and {', '.join(served)} received the full page. The rule keys on "
-                 f"unknown crawler names and spares the AI agents robots.txt permits, so it is "
-                 f"not a defect for AI discoverability -- it is why this audit could sample no "
-                 f"content. Informational."),
-                refs, confidence="medium", scope="site-wide", checked=0,
-                verification=f"curl -s -A 'SomeUnknownBot/1.0' {b.origin}/ | head -c 600",
-                action=act("Decide whether unknown crawlers should get a stub", "low",
-                           ["Keep the rule if it is intended; add the audit's or any partner "
-                            "crawler's name to the allow-list when it should see content"],
-                           "S", "Unknown crawlers include the next AI agent that has not "
-                           "published a name yet.", owner="infrastructure")))]
-        return [_locked(finding(
-            "REACH-005",
-            "The edge serves a challenge page to this client and to the AI agents probed",
-            "medium",
-            (f"Every one of the {n} URLs fetched came back as a challenge or 'unsupported client' "
-             f"stub, and the probe found "
-             + (f"{', '.join(refused)} refused or challenged as well" if refused
-                else "no named agent served either")
-             + (f" (browser baseline: {baseline.get('status')})" if baseline else "")
-             + ". No page content could be sampled; whether the block is keyed on the agent "
-             "name or on this address could not be separated from here."),
-            refs, confidence="low", scope="site-wide", checked=0,
-            verification=f"curl -s -A 'Mozilla/5.0 (compatible; GPTBot/1.0)' {b.origin}/ | head -c 600",
-            action=act("Confirm what the edge serves to named AI agents", "medium",
-                       ["Fetch the home page as GPTBot, ClaudeBot and PerplexityBot from a "
-                        "second network and compare with a browser",
-                        "Allow-list the retrieval agents robots.txt permits"],
-                       "S", "A challenge page is a page with nothing on it; an agent that "
-                       "receives one cites nothing.", owner="infrastructure")))]
-    if state == "timed-out":
-        return [_locked(finding(
-            "REACH-015",
-            "Every connection from the audit's client timed out",
-            "medium",
-            (f"No request to {b.origin} completed: the origin variants, robots.txt and the "
-             f"page fetches all timed out from this client, while the same URL answers a browser "
-             f"or curl promptly if it answers at all. An edge that holds unrecognised clients "
-             f"open until they give up produces exactly this; so does a network path problem. "
-             f"Nothing could be examined. Confidence is low because the two cannot be told apart "
-             f"from one address."),
-            refs, confidence="low", scope="site-wide", checked=0,
-            verification=f"curl -s -o /dev/null -w '%{{time_starttransfer}}' {b.origin}/",
-            action=act("Check the edge's handling of unrecognised TLS clients", "medium",
-                       ["Compare a browser, curl and a plain HTTP client against the home page",
-                        "If unknown clients are held rather than answered, exempt the retrieval "
-                        "agents robots.txt permits"],
-                       "M", "A crawler that never gets a byte indexes nothing.",
-                       owner="infrastructure")))]
+    refs = ["MANIFEST.json", "coverage.json"] + (["ua_probe.json"] if b.probe else [])
+
+    # -- states in which no probe could have run -------------------------------
+    if state == "unresolved":
+        return [_sample_finding(
+            "REACH-014", "The host did not resolve from the audit's network", "high", refs,
+            f"Every origin variant of {b.origin} failed at DNS resolution from this client. "
+            f"If the name resolves elsewhere, this is a resolver or network problem on the "
+            f"auditing side and nothing about the site was measured; if it does not, the site "
+            f"is unreachable to everyone.",
+            f"nslookup {b.site}  and  curl -sI {b.origin}/",
+            "Confirm the host resolves publicly",
+            ["Check the zone's A/AAAA records and the registrar's status",
+             "Re-run the audit from a second network"],
+            "A name that does not resolve is not a site.")]
     if state == "unreachable":
         errors = sorted({str(v.get("error") or "") for v in
                          ((b.run.get("origin_variants") or {}).values())} - {""})
-        return [_locked(finding(
-            "REACH-014",
-            "No origin variant answered a connection from the audit's client",
-            "medium",
-            (f"Every origin variant of {b.origin} failed before an HTTP response: "
-             f"{'; '.join(errors)[:300] or 'connection refused or handshake failure'}. A refused "
-             f"connection or a TLS handshake the client cannot complete looks the same from one "
-             f"address whether the site is down, the port is filtered for this network, or the "
-             f"edge drops unrecognised TLS clients. Nothing about the site was measured; confidence "
-             f"is low for that reason."),
-            refs, confidence="low", scope="site-wide", checked=0,
-            verification=f"curl -sIv {b.origin}/ 2>&1 | head -20",
-            action=act("Confirm the origin accepts connections from ordinary clients", "medium",
-                       ["Check the site from a browser and from curl on a second network",
-                        "If only non-browser TLS clients fail, look at the edge's TLS fingerprint rules"],
-                       "S", "A site that does not answer is not a site to a crawler.",
-                       owner="infrastructure")))]
-    if state == "unresolved":
-        return [_locked(finding(
-            "REACH-014",
-            "The host did not resolve from the audit's network",
-            "high",
-            (f"Every origin variant of {b.origin} failed at DNS resolution from this client. "
-             f"If the name resolves elsewhere, this is a resolver or network problem on the "
-             f"auditing side and nothing about the site was measured; if it does not, the site "
-             f"is unreachable to everyone. Confidence is low for that reason."),
-            refs, confidence="low", scope="site-wide", checked=0,
-            verification=f"nslookup {b.site}  and  curl -sI {b.origin}/",
-            action=act("Confirm the host resolves publicly", "high",
-                       ["Check the zone's A/AAAA records and the registrar's status",
-                        "Re-run the audit from a second network"],
-                       "S", "A name that does not resolve is not a site.", owner="infrastructure")))]
-    return []
+        return [_sample_finding(
+            "REACH-014", "No origin variant answered a connection from the audit's client", "medium", refs,
+            f"Every origin variant of {b.origin} failed before an HTTP response: "
+            f"{'; '.join(errors)[:300] or 'connection refused or handshake failure'}. A refused "
+            f"connection or a TLS handshake the client cannot complete looks the same from one "
+            f"address whether the site is down, the port is filtered for this network, or the "
+            f"edge drops unrecognised TLS clients. Nothing about the site was measured.",
+            f"curl -sIv {b.origin}/ 2>&1 | head -20",
+            "Confirm the origin accepts connections from ordinary clients",
+            ["Check the site from a browser and from curl on a second network",
+             "If only non-browser TLS clients fail, look at the edge's TLS fingerprint rules"],
+            "A site that does not answer is not a site to a crawler.")]
+    if state == "timed-out":
+        return [_sample_finding(
+            "REACH-015", "Every connection from the audit's client timed out", "medium", refs,
+            f"No request to {b.origin} completed: the origin variants, robots.txt and the page "
+            f"fetches all timed out from this client. An edge that holds unrecognised clients "
+            f"open until they give up produces exactly this; so does a network path problem, "
+            f"and the two cannot be told apart from one address. Nothing could be examined.",
+            f"curl -s -o /dev/null -w '%{{time_starttransfer}}' {b.origin}/",
+            "Check the edge's handling of unrecognised TLS clients",
+            ["Compare a browser, curl and a plain HTTP client against the home page",
+             "If unknown clients are held rather than answered, exempt the retrieval agents "
+             "robots.txt permits"],
+            "A crawler that never gets a byte indexes nothing.", effort="M")]
+
+    # -- refused / challenged / empty: what the probe recorded -----------------
+    p = _probe_facts(b)
+    if state == "challenged":
+        what = (f"Every one of the {b.coverage.get('challenge_pages') or 0} URLs the crawl fetched "
+                f"came back as a challenge or 'unsupported client' stub for the audit's user-agent")
+    elif state == "refused":
+        what = (f"The crawl fetched no pages: every request under the audit's user-agent answered "
+                f"{_statuses(b)}")
+    else:
+        what = "The crawl fetched no pages"
+
+    # Another check explains it with more authority? Ask, do not guess.
+    for other in (check_reach_005, check_reach_002):
+        try:
+            if other(b):
+                return []
+        except Exception:
+            pass
+
+    if not p["ran"]:
+        return [_sample_finding(
+            "REACH-005", f"The crawl fetched no pages ({state}) and no user-agent probe ran", "low", refs,
+            f"{what}, and the user-agent probe did not run, so whether a browser or the named AI "
+            f"agents are served was not observed. Nothing beyond robots.txt could be examined.",
+            f"curl -s -o /dev/null -w '%{{http_code}}' -A 'Mozilla/5.0' {b.origin}/",
+            "Rerun the audit with the user-agent probe",
+            ["Run the collector without --no-probe so the browser baseline and the named agents "
+             "are compared"],
+            "An empty sample with no probe measures nothing.")]
+
+    observed = _probe_sentence(p)
+    if p["baseline"] != 200:
+        # The browser was refused too: keyed on the address or network.
+        return [_sample_finding(
+            "REACH-005", "Every request from the audit's address was refused, browser user-agent included",
+            "medium", refs,
+            f"{what}. {observed} A refusal that does not spare a browser is keyed on the address "
+            f"or the network, not on the agent name, so it cannot be attributed to an AI-crawler "
+            f"policy; it can equally be bot management challenging an unfamiliar address. Re-run "
+            f"from another network, or a browser, before drawing a conclusion.",
+            f"curl -s -o /dev/null -w '%{{http_code}}' -A 'Mozilla/5.0' {b.origin}/  from a second network",
+            "Confirm the edge's rule for unfamiliar clients",
+            ["Check the bot-management rule that answered this address and whether it distinguishes "
+             "named AI retrieval agents from unknown clients",
+             "Allow-list the retrieval agents robots.txt permits, by verified network",
+             "Re-test from a plain HTTP client on a residential and a datacenter address"],
+            "A site that turns away every unfamiliar client is, for a crawler that has not been "
+            "allow-listed, a site that does not exist; whether the named AI agents are among them "
+            "could not be observed from here.")]
+    if p["served"] and not p["refused"] and not p["stalled"]:
+        # Only the audit's own name was turned away: not an AI-discoverability
+        # defect, the reason nothing could be sampled.
+        verb = "serves a challenge page to" if state == "challenged" else "turns away"
+        return [_sample_finding(
+            "REACH-005", f"The edge {verb} the audit's own user-agent while serving browsers and "
+                         "the named AI agents", "low", refs,
+            f"{what}. {observed} The rule keys on unknown crawler names and spares the agents "
+            f"robots.txt permits, so it is not a defect for AI discoverability -- it is why this "
+            f"audit could sample no content. Informational.",
+            f"curl -s -o /dev/null -w '%{{http_code}}' -A 'SomeUnknownBot/1.0' {b.origin}/",
+            "Decide whether unknown crawlers should be turned away",
+            ["Keep the rule if it is intended; allow-list partner or audit crawlers by name when "
+             "they should see content"],
+            "Unknown crawlers include the next AI agent that has not published a name yet.",
+            confidence="medium")]
+    # Named agents were refused or never answered while the browser was served,
+    # and REACH-005 did not claim it (an impersonation verdict, stalled
+    # connections, or a mix). Describe it; do not decide it.
+    if p["stalled"] and not p["refused"]:
+        title = (("Every named AI agent's connection stalled" if not p["served"] else
+                  f"The connections of {', '.join(p['stalled'])} stalled")
+                 + " while the browser baseline was served")
+        reading = ("An edge that holds unrecognised or named crawlers open until they give up "
+                   "produces this; so does a network path problem on one address.")
+    elif p["controls_served"]:
+        title = ("The named AI agents were refused while the browser and two control names were "
+                 "served")
+        reading = ("A rule that spares unknown names but refuses the named agents is what "
+                   "impersonation defence on verified-bot names looks like -- genuine GPTBot or "
+                   "ClaudeBot traffic passes by published IP range, and this audit's address is "
+                   "not on one -- so it cannot be attributed to an AI-crawler policy from here. It "
+                   "can equally be a block.")
+    else:
+        title = "The named AI agents were refused or unanswered while the browser baseline was served"
+        reading = ("Whether the rule keys on the agent names, on this address, or on unverified "
+                   "bots in general could not be separated from one address.")
+    return [_sample_finding(
+        "REACH-005", title, "medium", refs,
+        f"{what}. {observed} {reading} Nothing beyond robots.txt could be examined.",
+        f"curl -s -o /dev/null -m 30 -w '%{{http_code}} %{{time_total}}' -A 'Mozilla/5.0 (compatible; "
+        f"GPTBot/1.0)' {b.origin}/  from a second network, or read the edge's bot-verification logs",
+        "Confirm what the edge does with the named AI agents",
+        ["Compare a browser, curl and the named agent strings against the home page from two networks",
+         "Check whether the rule verifies the agents by IP range (genuine agents pass) or denies them",
+         "If it is a deny, allow-list the retrieval agents robots.txt permits"],
+        "If the rule is a deny, every AI agent robots.txt welcomes is turned away at the edge; if it "
+        "is verification or a hold on this address, nothing on the site is wrong.", effort="M")]
+
+
+def _probe_facts(b: Bundle) -> dict:
+    """What the user-agent probe recorded, as lists a sentence can be built from."""
+    probe = b.probe or {}
+    baseline = probe.get("baseline") or {}
+    agents = probe.get("agents") or {}
+    controls = probe.get("controls") or {}
+
+    def answered_refusal(r):
+        return r.get("status") in (401, 403, 429) or bool(r.get("challenge_detected"))
+
+    def stalled(r):
+        return r.get("status") is None and bool(r.get("error"))
+
+    # a 200 whose body is a challenge page is not "served"
+    served = sorted(a for a, r in agents.items() if r.get("status") == 200 and not r.get("challenge_detected"))
+    refused = sorted(a for a, r in agents.items() if answered_refusal(r))
+    stalled_agents = sorted(a for a, r in agents.items() if stalled(r))
+    other = sorted(a for a, r in agents.items()
+                   if a not in served and a not in refused and a not in stalled_agents)
+    return {
+        "ran": bool(probe) and bool(baseline),
+        "baseline": baseline.get("status"),
+        "served": served, "refused": refused, "stalled": stalled_agents, "other": other,
+        "controls_served": sorted(c for c, r in controls.items()
+                                  if r.get("status") == 200 and not r.get("challenge_detected")),
+        "controls_refused": sorted(c for c, r in controls.items()
+                                   if answered_refusal(r) or stalled(r)),
+    }
+
+
+def _probe_sentence(p: dict) -> str:
+    """One sentence that says exactly what the probe saw, and nothing it did not."""
+    parts = []
+    base = p["baseline"]
+    parts.append("the browser-user-agent baseline " + ("received the full page" if base == 200
+                 else f"received {base}" if base else "received no answer"))
+    if p["served"]:
+        parts.append(f"{', '.join(p['served'])} were served the full page")
+    if p["refused"]:
+        parts.append(f"{', '.join(p['refused'])} were refused or challenged")
+    if p["stalled"]:
+        parts.append(f"{', '.join(p['stalled'])} never received an answer (dropped or timed out)")
+    if p["other"]:
+        parts.append(f"{', '.join(p['other'])} received something else")
+    if p["controls_served"] and not p["controls_refused"]:
+        parts.append("both control names (an unknown crawler name and Bytespider) were served")
+    elif p["controls_refused"] and not p["controls_served"]:
+        parts.append("both control names were refused as well")
+    elif p["controls_served"] or p["controls_refused"]:
+        parts.append(f"of the control names, {', '.join(p['controls_served'])} served and "
+                     f"{', '.join(p['controls_refused'])} refused")
+    sentence = "; ".join(parts)
+    return "The probe recorded: " + sentence + "."
+
+
+def _sample_finding(check_id, title, severity, refs, evidence, verification, summary, steps,
+                    rationale, confidence="low", effort="S") -> dict:
+    f = finding(check_id, title, severity, evidence, refs, confidence=confidence,
+                scope="site-wide", checked=0, verification=verification,
+                action=act(summary, severity, steps, effort, rationale, owner="infrastructure"))
+    f["severity_locked"] = True
+    return f
 
 
 def _locked(f: dict) -> dict:

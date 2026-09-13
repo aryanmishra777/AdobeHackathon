@@ -1492,7 +1492,7 @@ def test_review_fixes_initialism_no_probe_and_unbound_coverage(tmp_path):
     assert '"of", "and", "the", "for"' in src
     # the no-probe branch says the probe did not run instead of asserting a baseline
     a_src = open(CHECK_ACCESS, encoding="utf-8").read()
-    assert 'if state in ("refused", "challenged") and (not probe or not baseline):' in a_src
+    assert 'if not p["ran"]:' in a_src and "no user-agent probe ran" in a_src
     assert '"No origin variant answered a connection' in a_src
     # run_audit: cov_doc is bound before the try
     r_src = open(os.path.join(REPO, "tools", "run_audit.py"), encoding="utf-8").read()
