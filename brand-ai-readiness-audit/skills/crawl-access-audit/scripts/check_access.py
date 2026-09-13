@@ -26,6 +26,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import collections
 import io
 import json
 import os
@@ -1772,19 +1773,59 @@ def check_sample_state(b: Bundle) -> list[dict]:
             ["If the disallow is intended, nothing is wrong; the site chose who crawls it",
              "Otherwise allow the crawler's user-agent, or run the audit under one robots.txt permits"],
             "A crawler that honours robots.txt fetches nothing where it is disallowed.")]
-    if state == "empty":
+    # An empty sample whose probe shows nothing amiss -- the browser and every
+    # named agent served -- is explained by the crawl itself: a budget spent
+    # before the first page, or every discovered URL skipped. A probe that
+    # shows a refusal is the better explanation and is handled below.
+    if state == "empty" and p["baseline_served"] and not p["unserved"]:
+        skips = collections.Counter(str(x.get("reason") or "").split(" ")[0]
+                                    for x in (b.coverage.get("skipped") or []))
+        if stopped in ("time-budget", "deadline"):
+            return [_sample_finding(
+                "REACH-015", "The crawl ended before its first page", "low", refs,
+                f"{what}. {observed} The budget or the deadline was spent on the origin, robots.txt, "
+                f"the sitemaps and the probe; rerun with a larger --budget.",
+                f"python tools/run_audit.py {b.origin} --budget 900 --cap 1500",
+                "Rerun with a larger fetch budget",
+                ["Rerun the audit with --budget 900 --cap 1500"],
+                "An empty sample measures nothing.")]
+        reasons = ", ".join(f"{r} x{n}" for r, n in skips.most_common(5)) or "no URL was queued"
         return [_sample_finding(
-            "REACH-015", "The crawl ended before its first page", "low", refs,
-            f"{what}. {observed} The budget or the deadline was spent on the origin, robots.txt, "
-            f"the sitemaps and the probe; rerun with a larger --budget.",
-            f"python tools/run_audit.py {b.origin} --budget 900 --cap 1500",
-            "Rerun with a larger fetch budget",
-            ["Rerun the audit with --budget 900 --cap 1500"],
+            "REACH-015", "Every URL the crawl found was skipped before a page was stored", "low", refs,
+            f"{what}. {observed} Every discovered URL was skipped ({reasons}); with nothing stored, "
+            f"nothing beyond robots.txt and the probe could be examined.",
+            f"curl -sI {b.origin}/  and read coverage.skipped in the bundle",
+            "Check why every URL was skipped",
+            ["Read coverage.skipped: per-page timeouts point at the edge, non-html at a start URL "
+             "that is not a page, robots-disallow at a rule that covers every path",
+             "Rerun from the page a visitor lands on, or with a larger --timeout"],
             "An empty sample measures nothing.")]
-    if not p["baseline_served"]:
-        # The browser was refused too: keyed on the address or network.
+    if not p["baseline_served"] and p["served"] and not p["unserved"]:
+        # The browser user-agent was refused or challenged while every named
+        # agent was served: a rule against unfamiliar browsers or automation,
+        # not against the address and not against the agents.
         return [_sample_finding(
-            "REACH-005", "Every request from the audit's address was refused, browser user-agent included",
+            "REACH-005", "The browser user-agent and the audit's own were refused while the named "
+                         "AI agents were served", "low", refs,
+            f"{what}. {observed} The edge spares the agents robots.txt permits and challenges or "
+            f"refuses what it does not recognise as a real browser -- this probe's browser string "
+            f"included. Not a defect for AI discoverability; it is why this audit could sample no "
+            f"content.",
+            f"curl -s -o /dev/null -w '%{{http_code}}' -A 'Mozilla/5.0 (compatible; GPTBot/1.0)' {b.origin}/",
+            "Decide whether unfamiliar browsers and crawlers should be challenged",
+            ["Keep the rule if it is intended; allow-list partner or audit crawlers by name when "
+             "they should see content"],
+            "Unknown crawlers include the next AI agent that has not published a name yet.",
+            confidence="medium")]
+    if not p["baseline_served"]:
+        # The browser was refused too: keyed on the address or network -- or,
+        # when some named agents were spared, a rule with exceptions.
+        title = ("Every request from the audit's address was refused, browser user-agent included"
+                 if not p["served"] else
+                 f"The browser user-agent, the audit's own and {', '.join(p['unserved'])} were "
+                 f"refused while {', '.join(p['served'])} were served")
+        return [_sample_finding(
+            "REACH-005", title,
             "medium", refs,
             f"{what}. {observed} A refusal (or a challenge) that does not spare a browser is keyed on the address "
             f"or the network, not on the agent name, so it cannot be attributed to an AI-crawler "

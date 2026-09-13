@@ -117,7 +117,9 @@ def _truthful(f, names, pattern, baseline, probe):
         assert not unserved, (f["title"], unserved)
     if "every named ai agent" in text and ("refused" in text or "stalled" in text):
         assert not served, (f["title"], served)
-    if f["title"].startswith("The named AI agents were refused") or "were refused or unanswered" in f["title"]:
+    if "every request" in f["title"].lower():
+        assert not served, (f["title"], served)          # a refusal of everything spares no agent
+    if f["title"].startswith("The named AI agents were refused") or "refused or unanswered" in f["title"]:
         assert truly_refused, (f["title"], outcome)      # an error is not a refusal
     for n in unserved:
         assert n in f["evidence"], (n, f["evidence"][:300])
@@ -222,3 +224,34 @@ def test_empty_state_names_its_cause(tmp_path, stopped, check, phrase):
     hits = [f for f in doc["findings"] if f["check_id"] == check]
     assert hits and phrase.lower() in hits[0]["title"].lower(), [f["title"] for f in doc["findings"]]
     assert not [f for f in doc["findings"] if "turns away the audit" in f["title"]]
+
+
+@pytest.mark.parametrize("baseline,pattern,controls,phrase", [
+    ("refused", ("refused",), ("refused", "refused"), "browser user-agent included"),
+    ("served", ("refused",), ("served", "served"), "control names were served"),
+    ("challenged", ("served",), ("served", "served"), "named ai agents were served"),
+])
+def test_empty_state_keeps_the_probes_explanation(tmp_path, baseline, pattern, controls, phrase):
+    """Sixth review: the empty state's budget finding pre-empted what the
+    probe recorded, and a challenged browser beside served agents was
+    'every request refused'."""
+    dst, names = _build(tmp_path, "empty", baseline, pattern, controls, stopped="completed")
+    doc = _run(dst)
+    hits = [f for f in doc["findings"] if f["check_id"] == "REACH-005"]
+    assert hits and phrase in hits[0]["title"].lower(), [f["title"] for f in doc["findings"]]
+    assert not [f for f in doc["findings"] if "larger --budget" in f["evidence"]]
+    for f in hits:
+        _truthful(f, names, pattern, baseline, probe=True)
+
+
+def test_empty_completed_crawl_names_the_skip_reasons(tmp_path):
+    dst, _ = _build(tmp_path, "empty", "served", ("served",), ("served", "served"), stopped="completed")
+    cov = json.loads((dst / "coverage.json").read_text(encoding="utf-8"))
+    cov["skipped"] = [{"url": "https://x.test/a.pdf", "reason": "non-html"},
+                      {"url": "https://x.test/b", "reason": "timeout"},
+                      {"url": "https://x.test/c", "reason": "timeout"}]
+    (dst / "coverage.json").write_text(json.dumps(cov), encoding="utf-8")
+    doc = _run(dst)
+    hits = [f for f in doc["findings"] if f["check_id"] == "REACH-015"]
+    assert hits and "skipped" in hits[0]["title"] and "timeout x2" in hits[0]["evidence"]
+    assert "larger --budget" not in hits[0]["evidence"]
