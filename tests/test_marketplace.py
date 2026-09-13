@@ -1522,8 +1522,14 @@ def test_access_impersonation_verdict_on_an_empty_sample_does_not_claim_agents_w
     man["sitemaps"] = []
     probe = json.loads((dst / "ua_probe.json").read_text(encoding="utf-8"))
     probe["baseline"].update({"status": 200, "bytes": 5000, "text_bytes": 3000})
-    for a in probe["agents"].values():
-        a.update({"status": 403, "bytes": 300, "text_bytes": 200})
+    # half the agents refused outright, half dropped without an answer: both
+    # are refusals (third review -- stalled agents fell through the guard)
+    for i, a in enumerate(probe["agents"].values()):
+        if i % 2:
+            a.update({"status": None, "bytes": 0, "text_bytes": 0, "challenge_detected": False,
+                      "error": "TimeoutError: The read operation timed out"})
+        else:
+            a.update({"status": 403, "bytes": 300, "text_bytes": 200})
     for c in (probe.get("controls") or {}).values():
         c.update({"status": 200, "bytes": 5000, "text_bytes": 3000})
     man["ua_probe"] = probe
@@ -1539,4 +1545,7 @@ def test_access_impersonation_verdict_on_an_empty_sample_does_not_claim_agents_w
     hits = [f for f in doc["findings"] if f["check_id"] == "REACH-005"]
     assert hits, [f["check_id"] for f in doc["findings"]]
     assert all("serving browsers and the named AI agents" not in f["title"] for f in hits)
-    assert any("control names were served" in f["title"] and f["confidence"] == "low" for f in hits)
+    hit = next(f for f in hits if "control names were served" in f["title"])
+    assert hit["confidence"] == "low"
+    for name in probe["agents"]:
+        assert name in hit["evidence"], name   # every refused agent is named, stalled ones included

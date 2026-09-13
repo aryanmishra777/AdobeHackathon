@@ -1649,7 +1649,11 @@ def check_sample_state(b: Bundle) -> list[dict]:
     baseline = probe.get("baseline") or {}
     agents = probe.get("agents") or {}
     served = [a for a, r in agents.items() if r.get("status") == 200]
-    refused = [a for a, r in agents.items() if r.get("status") in (401, 403, 429) or r.get("challenge_detected")]
+    # the same definition _control_verdict uses: an agent whose connection was
+    # dropped or timed out (status None with an error) was refused too
+    refused = [a for a, r in agents.items()
+               if r.get("status") in (401, 403, 429) or r.get("challenge_detected")
+               or (r.get("status") is None and r.get("error"))]
     refs = ["MANIFEST.json", "coverage.json"] + (["ua_probe.json"] if probe else [])
     if state in ("refused", "challenged") and (not probe or not baseline):
         # --no-probe, or a probe that never ran: the browser baseline and the
