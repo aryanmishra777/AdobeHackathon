@@ -447,12 +447,14 @@ def check_reach_005(b: Bundle) -> list[dict]:
     """
     baseline = b.probe.get("baseline") or {}
     agents = b.probe.get("agents") or {}
-    if not baseline or not agents or baseline.get("status") != 200:
+    # a browser baseline that got a challenge page is not a served baseline:
+    # nothing can be verified against it (the engine table says "unverified")
+    if not baseline or not agents or baseline.get("status") != 200 or baseline.get("challenge_detected"):
         return []
 
     matrix = b.robots.get("agent_matrix") or {}
     base_bytes = baseline.get("bytes") or 0
-    hard, soft, stalled = [], [], []
+    hard, soft, stalled, other = [], [], [], []
 
     for token, res in sorted(agents.items()):
         # Guard: if robots.txt already disallows the agent, the CDN is enforcing
@@ -466,6 +468,8 @@ def check_reach_005(b: Bundle) -> list[dict]:
             # never answered: named in the evidence beside the refusals, never
             # counted as a refusal (a stall cannot be attributed from here)
             stalled.append(token)
+        elif status != 200:
+            other.append((token, status))   # an error or a redirect: named, not counted
         elif status == 200 and base_bytes:
             ratio = (res.get("bytes") or 0) / base_bytes
             # Guard: differences under 10% are normal personalisation.
@@ -494,6 +498,7 @@ def check_reach_005(b: Bundle) -> list[dict]:
             + "; ".join(f"{t} receives {d}" for t, _, d in hard)
             + (f"; {', '.join(stalled)} never received an answer (dropped or timed out)"
                if stalled else "")
+            + (f"; {'; '.join(f'{t} received {st}' for t, st in other)}" if other else "")
             + ". robots.txt permits these agents, so the block is being applied "
               "by a CDN, WAF or bot-management rule."
             + (f" {control_sentence}" if control_sentence else
@@ -527,6 +532,9 @@ def check_reach_005(b: Bundle) -> list[dict]:
             f"{base_bytes} bytes, but "
             + "; ".join(f"{t} receives {n} bytes ({p}% of baseline)"
                         for t, n, p in soft)
+            + (f"; {', '.join(stalled)} never received an answer (dropped or timed out)"
+               if stalled else "")
+            + (f"; {'; '.join(f'{t} received {st}' for t, st in other)}" if other else "")
             + ". The content served to crawlers is substantially reduced.",
             ["ua_probe.json"],
             counts={"degraded_agents": len(soft)},
@@ -1704,24 +1712,45 @@ def check_sample_state(b: Bundle) -> list[dict]:
 
     # -- refused / challenged / empty: what the probe recorded -----------------
     p = _probe_facts(b)
+    stopped = b.coverage.get("stopped_reason") or ""
     if state == "challenged":
         what = (f"Every one of the {b.coverage.get('challenge_pages') or 0} URLs the crawl fetched "
                 f"came back as a challenge or 'unsupported client' stub for the audit's user-agent")
     elif state == "refused":
         what = (f"The crawl fetched no pages: every request under the audit's user-agent answered "
                 f"{_statuses(b)}")
+    elif stopped == "site-blocked":
+        # the crawler honoured a robots.txt that disallows it: nothing was
+        # refused by an edge, nothing was tried beyond the probe
+        what = ("The crawl fetched no pages: robots.txt disallows the audit's own crawler from "
+                "the start URL, and the crawler honoured it")
     else:
-        what = "The crawl fetched no pages"
+        what = (f"The crawl fetched no pages: it stopped ({stopped or 'unknown reason'}) before the "
+                f"first page was fetched")
 
-    # Another check explains it with more authority? Ask, do not guess.
-    for other in (check_reach_005, check_reach_002):
-        try:
-            if other(b):
+    # A verified block of named agents is REACH-005's finding, and it explains
+    # the empty sample with more authority than this check can. Ask it; stand
+    # down only for that finding (its "blocked_agents" count), never for the
+    # smaller-page one, which explains nothing about an empty sample.
+    try:
+        for f in check_reach_005(b) or []:
+            if ((f.get("evidence_detail") or {}).get("counts") or {}).get("blocked_agents"):
                 return []
-        except Exception:
-            pass
+    except Exception:
+        pass
 
     if not p["ran"]:
+        if stopped == "site-blocked":
+            return [_sample_finding(
+                "REACH-001", "robots.txt disallows the audit's own crawler; no page was fetched", "low", refs,
+                f"{what}. The user-agent probe did not run, so whether the named AI agents are "
+                f"served was not observed; their robots.txt permissions are in the reachability "
+                f"table. Nothing beyond robots.txt could be examined.",
+                f"curl -s {b.origin}/robots.txt",
+                "Decide whether the audit's crawler should be allowed",
+                ["If the disallow is intended, nothing is wrong; the site chose who crawls it",
+                 "Otherwise allow the crawler's user-agent, or run the audit under one robots.txt permits"],
+                "A crawler that honours robots.txt fetches nothing where it is disallowed.")]
         return [_sample_finding(
             "REACH-005", f"The crawl fetched no pages ({state}) and no user-agent probe ran", "low", refs,
             f"{what}, and the user-agent probe did not run, so whether a browser or the named AI "
@@ -1733,12 +1762,31 @@ def check_sample_state(b: Bundle) -> list[dict]:
             "An empty sample with no probe measures nothing.")]
 
     observed = _probe_sentence(p)
-    if p["baseline"] != 200:
+    if stopped == "site-blocked" and state not in ("refused", "challenged"):
+        return [_sample_finding(
+            "REACH-001", "robots.txt disallows the audit's own crawler; no page was fetched", "low", refs,
+            f"{what}. {observed} Nothing beyond robots.txt and the probe could be examined; "
+            f"whether the named agents are disallowed as well is REACH-002's finding.",
+            f"curl -s {b.origin}/robots.txt",
+            "Decide whether the audit's crawler should be allowed",
+            ["If the disallow is intended, nothing is wrong; the site chose who crawls it",
+             "Otherwise allow the crawler's user-agent, or run the audit under one robots.txt permits"],
+            "A crawler that honours robots.txt fetches nothing where it is disallowed.")]
+    if state == "empty":
+        return [_sample_finding(
+            "REACH-015", "The crawl ended before its first page", "low", refs,
+            f"{what}. {observed} The budget or the deadline was spent on the origin, robots.txt, "
+            f"the sitemaps and the probe; rerun with a larger --budget.",
+            f"python tools/run_audit.py {b.origin} --budget 900 --cap 1500",
+            "Rerun with a larger fetch budget",
+            ["Rerun the audit with --budget 900 --cap 1500"],
+            "An empty sample measures nothing.")]
+    if not p["baseline_served"]:
         # The browser was refused too: keyed on the address or network.
         return [_sample_finding(
             "REACH-005", "Every request from the audit's address was refused, browser user-agent included",
             "medium", refs,
-            f"{what}. {observed} A refusal that does not spare a browser is keyed on the address "
+            f"{what}. {observed} A refusal (or a challenge) that does not spare a browser is keyed on the address "
             f"or the network, not on the agent name, so it cannot be attributed to an AI-crawler "
             f"policy; it can equally be bot management challenging an unfamiliar address. Re-run "
             f"from another network, or a browser, before drawing a conclusion.",
@@ -1751,7 +1799,21 @@ def check_sample_state(b: Bundle) -> list[dict]:
             "A site that turns away every unfamiliar client is, for a crawler that has not been "
             "allow-listed, a site that does not exist; whether the named AI agents are among them "
             "could not be observed from here.")]
-    if p["served"] and not p["refused"] and not p["stalled"]:
+    if p["declared"] and not p["served"] and not p["unserved"]:
+        # every named agent is disallowed by robots.txt (REACH-002's finding);
+        # the audit's own refusal is the only thing left to explain
+        verb = "serves a challenge page to" if state == "challenged" else "turns away"
+        return [_sample_finding(
+            "REACH-005", f"The edge {verb} the audit's own user-agent; the named AI agents are "
+                         "disallowed by robots.txt", "low", refs,
+            f"{what}. {observed} The named agents' refusals are the declared policy, reported "
+            f"under REACH-002; this note records why the audit could sample no content.",
+            f"curl -s -o /dev/null -w '%{{http_code}}' -A 'SomeUnknownBot/1.0' {b.origin}/",
+            "Decide whether unknown crawlers should be turned away",
+            ["Keep the rule if it is intended; allow-list partner or audit crawlers by name when "
+             "they should see content"],
+            "Unknown crawlers include the next AI agent that has not published a name yet.")]
+    if p["served"] and not p["unserved"]:
         # Only the audit's own name was turned away: not an AI-discoverability
         # defect, the reason nothing could be sampled.
         verb = "serves a challenge page to" if state == "challenged" else "turns away"
@@ -1770,13 +1832,22 @@ def check_sample_state(b: Bundle) -> list[dict]:
     # Named agents were refused or never answered while the browser was served,
     # and REACH-005 did not claim it (an impersonation verdict, stalled
     # connections, or a mix). Describe it; do not decide it.
-    if p["stalled"] and not p["refused"]:
-        title = (("Every named AI agent's connection stalled" if not p["served"] else
+    every = "Every named AI agent" if not p["served"] else None
+    if not p["refused"] and not p["stalled"]:
+        # neither served nor refused: errors, redirects, or no agent probed
+        title = ((f"{every} received an error or an unexpected response" if every and p["other"]
+                  else f"{', '.join(p['other'])} received an error or an unexpected response"
+                  if p["other"] else "No named AI agent was probed")
+                 + " while the browser baseline was served")
+        reading = ("An error to a crawler name that a browser does not get is an edge rule or an "
+                   "origin fault; which one could not be told from one address.")
+    elif p["stalled"] and not p["refused"]:
+        title = ((f"{every}'s connection stalled" if every else
                   f"The connections of {', '.join(p['stalled'])} stalled")
                  + " while the browser baseline was served")
         reading = ("An edge that holds unrecognised or named crawlers open until they give up "
                    "produces this; so does a network path problem on one address.")
-    elif p["controls_served"]:
+    elif p["controls_served"] and not p["served"]:
         title = ("The named AI agents were refused while the browser and two control names were "
                  "served")
         reading = ("A rule that spares unknown names but refuses the named agents is what "
@@ -1785,7 +1856,9 @@ def check_sample_state(b: Bundle) -> list[dict]:
                    "not on one -- so it cannot be attributed to an AI-crawler policy from here. It "
                    "can equally be a block.")
     else:
-        title = "The named AI agents were refused or unanswered while the browser baseline was served"
+        title = ((f"{every} was refused or unanswered" if every else
+                  f"{', '.join(p['refused'] + p['stalled'])} were refused or unanswered")
+                 + " while the browser baseline was served")
         reading = ("Whether the rule keys on the agent names, on this address, or on unverified "
                    "bots in general could not be separated from one address.")
     return [_sample_finding(
@@ -1815,15 +1888,24 @@ def _probe_facts(b: Bundle) -> dict:
         return r.get("status") is None and bool(r.get("error"))
 
     # a 200 whose body is a challenge page is not "served"
-    served = sorted(a for a, r in agents.items() if r.get("status") == 200 and not r.get("challenge_detected"))
-    refused = sorted(a for a, r in agents.items() if answered_refusal(r))
-    stalled_agents = sorted(a for a, r in agents.items() if stalled(r))
-    other = sorted(a for a, r in agents.items()
-                   if a not in served and a not in refused and a not in stalled_agents)
+    # An agent robots.txt disallows is refused as declared: REACH-002 reports
+    # the declaration, and its refusal says nothing about the edge. It is
+    # named in the sentence and left out of the decision.
+    matrix = b.robots.get("agent_matrix") or {}
+    declared = sorted(a for a in agents if (matrix.get(a) or {}).get("root_allowed") is False)
+    live = {a: r for a, r in agents.items() if a not in declared}
+    served = sorted(a for a, r in live.items() if r.get("status") == 200 and not r.get("challenge_detected"))
+    refused = sorted(a for a, r in live.items() if answered_refusal(r))
+    stalled_agents = sorted(a for a, r in live.items() if stalled(r))
+    other = sorted(a for a in live if a not in served and a not in refused and a not in stalled_agents)
     return {
         "ran": bool(probe) and bool(baseline),
         "baseline": baseline.get("status"),
+        # a 200 whose body is a challenge page is not the page
+        "baseline_served": baseline.get("status") == 200 and not baseline.get("challenge_detected"),
         "served": served, "refused": refused, "stalled": stalled_agents, "other": other,
+        "unserved": refused + stalled_agents + other,
+        "declared": declared,
         "controls_served": sorted(c for c, r in controls.items()
                                   if r.get("status") == 200 and not r.get("challenge_detected")),
         "controls_refused": sorted(c for c, r in controls.items()
@@ -1835,7 +1917,8 @@ def _probe_sentence(p: dict) -> str:
     """One sentence that says exactly what the probe saw, and nothing it did not."""
     parts = []
     base = p["baseline"]
-    parts.append("the browser-user-agent baseline " + ("received the full page" if base == 200
+    parts.append("the browser-user-agent baseline " + ("received the full page" if p["baseline_served"]
+                 else "received a challenge page" if base == 200
                  else f"received {base}" if base else "received no answer"))
     if p["served"]:
         parts.append(f"{', '.join(p['served'])} were served the full page")
@@ -1844,7 +1927,9 @@ def _probe_sentence(p: dict) -> str:
     if p["stalled"]:
         parts.append(f"{', '.join(p['stalled'])} never received an answer (dropped or timed out)")
     if p["other"]:
-        parts.append(f"{', '.join(p['other'])} received something else")
+        parts.append(f"{', '.join(p['other'])} received an error or an unexpected response")
+    if p["declared"]:
+        parts.append(f"{', '.join(p['declared'])} are disallowed by robots.txt and were not counted")
     if p["controls_served"] and not p["controls_refused"]:
         parts.append("both control names (an unknown crawler name and Bytespider) were served")
     elif p["controls_refused"] and not p["controls_served"]:
