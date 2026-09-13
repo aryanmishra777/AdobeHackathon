@@ -397,6 +397,7 @@ def main(argv=None) -> int:
                    "challenged": "every fetch returned a challenge or unsupported-client stub",
                    "timed-out": "every connection timed out from the audit's client",
                    "unresolved": "the host did not resolve from the audit's network",
+                   "unreachable": "no origin variant accepted a connection from the audit's client",
                    "empty": "no page was fetched"}.get(sample, sample)
                 + ". Only the access analysis ran; the reachability table and the REACH findings are "
                 "what was measured. Rerun from another network or with a browser before drawing a "

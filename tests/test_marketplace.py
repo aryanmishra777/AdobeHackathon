@@ -1506,3 +1506,37 @@ def test_review_fixes_initialism_no_probe_and_unbound_coverage(tmp_path):
                "--out", str(tmp_path / "out"))
     assert proc.returncode == 0, proc.stderr[-800:]
     assert (tmp_path / "out" / "report.json").exists()
+
+
+def test_access_impersonation_verdict_on_an_empty_sample_does_not_claim_agents_were_served(tmp_path):
+    """Second review: with the browser and both control names served and every
+    named agent refused, the refused-sample branch fell into the 'agents are
+    served' wording with an empty name list."""
+    import shutil
+    src = bundle("clean")
+    dst = tmp_path / "b"
+    shutil.copytree(src, dst)
+    man = json.loads((dst / "MANIFEST.json").read_text(encoding="utf-8"))
+    man["pages"] = [{"page_id": "p000", "url": man["run"]["origin"] + "/", "status": 403,
+                     "role": "home", "page_type": "other"}]
+    man["sitemaps"] = []
+    probe = json.loads((dst / "ua_probe.json").read_text(encoding="utf-8"))
+    probe["baseline"].update({"status": 200, "bytes": 5000, "text_bytes": 3000})
+    for a in probe["agents"].values():
+        a.update({"status": 403, "bytes": 300, "text_bytes": 200})
+    for c in (probe.get("controls") or {}).values():
+        c.update({"status": 200, "bytes": 5000, "text_bytes": 3000})
+    man["ua_probe"] = probe
+    cov = json.loads((dst / "coverage.json").read_text(encoding="utf-8"))
+    cov.update({"pages_fetched": 0, "sample": "refused", "stopped_reason": "completed"})
+    man["coverage"] = cov
+    (dst / "MANIFEST.json").write_text(json.dumps(man), encoding="utf-8")
+    (dst / "ua_probe.json").write_text(json.dumps(probe), encoding="utf-8")
+    (dst / "coverage.json").write_text(json.dumps(cov), encoding="utf-8")
+    proc = run(CHECK_ACCESS, str(dst), "--stdout")
+    assert proc.returncode == 0, proc.stderr
+    doc = json.loads(proc.stdout)
+    hits = [f for f in doc["findings"] if f["check_id"] == "REACH-005"]
+    assert hits, [f["check_id"] for f in doc["findings"]]
+    assert all("serving browsers and the named AI agents" not in f["title"] for f in hits)
+    assert any("control names were served" in f["title"] and f["confidence"] == "low" for f in hits)

@@ -1683,6 +1683,34 @@ def check_sample_state(b: Bundle) -> list[dict]:
                 return []
             if not allowed_refused:
                 return []   # REACH-002 carries it
+            # Impersonation verdict: the browser and both control names were
+            # served, every named agent was refused, and REACH-005 withheld
+            # itself because a refusal of verified-bot names that genuine
+            # agents pass by IP range cannot be told from a block. Say that,
+            # not the "agents are served" wording below.
+            return [_locked(finding(
+                "REACH-005",
+                "Every named AI agent and the audit's own user-agent were refused; the browser and two control names were served",
+                "medium",
+                (f"The crawl fetched no pages: every request under the audit's user-agent answered "
+                 f"{_statuses(b)}, and the probe found {', '.join(refused)} refused or challenged, "
+                 f"while the browser baseline and both control names (an unknown crawler name and "
+                 f"Bytespider) were served. A rule that spares unknown names but refuses the named "
+                 f"agents is what impersonation defence on verified-bot names looks like -- genuine "
+                 f"GPTBot or ClaudeBot traffic passes by published IP range, and this audit's address "
+                 f"is not on one -- so the refusal cannot be attributed to an AI-crawler policy from "
+                 f"here. It can equally be a block. Nothing beyond robots.txt could be examined."),
+                refs, confidence="low", scope="site-wide", checked=0,
+                verification=(f"curl -s -o /dev/null -w '%{{http_code}}' -A 'Mozilla/5.0 (compatible; "
+                              f"GPTBot/1.0)' {b.origin}/  from a network on OpenAI's published ranges, "
+                              f"or read the edge's bot-verification logs"),
+                action=act("Confirm whether verified AI agents pass the rule that refused their names", "medium",
+                           ["Check the bot-management rule for the named agents: verification by IP range "
+                            "(genuine agents pass) or a plain deny (they do not)",
+                            "If it is a plain deny, allow-list the retrieval agents robots.txt permits"],
+                           "S", "If the rule is a deny, every AI agent robots.txt welcomes is turned "
+                           "away at the edge; if it is verification, nothing is wrong.",
+                           owner="infrastructure")))]
         if baseline.get("status") == 200:
             # apollohospitals.com: the browser and every named agent served,
             # only the audit's own user-agent refused. Not an AI-discoverability
