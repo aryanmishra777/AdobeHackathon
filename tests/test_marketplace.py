@@ -1549,3 +1549,38 @@ def test_access_impersonation_verdict_on_an_empty_sample_does_not_claim_agents_w
     assert hit["confidence"] == "low"
     for name in probe["agents"]:
         assert name in hit["evidence"], name   # every refused agent is named, stalled ones included
+
+
+def test_access_all_agents_stalled_with_browser_served_still_yields_a_finding(tmp_path):
+    """Fourth review: with every named agent stalled (no controls, or a
+    name-rule verdict) the sample-state check deferred to REACH-005, which
+    only reports answered refusals, and the empty-sample report lost its
+    only REACH finding."""
+    import shutil
+    src = bundle("clean")
+    dst = tmp_path / "b"
+    shutil.copytree(src, dst)
+    man = json.loads((dst / "MANIFEST.json").read_text(encoding="utf-8"))
+    man["pages"] = [{"page_id": "p000", "url": man["run"]["origin"] + "/", "status": 403,
+                     "role": "home", "page_type": "other"}]
+    man["sitemaps"] = []
+    probe = json.loads((dst / "ua_probe.json").read_text(encoding="utf-8"))
+    probe["baseline"].update({"status": 200, "bytes": 5000, "text_bytes": 3000})
+    for a in probe["agents"].values():
+        a.update({"status": None, "bytes": 0, "text_bytes": 0, "challenge_detected": False,
+                  "error": "TimeoutError: The read operation timed out"})
+    probe.pop("controls", None)          # an older collector: no verdict at all
+    man["ua_probe"] = probe
+    cov = json.loads((dst / "coverage.json").read_text(encoding="utf-8"))
+    cov.update({"pages_fetched": 0, "sample": "refused", "stopped_reason": "completed"})
+    man["coverage"] = cov
+    (dst / "MANIFEST.json").write_text(json.dumps(man), encoding="utf-8")
+    (dst / "ua_probe.json").write_text(json.dumps(probe), encoding="utf-8")
+    (dst / "coverage.json").write_text(json.dumps(cov), encoding="utf-8")
+    proc = run(CHECK_ACCESS, str(dst), "--stdout")
+    assert proc.returncode == 0, proc.stderr
+    doc = json.loads(proc.stdout)
+    hits = [f for f in doc["findings"] if f["check_id"] == "REACH-005"]
+    assert hits, [f["check_id"] for f in doc["findings"]]
+    assert any("stalled" in f["title"] and f["confidence"] == "low" and f.get("severity_locked") for f in hits)
+    assert all("serving browsers and the named AI agents" not in f["title"] for f in hits)

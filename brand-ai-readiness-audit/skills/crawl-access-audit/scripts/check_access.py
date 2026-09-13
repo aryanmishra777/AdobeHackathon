@@ -1682,11 +1682,41 @@ def check_sample_state(b: Bundle) -> list[dict]:
             # pages were sampled, so the informational finding below does.
             matrix = b.robots.get("agent_matrix") or {}
             allowed_refused = [a for a in refused if (matrix.get(a) or {}).get("root_allowed") is not False]
+            # REACH-005 reports only answered refusals (4xx or a challenge); an
+            # agent whose connection stalled is invisible to it, so the
+            # deferral is sound only when at least one agent answered
+            answered = [a for a in allowed_refused
+                        if (agents.get(a) or {}).get("status") in (401, 403, 429)
+                        or (agents.get(a) or {}).get("challenge_detected")]
+            stalled_only = [a for a in allowed_refused if a not in answered]
             kind, _ = _control_verdict(b)
-            if allowed_refused and kind != "impersonation":
+            if answered and kind != "impersonation":
                 return []
             if not allowed_refused:
                 return []   # REACH-002 carries it
+            if not answered and kind != "impersonation":
+                # every named agent's connection stalled while the browser was
+                # served: nothing else would say why zero pages were sampled
+                return [_locked(finding(
+                    "REACH-005",
+                    "Every named AI agent's connection stalled while the browser baseline was served",
+                    "medium",
+                    (f"The crawl fetched no pages: every request under the audit's user-agent answered "
+                     f"{_statuses(b)}, and the probe's requests as {', '.join(stalled_only)} never "
+                     f"received an answer (dropped or timed out) while the browser baseline got the "
+                     f"full page. An edge that holds unrecognised or named crawlers open until they "
+                     f"give up produces this; so does a network path problem on one address. Whether "
+                     f"it is a policy against these agents could not be verified from here."),
+                    refs, confidence="low", scope="site-wide", checked=0,
+                    verification=(f"curl -s -o /dev/null -m 30 -w '%{{http_code}} %{{time_total}}' "
+                                  f"-A 'Mozilla/5.0 (compatible; GPTBot/1.0)' {b.origin}/  from a second network"),
+                    action=act("Check what the edge does with connections from the named AI agents", "medium",
+                               ["Compare a browser, curl and the named agent strings against the home page "
+                                "from two networks",
+                                "If the agents are held rather than answered, exempt the retrieval agents "
+                                "robots.txt permits"],
+                               "M", "A crawler that never gets a byte indexes nothing.",
+                               owner="infrastructure")))]
             # Impersonation verdict: the browser and both control names were
             # served, every named agent was refused, and REACH-005 withheld
             # itself because a refusal of verified-bot names that genuine
