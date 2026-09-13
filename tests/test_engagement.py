@@ -283,3 +283,27 @@ def test_stay_013_accepts_a_placeholder_as_a_weak_label():
     mod = _stay_module()
     src = open(CHECK_STAY, encoding="utf-8").read()
     assert 'placeholder="[^"]{3,}"' in src
+
+
+def test_stay_007_ignores_a_modal_that_a_control_on_the_page_opens():
+    """ea.com/careers: <ea-modal id="recruitment-modal"> sits behind a
+    'Learn More' button carrying modal-id="recruitment-modal"; it opens on a
+    click, not on arrival."""
+    mod = _stay_module()
+    page = ('<ea-cta modal-id="recruitment-modal"><a>Learn More</a></ea-cta>'
+            '<ea-modal modal restore-focus-on-close unresolved id="recruitment-modal" theme="light">')
+    m = mod.INTERSTITIAL_RE.search(page)
+    assert m and mod._opened_by_a_control(page, m.group(0))
+    orphan = '<div id="newsletter-modal" class="modal">Sign up</div>'
+    m = mod.INTERSTITIAL_RE.search(orphan)
+    assert m and not mod._opened_by_a_control(orphan, m.group(0))
+
+
+def test_stay_014_counts_a_repeated_src_once_and_stay_011_reads_the_main_text():
+    """ea.com loads its component loader twice and serves it from pl.ea.com;
+    the collector now classifies scripts by registrable domain and the check
+    counts each src once. STAY-011 counted the page with its menus (867
+    words) instead of the 564-word post."""
+    src = open(CHECK_STAY, encoding="utf-8").read()
+    assert 's.get("src") not in seen' in src
+    assert 'clean = text.get("main_clean")' in src

@@ -896,11 +896,13 @@ def check_reach_012(b: Bundle) -> list[dict]:
 
 def check_reach_015(b: Bundle) -> list[dict]:
     """Slow TTFB. Guard: one-shot and location-dependent, so never above medium."""
-    ttfbs = []
+    ttfbs, slow = [], []
     for page in b.ok_pages:
         value = ((b.request(page["page_id"]).get("timing") or {}).get("ttfb_ms"))
         if isinstance(value, (int, float)):
             ttfbs.append(value)
+            if value >= SLOW_TTFB_MEDIUM_MS:
+                slow.append(page["url"])
     if len(ttfbs) < 3:
         return []
     median = statistics.median(ttfbs)
@@ -922,6 +924,9 @@ def check_reach_015(b: Bundle) -> list[dict]:
         f"Median time to first byte across {len(ttfbs)} sampled pages was "
         f"{int(median)} ms (range {int(min(ttfbs))}-{int(max(ttfbs))} ms). " + caveat,
         [f"pages/{p['page_id']}/request.json" for p in b.ok_pages[:5]],
+        # the slow pages are the affected pages: without them the merge read
+        # a site-wide finding with nothing affected and demoted it to one page
+        pages=slow,
         counts={"median_ttfb_ms": int(median), "pages": len(ttfbs)},
         confidence="medium",
         verification=f"curl -s -o /dev/null -w '%{{time_starttransfer}}' {b.origin}/",
@@ -1512,10 +1517,12 @@ def engine_reachability(b: Bundle) -> list[dict]:
             kind, sentence = _control_verdict(b)
             if kind == "impersonation":
                 state = "partial"
-                detail = (f"unverified: the edge refused {(edge_blocked + stalled)[0]} but "
-                          f"served both control names, so this is impersonation defence "
-                          f"on verified-bot names that genuine agents pass by IP range; "
-                          f"robots.txt permits it")
+                agent = (edge_blocked + stalled)[0]
+                what = (f"never answers {agent} ({(probe_agents.get(agent) or {}).get('error')})"
+                        if agent in stalled else f"refused {agent}")
+                detail = (f"unverified: the edge {what} but served both control names, "
+                          f"so this is impersonation defence on verified-bot names that "
+                          f"genuine agents pass by IP range; robots.txt permits it")
             if sentence:
                 note = (note + " " if note else "") + sentence
         rows.append({

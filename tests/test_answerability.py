@@ -332,3 +332,27 @@ def test_quote_org_names_ignore_an_articles_author():
             "publisher": {"@type": "Organization", "name": "Wikimedia Foundation, Inc."}}
     assert mod._jsonld_org_names(node) == ["Wikimedia Foundation, Inc."]
 
+
+
+def test_quote_010_needs_a_recurring_segment_and_reads_official_site_as_a_tagline():
+    """ea.com: two pages titled 'EA Game Cards' were reported as a second name
+    for Electronic Arts, and 'Official EA Site' on twelve titles as a third."""
+    mod = _quote_module()
+    assert mod.OFFICIAL_SITE_RE.sub(r"\1", "Official EA Site") == "EA"
+    assert mod.OFFICIAL_SITE_RE.sub(r"\1", "An Official EA Site") == "EA"
+    assert mod.OFFICIAL_SITE_RE.sub(r"\1", "Nike Official Site") == "Nike Official Site"
+    src = open(CHECK_QUOTE, encoding="utf-8").read()
+    assert "recur = max(2, len(b.ok_pages) // 4)" in src
+
+
+def test_quote_002_accepts_the_host_label_initialism(tmp_path):
+    """'EA is a global leader in digital interactive entertainment' on ea.com,
+    whose declared name is Electronic Arts, is the identity sentence."""
+    mod = _quote_module()
+    b = mod.Bundle.__new__(mod.Bundle)
+    b.site = "www.ea.com"
+    b._brand_phrases = ["Electronic Arts", "Official EA Site"]
+    assert b.brand_initialism == "EA"
+    b.site = "www.nike.in"
+    b._brand_phrases = ["Nike"]
+    assert b.brand_initialism is None

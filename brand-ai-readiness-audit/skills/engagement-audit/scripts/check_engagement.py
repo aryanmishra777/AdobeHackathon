@@ -756,6 +756,24 @@ def check_stay_006(b: Bundle) -> list:
     return out
 
 
+_ID_IN_MATCH_RE = re.compile(r'id="([^"]+)"', re.I)
+
+
+def _opened_by_a_control(raw: str, match_text: str) -> bool:
+    """Whether the element the interstitial match names is the target of a
+    trigger elsewhere in the document (modal-id, data-target, data-modal,
+    aria-controls, href="#id")."""
+    m = _ID_IN_MATCH_RE.search(match_text)
+    if not m:
+        return False
+    ident = re.escape(m.group(1))
+    trigger = re.compile(
+        r'(?:modal-id|data-target|data-modal|data-toggle-target|data-open|'
+        r'aria-controls|data-bs-target|data-micromodal-trigger)="#?' + ident + r'"'
+        r'|href="#' + ident + r'"', re.I)
+    return bool(trigger.search(raw))
+
+
 def check_stay_007(b: Bundle) -> list:
     """An interstitial blocks the page on arrival. Deterministic -- only overlays
     present in the INITIAL HTML (we cannot see delayed pop-ups)."""
@@ -771,6 +789,12 @@ def check_stay_007(b: Bundle) -> list:
             # dexter-Author-Hide" is the footer's 'Choose your region' dialog.
             around = raw[max(0, cand.start() - 300):cand.end() + 600]
             if NOT_AN_INTERSTITIAL_RE.search(around):
+                continue
+            # A dialog that a control on the page opens by id is shown on a
+            # click, not on arrival: ea.com/careers has <ea-modal
+            # id="recruitment-modal"> behind a "Learn More" button carrying
+            # modal-id="recruitment-modal".
+            if _opened_by_a_control(raw, cand.group(0)):
                 continue
             m = cand
             break
@@ -1013,7 +1037,12 @@ def check_stay_011(b: Bundle) -> list:
     out = []
     for p in b.content_pages:
         ex = b.extracted(p["page_id"])
-        words = (ex.get("text") or {}).get("word_count") or 0
+        # The words a reader has to get through are the main text, cleanest
+        # copy first: ea.com's 560-word security post counted 867 with the
+        # header and footer menus and was called unbroken off one <h1>.
+        text = ex.get("text") or {}
+        clean = text.get("main_clean")
+        words = (len(clean.split()) if clean else None) or text.get("main_word_count")             or text.get("word_count") or 0
         subs = [h for h in ex.get("headings") or [] if h.get("level", 1) >= 2]
         if words < 600:
             continue
@@ -1188,7 +1217,12 @@ def check_stay_014(b: Bundle) -> list:
     out = []
     for p in b.content_pages:
         scripts = b.extracted(p["page_id"]).get("scripts") or []
-        blocking_3p = [s for s in scripts if s.get("third_party") and s.get("blocking")]
+        blocking_3p, seen = [], set()
+        for s in scripts:
+            # the same src twice is one script (ea.com repeats its loader)
+            if s.get("third_party") and s.get("blocking") and s.get("src") not in seen:
+                seen.add(s.get("src"))
+                blocking_3p.append(s)
         if len(blocking_3p) < 3:
             continue
         hosts = sorted({urlparse(s.get("src") or "").netloc for s in blocking_3p

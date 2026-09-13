@@ -169,6 +169,10 @@ def _unspace_letters(name: str) -> str:
     if len(toks) >= 4 and all(len(t) == 1 for t in toks):
         return "".join(toks)
     return name
+# "Official EA Site" on twelve ea.com titles is a claim about the site, not
+# a name; the name inside it is what the segment contributes.
+OFFICIAL_SITE_RE = re.compile(r"^(?:an?\s+)?official\s+(.+?)\s+(?:web\s*)?site$", re.I)
+
 SENT_VERB = (r"(?:is|are|was|were|provides?|offers?|helps?|builds?|makes?|"
              r"delivers?|sells?|operates?|creates?|designs?|specialise|"
              r"specialize|manufactures?|runs?|powers?)")
@@ -325,6 +329,7 @@ class Bundle:
         # the logo's alt text leaking into the title. Strip that class of
         # suffix so the candidate merges with the declared name.
         def _clean(name: str) -> str:
+            name = OFFICIAL_SITE_RE.sub(r"", name.strip())
             return re.sub(r"\s+(logo|icon|homepage|home page|home|official site)$",
                           "", name.strip(), flags=re.I).strip() or name.strip()
         declared = Counter({_clean(k): v for k, v in declared.items()
@@ -396,8 +401,22 @@ class Bundle:
         # ceil(0.6 * n) without importing math; never below 2.
         threshold = max(2, -(-3 * n // 5))
         terms |= {t for t, c in counter.items() if c >= threshold}
+        if self.brand_initialism:
+            terms.add(self.brand_initialism.lower())
         self._brand_terms = terms
         return terms
+
+    @property
+    def brand_initialism(self):
+        """The initialism the site goes by when it is also the host label:
+        "EA" for Electronic Arts on ea.com. None otherwise, so that a two-
+        letter coincidence elsewhere in the prose cannot name the subject."""
+        label = _host_label(self.site)
+        for ph in self.brand_phrases:
+            initials = "".join(w[0] for w in ph.split() if w[:1].isalpha())
+            if len(initials) >= 2 and initials.lower() == label.lower():
+                return initials.upper()
+        return None
 
     @property
     def brand_display(self) -> str:
@@ -686,7 +705,14 @@ def check_quote_002(b: Bundle) -> list:
     # site whose title suffix is "lighty news".
     phrases = list(b.brand_phrases)
     label = _host_label(b.site)
-    for extra in ([label] if len(label) >= 3 else []) + [re.sub(r"^www\.", "", b.site or "")]:
+    extras = ([label] if len(label) >= 3 else []) + [re.sub(r"^www\.", "", b.site or "")]
+    # The initialism the site itself goes by: "EA is a global leader in
+    # digital interactive entertainment" on ea.com, whose declared name is
+    # Electronic Arts. Accepted only when it is the host label, so that a
+    # two-letter coincidence elsewhere in the prose cannot pass the check.
+    if b.brand_initialism:
+        extras.append(b.brand_initialism)
+    for extra in extras:
         if extra and extra.lower() not in {ph.lower() for ph in phrases}:
             phrases.append(extra)
     patterns = [re.compile(r"\b" + re.escape(ph) + r"\b\s+" + SENT_VERB + r"\b", re.I)
@@ -1232,9 +1258,13 @@ def check_quote_010(b: Bundle) -> list:
             seg = seg.strip()
             if len(seg) >= 3:
                 seg_counter[seg] += 1
+    # A segment is a brand candidate when it recurs across the sample, not
+    # when two pages share a title: ea.com's two "EA Game Cards" pages were
+    # reported as a second name for Electronic Arts.
+    recur = max(2, len(b.ok_pages) // 4)
     for seg, c in seg_counter.items():
-        if c >= 2:
-            names[_norm_name(seg)] += c
+        if c >= recur:
+            names[_norm_name(OFFICIAL_SITE_RE.sub(r"", seg))] += c
 
     distinct = sorted({n for n in names if n})
     # Guard: capitalisation, punctuation and legal suffixes already normalised.

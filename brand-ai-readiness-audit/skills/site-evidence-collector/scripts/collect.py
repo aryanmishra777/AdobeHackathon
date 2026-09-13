@@ -353,6 +353,31 @@ def _optional(name: str):
 
 _EXTRAS_NOTED: dict = {}
 
+# Second-level labels under which a two-letter country code sells third-level
+# names: the registrable domain of shop.example.co.uk is example.co.uk.
+_CC_SECOND_LEVEL = {"co", "com", "org", "net", "ac", "gov", "edu", "ne", "or", "go"}
+
+
+def _registrable(host: str) -> str:
+    """The site a host belongs to: pl.ea.com -> ea.com, www.nike.in -> nike.in,
+    shop.example.co.uk -> example.co.uk. tldextract knows the public suffix
+    list; the fallback reads the last two labels, three under a ccSLD."""
+    host = (host or "").lower().rstrip(".")
+    if not host or host.replace(".", "").isdigit():
+        return host
+    ext = _optional("tldextract")
+    if ext is not None:
+        try:
+            e = ext.extract(host)
+            if e.domain and e.suffix:
+                return f"{e.domain}.{e.suffix}"
+        except Exception:
+            pass
+    labels = host.split(".")
+    if len(labels) >= 3 and len(labels[-1]) == 2 and labels[-2] in _CC_SECOND_LEVEL:
+        return ".".join(labels[-3:])
+    return ".".join(labels[-2:])
+
 
 def _note_extra(name: str, used_for: str) -> None:
     _EXTRAS_NOTED.setdefault((name, used_for), True)
@@ -812,7 +837,9 @@ def extract_page(page_id: str, url: str, html: str, origin: str) -> dict:
     for s in parser.scripts:
         if s["src"]:
             s["src"] = urljoin(url, s["src"])
-            s["third_party"] = urlparse(s["src"]).netloc.lower() != origin_host
+            # ea.com serves its component library from pl.ea.com: a script
+            # from the site's own registrable domain is first-party code
+            s["third_party"] = _registrable(urlparse(s["src"]).netloc) != _registrable(origin_host)
 
     images = [{**img, "src": urljoin(url, img["src"]) if img["src"] else ""}
               for img in parser.images]

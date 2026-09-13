@@ -885,7 +885,7 @@ def test_engine_reachability_is_unverified_when_the_browser_baseline_is_refused_
     shutil.copytree(src, dst)
     probe = json.loads((dst / "ua_probe.json").read_text(encoding="utf-8"))
     probe["baseline"].update({"status": 403, "challenge_detected": True, "bytes": 363, "text_bytes": 283})
-    for a in probe["agents"].values():
+    for a in list(probe["agents"].values()) + list((probe.get("controls") or {}).values()):
         a.update({"status": 403, "challenge_detected": True, "bytes": 363, "text_bytes": 283})
     (dst / "ua_probe.json").write_text(json.dumps(probe), encoding="utf-8")
     man_path = dst / "MANIFEST.json"
@@ -1040,6 +1040,50 @@ def test_collector_keeps_a_budget_share_for_pages_under_a_hold(monkeypatch, tmp_
     assert c.ua_probe("https://www.ea.com/sports")["agents"] == {}
 
 
+def test_collector_classifies_scripts_by_registrable_domain():
+    """ea.com serves its component library from pl.ea.com; a script from the
+    site's own registrable domain is first-party, not one of three
+    render-blocking third parties on every page."""
+    mod = _collect_module()
+    assert mod._registrable("pl.ea.com") == "ea.com"
+    assert mod._registrable("www.ea.com") == "ea.com"
+    assert mod._registrable("shop.example.co.uk") == "example.co.uk"
+    assert mod._registrable("cdnjs.cloudflare.com") == "cloudflare.com"
+    html = ('<html><head><script src="https://pl.ea.com/release/4.69.8/elements/ea-elements.min.js"></script>'
+            '<script src="https://unpkg.com/@webcomponents/webcomponentsjs@2.2.7/webcomponents-loader.js"></script>'
+            '</head><body><h1>x</h1><p>' + "word " * 40 + '</p></body></html>')
+    ex = mod.extract_page("p", "https://www.ea.com/sports", html, "https://www.ea.com")
+    by = {s["src"].split("/")[2]: s["third_party"] for s in ex["scripts"] if s.get("src")}
+    assert by == {"pl.ea.com": False, "unpkg.com": True}
+
+
+def test_reach_015_lists_the_slow_pages_as_affected(tmp_path):
+    """Without affected pages the merge read a site-wide REACH-015 with
+    nothing affected, demoted it to one page and then to low: ea.com's
+    42-second hold on every response came out as a low."""
+    import shutil
+    src = bundle("clean")
+    dst = tmp_path / "b"
+    shutil.copytree(src, dst)
+    man = json.loads((dst / "MANIFEST.json").read_text(encoding="utf-8"))
+    slow = []
+    for p in man["pages"]:
+        req = dst / "pages" / p["page_id"] / "request.json"
+        if not req.exists():
+            continue
+        doc = json.loads(req.read_text(encoding="utf-8"))
+        doc.setdefault("timing", {})["ttfb_ms"] = 42000.0
+        req.write_text(json.dumps(doc), encoding="utf-8")
+        if p.get("status") == 200:
+            slow.append(p["url"])
+    proc = run(CHECK_ACCESS, str(dst), "--stdout")
+    assert proc.returncode == 0, proc.stderr
+    f = next(f for f in json.loads(proc.stdout)["findings"] if f["check_id"] == "REACH-015")
+    assert f["title"].startswith("The edge holds responses")
+    assert f["affected_scope"]["pages_affected"] == len(slow) >= 3
+    assert set(f["evidence_detail"]["pages_affected"]) == set(slow)
+
+
 def test_read_001_recognises_a_byte_identical_shell_and_a_no_javascript_message(tmp_path):
     """crunchyroll.com served one document for 21 browse routes: 99 words of
     header and footer chrome and 'Update your web browser!'. No selector in
@@ -1132,8 +1176,10 @@ def test_engine_row_survives_a_probe_that_never_answered(tmp_path):
     man_path.write_text(json.dumps(man), encoding="utf-8")
     proc = run(CHECK_ACCESS, str(dst), "--stdout")
     rows = {r["engine"]: r for r in json.loads(proc.stdout)["engine_reachability"]}
-    assert rows["ChatGPT"]["state"] == "blocked"      # baseline was served, the agent was not
-    assert "never answers" in rows["ChatGPT"]["detail"]
+    # the baseline was served and the agent was not; with both control names
+    # served too, the verdict is impersonation defence -- unverified, not blocked
+    assert rows["ChatGPT"]["state"] == "partial"
+    assert "never answers" in rows["ChatGPT"]["detail"] and "control names" in rows["ChatGPT"]["detail"]
 
 
 # --------------------------------------------------------------------------

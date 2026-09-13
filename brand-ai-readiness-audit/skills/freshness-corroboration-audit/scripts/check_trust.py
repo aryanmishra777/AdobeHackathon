@@ -126,6 +126,24 @@ CURRENCY_LANGUAGE_RE = re.compile(
     r"this (?:year|season|month|quarter)|latest release|new for 20\d{2}|"
     r"register now|join us|upcoming|available today|out now)\b", re.I)
 COMING_YEAR_RE = re.compile(r"\bcoming (?:soon )?in (20\d{2})\b", re.I)
+# "current" as interface state, not as a claim about the world: a carousel's
+# live-region text ("is now the current item in the media gallery"), a
+# consent banner ("cookies are currently disabled"), a pager. ea.com's game
+# pages carried both and were called stale off a 2010 date.
+UI_CURRENT_RE = re.compile(
+    r"\b(?:the |a )?current(?:ly)? (?:item|slide|page|tab|step|view|selection|"
+    r"language|region|location|settings?|disabled|enabled|selected|active|"
+    r"viewing|playing|open|closed|hidden|shown)\b", re.I)
+
+
+def _currency_match(text: str):
+    """The first currency phrase that is a claim, skipping interface state."""
+    for m in CURRENCY_LANGUAGE_RE.finditer(text):
+        window = text[max(0, m.start() - 8):m.end() + 12]
+        if m.group(0).lower().startswith("current") and UI_CURRENT_RE.search(window):
+            continue
+        return m
+    return None
 
 TIME_SENSITIVE_PRICING_RE = re.compile(
     r"\b(as of\b|effective\b|last updated|updated on|current (?:prices?|pricing|"
@@ -864,7 +882,7 @@ def check_trust_005(b: Bundle) -> list:
                 d.get("source") in ("time-element", "visible-text", "jsonld")
                 for d in (ex.get("dates") or [])):
             continue
-        if ref_year and CURRENCY_LANGUAGE_RE.search(text):
+        if ref_year and _currency_match(text):
             # The page's date is when it was last published or modified, which
             # is the MOST RECENT structured date it declares -- not the oldest
             # year its prose happens to mention. Taking min() dated Wikipedia's
@@ -883,7 +901,7 @@ def check_trust_005(b: Bundle) -> list:
                 visible = [y for y in visible if y]
                 page_year = max(visible) if visible else None
             if page_year and ref_year - page_year >= 2:
-                m = CURRENCY_LANGUAGE_RE.search(text)
+                m = _currency_match(text)
                 reasons.append('the page is dated {} but presents "{}" as current'.format(
                     page_year, m.group(0).strip()))
         cm = COMING_YEAR_RE.search(text)
@@ -902,7 +920,7 @@ def check_trust_005(b: Bundle) -> list:
         if not reasons:
             continue
         excerpt = ""
-        sm = CURRENCY_LANGUAGE_RE.search(text) or COMING_YEAR_RE.search(text)
+        sm = _currency_match(text) or COMING_YEAR_RE.search(text)
         if sm:
             start = max(0, sm.start() - 100)
             excerpt = re.sub(r"\s+", " ", text[start:sm.end() + 100]).strip()

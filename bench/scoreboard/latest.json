@@ -42,7 +42,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 6.1,
+      "seconds": 18.0,
       "findings": [
         {
           "check_id": "READ-001",
@@ -187,7 +187,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.7,
+      "seconds": 5.6,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -287,7 +287,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.3,
+      "seconds": 5.0,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -407,7 +407,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.7,
+      "seconds": 6.4,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -527,7 +527,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 11.5,
+      "seconds": 12.3,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -636,7 +636,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 73.4,
+      "seconds": 118.3,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -711,7 +711,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.6,
+      "seconds": 5.8,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -856,7 +856,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 9.3,
+      "seconds": 13.3,
       "findings": [
         {
           "check_id": "PARSE-010",
@@ -984,7 +984,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.2,
+      "seconds": 6.2,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -1082,23 +1082,23 @@
       "pages": 20,
       "discoverability": 54,
       "disc_grade": "D",
-      "engagement_score": 97,
+      "engagement_score": 98,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 16,
+        "total_findings": 15,
         "critical": 1,
         "high": 0,
-        "medium": 9,
-        "low": 6,
+        "medium": 7,
+        "low": 7,
         "by_category": {
-          "discoverability": 14,
+          "discoverability": 13,
           "engagement": 2
         },
         "by_mechanism": {
           "reach": 3,
           "read": 5,
           "parse": 1,
-          "quote": 3,
+          "quote": 2,
           "trust": 2,
           "stay": 2
         }
@@ -1114,7 +1114,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.1,
+      "seconds": 4.2,
       "findings": [
         {
           "check_id": "READ-013",
@@ -1130,11 +1130,6 @@
           "check_id": "QUOTE-001",
           "severity": "medium",
           "title": "Passages do not make sense when retrieved on their own"
-        },
-        {
-          "check_id": "QUOTE-010",
-          "severity": "medium",
-          "title": "The brand or product is named inconsistently"
         },
         {
           "check_id": "REACH-007",
@@ -1162,11 +1157,6 @@
           "title": "Heading structure does not describe the page"
         },
         {
-          "check_id": "STAY-011",
-          "severity": "medium",
-          "title": "Content is hard to read"
-        },
-        {
           "check_id": "QUOTE-007",
           "severity": "low",
           "title": "Answers are buried below long preamble"
@@ -1185,6 +1175,11 @@
           "check_id": "STAY-009",
           "severity": "low",
           "title": "Images without dimensions risk layout shift"
+        },
+        {
+          "check_id": "STAY-011",
+          "severity": "low",
+          "title": "Content is hard to read"
         },
         {
           "check_id": "TRUST-004",
@@ -1210,20 +1205,20 @@
       "engagement_score": 94,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 18,
+        "total_findings": 17,
         "critical": 0,
         "high": 1,
-        "medium": 13,
+        "medium": 12,
         "low": 4,
         "by_category": {
-          "discoverability": 16,
+          "discoverability": 15,
           "engagement": 2
         },
         "by_mechanism": {
           "reach": 1,
           "read": 2,
           "parse": 8,
-          "quote": 4,
+          "quote": 3,
           "trust": 1,
           "stay": 2
         }
@@ -1239,7 +1234,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 7.4,
+      "seconds": 7.6,
       "findings": [
         {
           "check_id": "PARSE-004",
@@ -1280,11 +1275,6 @@
           "check_id": "QUOTE-005",
           "severity": "medium",
           "title": "The site has none of the page types assistants cite most"
-        },
-        {
-          "check_id": "QUOTE-010",
-          "severity": "medium",
-          "title": "The brand or product is named inconsistently"
         },
         {
           "check_id": "REACH-008",
@@ -1373,7 +1363,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 9.3,
+      "seconds": 10.4,
       "findings": [
         {
           "check_id": "REACH-008",
@@ -1493,7 +1483,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.6,
+      "seconds": 4.5,
       "findings": [
         {
           "check_id": "READ-013",
@@ -1648,7 +1638,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 10.7,
+      "seconds": 11.5,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -1758,7 +1748,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.4,
+      "seconds": 2.5,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -1986,7 +1976,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 6.2,
+      "seconds": 6.1,
       "findings": [
         {
           "check_id": "PARSE-004",
@@ -2279,7 +2269,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 7.9,
+      "seconds": 9.1,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -2379,7 +2369,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.1,
+      "seconds": 2.3,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -2445,20 +2435,19 @@
       "engagement_score": 98,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 13,
+        "total_findings": 12,
         "critical": 0,
         "high": 0,
-        "medium": 7,
+        "medium": 6,
         "low": 6,
         "by_category": {
-          "discoverability": 11,
+          "discoverability": 10,
           "engagement": 2
         },
         "by_mechanism": {
           "reach": 2,
           "read": 3,
           "parse": 4,
-          "quote": 1,
           "trust": 1,
           "stay": 2
         }
@@ -2474,7 +2463,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.1,
+      "seconds": 2.4,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -2490,11 +2479,6 @@
           "check_id": "PARSE-013",
           "severity": "medium",
           "title": "No breadcrumb markup or navigation"
-        },
-        {
-          "check_id": "QUOTE-010",
-          "severity": "medium",
-          "title": "The brand or product is named inconsistently"
         },
         {
           "check_id": "REACH-010",
@@ -2584,7 +2568,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 14.8,
+      "seconds": 23.9,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -2808,7 +2792,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.9,
+      "seconds": 3.1,
       "findings": [
         {
           "check_id": "REACH-007",
@@ -2948,7 +2932,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 20.9,
+      "seconds": 47.8,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -3064,20 +3048,20 @@
       "engagement_score": 92,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 21,
+        "total_findings": 20,
         "critical": 0,
         "high": 1,
-        "medium": 8,
+        "medium": 7,
         "low": 12,
         "by_category": {
-          "discoverability": 14,
+          "discoverability": 13,
           "engagement": 7
         },
         "by_mechanism": {
           "reach": 2,
           "read": 4,
           "parse": 4,
-          "quote": 4,
+          "quote": 3,
           "stay": 7
         }
       },
@@ -3092,7 +3076,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.3,
+      "seconds": 2.5,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -3118,11 +3102,6 @@
           "check_id": "QUOTE-005",
           "severity": "medium",
           "title": "The site has none of the page types assistants cite most"
-        },
-        {
-          "check_id": "QUOTE-010",
-          "severity": "medium",
-          "title": "The brand or product is named inconsistently"
         },
         {
           "check_id": "READ-009",
@@ -3213,20 +3192,20 @@
       "engagement_score": 99,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 20,
+        "total_findings": 19,
         "critical": 0,
         "high": 4,
-        "medium": 7,
+        "medium": 6,
         "low": 9,
         "by_category": {
-          "discoverability": 17,
+          "discoverability": 16,
           "engagement": 3
         },
         "by_mechanism": {
           "reach": 6,
           "read": 1,
           "parse": 4,
-          "quote": 5,
+          "quote": 4,
           "trust": 1,
           "stay": 3
         }
@@ -3242,7 +3221,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.1,
+      "seconds": 4.3,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -3283,11 +3262,6 @@
           "check_id": "QUOTE-005",
           "severity": "medium",
           "title": "The site has none of the page types assistants cite most"
-        },
-        {
-          "check_id": "QUOTE-010",
-          "severity": "medium",
-          "title": "The brand or product is named inconsistently"
         },
         {
           "check_id": "REACH-012",
@@ -3625,7 +3599,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.0,
+      "seconds": 4.1,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -3744,7 +3718,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.1,
+      "seconds": 3.2,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -3844,7 +3818,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.4,
+      "seconds": 3.7,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -4110,20 +4084,20 @@
       "engagement_score": 90,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 21,
+        "total_findings": 20,
         "critical": 0,
         "high": 2,
-        "medium": 8,
+        "medium": 7,
         "low": 11,
         "by_category": {
-          "discoverability": 17,
+          "discoverability": 16,
           "engagement": 4
         },
         "by_mechanism": {
           "reach": 5,
           "read": 2,
           "parse": 4,
-          "quote": 4,
+          "quote": 3,
           "trust": 2,
           "stay": 4
         }
@@ -4139,7 +4113,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.7,
+      "seconds": 4.0,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -4170,11 +4144,6 @@
           "check_id": "QUOTE-005",
           "severity": "medium",
           "title": "The site has none of the page types assistants cite most"
-        },
-        {
-          "check_id": "QUOTE-010",
-          "severity": "medium",
-          "title": "The brand or product is named inconsistently"
         },
         {
           "check_id": "REACH-012",
@@ -4260,20 +4229,20 @@
       "engagement_score": 85,
       "eng_grade": "B",
       "summary": {
-        "total_findings": 20,
+        "total_findings": 19,
         "critical": 1,
         "high": 1,
-        "medium": 10,
+        "medium": 9,
         "low": 8,
         "by_category": {
-          "discoverability": 14,
+          "discoverability": 13,
           "engagement": 6
         },
         "by_mechanism": {
           "reach": 2,
           "read": 2,
           "parse": 2,
-          "quote": 6,
+          "quote": 5,
           "trust": 2,
           "stay": 6
         }
@@ -4289,7 +4258,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 6.7,
+      "seconds": 8.3,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -4320,11 +4289,6 @@
           "check_id": "QUOTE-005",
           "severity": "medium",
           "title": "The site has none of the page types assistants cite most"
-        },
-        {
-          "check_id": "QUOTE-010",
-          "severity": "medium",
-          "title": "The brand or product is named inconsistently"
         },
         {
           "check_id": "READ-008",
@@ -4402,17 +4366,17 @@
       "pages": 20,
       "discoverability": 0,
       "disc_grade": "F",
-      "engagement_score": 85,
+      "engagement_score": 86,
       "eng_grade": "B",
       "summary": {
-        "total_findings": 29,
+        "total_findings": 28,
         "critical": 2,
         "high": 2,
-        "medium": 15,
+        "medium": 14,
         "low": 10,
         "by_category": {
           "discoverability": 21,
-          "engagement": 8
+          "engagement": 7
         },
         "by_mechanism": {
           "reach": 5,
@@ -4420,7 +4384,7 @@
           "parse": 5,
           "quote": 5,
           "trust": 2,
-          "stay": 8
+          "stay": 7
         }
       },
       "skills_run": [
@@ -4434,7 +4398,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.8,
+      "seconds": 4.1,
       "findings": [
         {
           "check_id": "PARSE-004",
@@ -4520,11 +4484,6 @@
           "check_id": "STAY-009",
           "severity": "medium",
           "title": "Images without dimensions risk layout shift"
-        },
-        {
-          "check_id": "STAY-011",
-          "severity": "medium",
-          "title": "Content is hard to read"
         },
         {
           "check_id": "STAY-016",
@@ -4624,7 +4583,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 10.4,
+      "seconds": 14.6,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -4719,7 +4678,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.1,
+      "seconds": 2.8,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -4869,7 +4828,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 8.3,
+      "seconds": 11.6,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -5018,7 +4977,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.5,
+      "seconds": 3.8,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -5143,7 +5102,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 21.5,
+      "seconds": 33.8,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -5273,7 +5232,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 33.3,
+      "seconds": 54.9,
       "findings": [
         {
           "check_id": "REACH-011",
@@ -5413,7 +5372,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "REACH-011",
@@ -5518,7 +5477,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.0,
+      "seconds": 6.0,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -5663,7 +5622,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.4,
+      "seconds": 2.6,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -5798,7 +5757,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 13.3,
+      "seconds": 20.0,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -5958,7 +5917,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 27.0,
+      "seconds": 52.3,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -6083,7 +6042,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.7,
+      "seconds": 5.6,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -6368,7 +6327,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 39.5,
+      "seconds": 43.4,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6456,17 +6415,17 @@
       "pages": 20,
       "discoverability": 60,
       "disc_grade": "C",
-      "engagement_score": 93,
+      "engagement_score": 94,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 15,
+        "total_findings": 14,
         "critical": 0,
         "high": 1,
         "medium": 7,
-        "low": 7,
+        "low": 6,
         "by_category": {
           "discoverability": 10,
-          "engagement": 5
+          "engagement": 4
         },
         "by_mechanism": {
           "reach": 2,
@@ -6474,7 +6433,7 @@
           "parse": 3,
           "quote": 1,
           "trust": 2,
-          "stay": 5
+          "stay": 4
         }
       },
       "skills_run": [
@@ -6488,7 +6447,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.1,
+      "seconds": 3.4,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6551,11 +6510,6 @@
           "title": "Images without dimensions risk layout shift"
         },
         {
-          "check_id": "STAY-011",
-          "severity": "low",
-          "title": "Content is hard to read"
-        },
-        {
           "check_id": "STAY-013",
           "severity": "low",
           "title": "Accessibility basics are missing"
@@ -6608,7 +6562,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 21.5,
+      "seconds": 19.0,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -6767,7 +6721,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.7,
+      "seconds": 5.0,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6892,7 +6846,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 54.5,
+      "seconds": 93.4,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -7047,7 +7001,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 25.8,
+      "seconds": 51.7,
       "findings": [
         {
           "check_id": "REACH-014",
@@ -7275,7 +7229,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 70.1,
+      "seconds": 104.3,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -7399,7 +7353,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 1.9,
+      "seconds": 1.8,
       "findings": [
         {
           "check_id": "REACH-011",
@@ -7529,7 +7483,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 6.9,
+      "seconds": 8.9,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -7664,7 +7618,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.4,
+      "seconds": 3.3,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -7794,7 +7748,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.6,
+      "seconds": 0.7,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -7853,7 +7807,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 0.7,
+      "seconds": 0.8,
       "findings": [
         {
           "check_id": "REACH-007",
@@ -7963,7 +7917,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.1,
+      "seconds": 2.2,
       "findings": [
         {
           "check_id": "REACH-008",

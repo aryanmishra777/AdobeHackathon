@@ -316,3 +316,14 @@ def test_trust_010_compares_each_pages_first_number_only():
     fact. Only a page's first number is its contact."""
     src = open(CHECK_TRUST, encoding="utf-8").read()
     assert "for m in found[:1]:" in src
+
+
+def test_trust_005_skips_interface_state_uses_of_current():
+    """ea.com's carousel announces 'is now the current item in the media
+    gallery' and its consent notice says cookies are 'currently disabled';
+    both were read as claims and three 2010-2016 pages were called stale."""
+    mod = _trust_module()
+    assert mod._currency_match("Star Wars montage is now the current item in the media gallery") is None
+    assert mod._currency_match("Optional Cookies are currently disabled based on Your Privacy Choices") is None
+    assert mod._currency_match("Our current pricing is listed below").group(0).lower() == "current"
+    assert mod._currency_match("Bejeweled Stars is available now from EA").group(0) == "available now"

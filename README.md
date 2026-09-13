@@ -20,7 +20,7 @@ this repo is the harness that proves it works.
 |---|---|
 | **`brand-ai-readiness-audit/`** | **THE SUBMISSION.** `marketplace.json` + 8 skills. This is the only directory that gets zipped. |
 | `bench/` | 85 real-site candidates → 64 measured corpus entries across the SEO×GEO quadrants, plus the live/replay runner. |
-| `tests/` | 7 local fixture sites, the bundles built from them, and 389 pytest assertions. |
+| `tests/` | 7 local fixture sites, the bundles built from them, and 396 pytest assertions. |
 | `tools/` | `validate.py`, `package.py`, `check_coverage.py`, `run_audit.py`, `install_local.py`. |
 | `docs/` | `EVIDENCE.md` (what the literature supports, and what it doesn't), `ADOBE-BRAND-VISIBILITY.md` (how our checks map to Adobe's own product), `ROLES.md`, `CONTRIBUTING.md`, `todo/`. |
 | `TODO.md` | Who builds what, in what order. Index into `docs/todo/`. |
@@ -87,7 +87,7 @@ pip install -r tools/requirements-dev.txt   # dev tooling only, never shipped
 python tests/make_fixtures.py               # build the local test websites
 python tests/make_bundles.py                # crawl them into evidence bundles
 
-python -m pytest tests/ -q                  # expect: 389 passed
+python -m pytest tests/ -q                  # expect: 396 passed
 python tools/validate.py                    # expect: PASS (0 TODOs)
 python tools/package.py                     # builds dist/ and checks the 50 MB ceiling
 python tools/check_coverage.py              # find checks that never fire anywhere
@@ -170,4 +170,6 @@ and STAY.
 See [`docs/examples/report-vox-com.md`](docs/examples/report-vox-com.md) for
 what the marketplace produces when an agent drives it end to end, and
 [`report-bbc-co-uk.md`](docs/examples/report-bbc-co-uk.md) for the scripts-only
-harness output.
+harness output. [`report-ea-com-sports.md`](docs/examples/report-ea-com-sports.md)
+is the audit of a site whose edge held every response for 42 seconds: what the
+collector does under a hold, and how the report says so.
