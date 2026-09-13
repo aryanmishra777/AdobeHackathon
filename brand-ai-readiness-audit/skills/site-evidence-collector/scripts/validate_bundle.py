@@ -28,10 +28,11 @@ PAGE_DOCS = ["request.json", "response.headers.json", "raw.html",
 EXTRACTED_REQUIRED = ["page_id", "url", "title", "headings", "links", "images",
                       "scripts", "jsonld", "text"]
 SKIP_REASONS = {"robots-disallow", "budget-exceeded", "timeout", "http-error",
-                "non-html", "duplicate", "out-of-scope"}
+                "non-html", "duplicate", "out-of-scope", "challenge-page",
+                "undecodable-encoding"}
 PURPOSES = {"retrieval", "training", "search-index", "mixed"}
 STOPPED = {"completed", "max-pages", "time-budget", "site-blocked",
-           "dns-failure", "error"}
+           "dns-failure", "unreachable-timeout", "unreachable", "challenged", "error"}
 
 
 def load(path, errors, label):

@@ -1651,9 +1651,38 @@ def check_sample_state(b: Bundle) -> list[dict]:
     served = [a for a, r in agents.items() if r.get("status") == 200]
     refused = [a for a, r in agents.items() if r.get("status") in (401, 403, 429) or r.get("challenge_detected")]
     refs = ["MANIFEST.json", "coverage.json"] + (["ua_probe.json"] if probe else [])
+    if state in ("refused", "challenged") and (not probe or not baseline):
+        # --no-probe, or a probe that never ran: the browser baseline and the
+        # named agents were not tried, so nothing about them can be asserted
+        return [_locked(finding(
+            "REACH-005",
+            f"The crawl fetched no pages ({state}) and no user-agent probe ran",
+            "low",
+            (f"Every fetch under the audit's user-agent answered {_statuses(b)} or nothing "
+             f"(sample: {state}), and the user-agent probe did not run, so whether a browser "
+             f"or the named AI agents are served was not observed. Nothing beyond robots.txt "
+             f"could be examined; rerun with the probe enabled."),
+            refs, confidence="low", scope="site-wide", checked=0,
+            verification=f"curl -s -o /dev/null -w '%{{http_code}}' -A 'Mozilla/5.0' {b.origin}/",
+            action=act("Rerun the audit with the user-agent probe", "low",
+                       ["Run the collector without --no-probe so the browser baseline and the "
+                        "named agents are compared"],
+                       "S", "An empty sample with no probe measures nothing.",
+                       owner="infrastructure")))]
     if state == "refused":
         if baseline.get("status") == 200 and refused:
-            return []   # REACH-005 says it, verified against the browser baseline
+            # REACH-005 says it, verified against the browser baseline -- unless
+            # its own guards withhold it: agents robots.txt disallows (REACH-002
+            # then explains the refusal) or an impersonation verdict from the
+            # controls. In the second case nothing else would say why zero
+            # pages were sampled, so the informational finding below does.
+            matrix = b.robots.get("agent_matrix") or {}
+            allowed_refused = [a for a in refused if (matrix.get(a) or {}).get("root_allowed") is not False]
+            kind, _ = _control_verdict(b)
+            if allowed_refused and kind != "impersonation":
+                return []
+            if not allowed_refused:
+                return []   # REACH-002 carries it
         if baseline.get("status") == 200:
             # apollohospitals.com: the browser and every named agent served,
             # only the audit's own user-agent refused. Not an AI-discoverability
@@ -1725,8 +1754,9 @@ def check_sample_state(b: Bundle) -> list[dict]:
             "The edge serves a challenge page to this client and to the AI agents probed",
             "medium",
             (f"Every one of the {n} URLs fetched came back as a challenge or 'unsupported client' "
-             f"stub, and the probe found {', '.join(refused) or 'the named agents'} refused or "
-             f"challenged as well"
+             f"stub, and the probe found "
+             + (f"{', '.join(refused)} refused or challenged as well" if refused
+                else "no named agent served either")
              + (f" (browser baseline: {baseline.get('status')})" if baseline else "")
              + ". No page content could be sampled; whether the block is keyed on the agent "
              "name or on this address could not be separated from here."),
@@ -1756,6 +1786,26 @@ def check_sample_state(b: Bundle) -> list[dict]:
                         "If unknown clients are held rather than answered, exempt the retrieval "
                         "agents robots.txt permits"],
                        "M", "A crawler that never gets a byte indexes nothing.",
+                       owner="infrastructure")))]
+    if state == "unreachable":
+        errors = sorted({str(v.get("error") or "") for v in
+                         ((b.run.get("origin_variants") or {}).values())} - {""})
+        return [_locked(finding(
+            "REACH-014",
+            "No origin variant answered a connection from the audit's client",
+            "medium",
+            (f"Every origin variant of {b.origin} failed before an HTTP response: "
+             f"{'; '.join(errors)[:300] or 'connection refused or handshake failure'}. A refused "
+             f"connection or a TLS handshake the client cannot complete looks the same from one "
+             f"address whether the site is down, the port is filtered for this network, or the "
+             f"edge drops unrecognised TLS clients. Nothing about the site was measured; confidence "
+             f"is low for that reason."),
+            refs, confidence="low", scope="site-wide", checked=0,
+            verification=f"curl -sIv {b.origin}/ 2>&1 | head -20",
+            action=act("Confirm the origin accepts connections from ordinary clients", "medium",
+                       ["Check the site from a browser and from curl on a second network",
+                        "If only non-browser TLS clients fail, look at the edge's TLS fingerprint rules"],
+                       "S", "A site that does not answer is not a site to a crawler.",
                        owner="infrastructure")))]
     if state == "unresolved":
         return [_locked(finding(

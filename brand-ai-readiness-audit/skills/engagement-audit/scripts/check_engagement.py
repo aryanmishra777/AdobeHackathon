@@ -68,9 +68,9 @@ ORIENTATION_NOUN_RE = re.compile(
     r"apparel|clothing|supplies|pharmacy|groceries|scripting|programming|"
     # travel, property and listings: "Holiday rentals in North Myrtle Beach"
     # names its offering with no verb
-    r"rentals?|stays|homes|apartments?|villas?|properties|listings|flights?|"
-    r"hotels|cars?|tickets|deals|experiences|loans?|accounts?|cards?|policies|"
-    r"vehicles?|doctors?|treatments?|recipes?|games?|templates?|designs?)\b", re.I)
+    r"rentals?|stays|apartments?|villas?|properties|listings|flights?|"
+    r"hotels|tickets|experiences|loans?|vehicles?|doctors?|treatments?|recipes?|"
+    r"templates?)\b", re.I)
 
 # The first screen is an error or a loading shell, not the site's own words:
 # khanacademy.org served "A required part of this site couldn't load" and
@@ -126,7 +126,7 @@ NOT_AN_INTERSTITIAL_RE = re.compile(
     # a consent checkbox inside a signup form is a form field, not a notice
     r"|form-field|FormControl|type=\"checkbox\""
     # an empty mount point a framework renders dialogs into later
-    r"|modal-root|portal-root|modal-container\"[^>]*>\s*</|__portal|-portal\b)", re.I)
+    r"|id=\"(?:modal-root|portal-root|__portal|__next-portal|headlessui-portal-root)\")", re.I)
 
 # "overlay" or "modal" as a modifier of a structural word names a style, not
 # a layer shown on arrival: github.com's page wrapper is class="header-overlay"

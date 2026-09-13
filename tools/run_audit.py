@@ -251,6 +251,7 @@ def main(argv=None) -> int:
     renderer = run_doc.get("renderer") or {}
     hold_ms = run_doc.get("hold_ttfb_ms")
     stopped = (manifest.get("coverage") or {}).get("stopped_reason") or run_doc.get("stopped_reason")
+    cov_doc = manifest.get("coverage") or {}
     try:
         cov_doc = json.load(io.open(os.path.join(bundle, "coverage.json"), encoding="utf-8"))
         stopped = cov_doc.get("stopped_reason") or stopped
@@ -267,8 +268,9 @@ def main(argv=None) -> int:
     budget_used = (run_doc.get("budget") or {}).get("total_fetch_budget_s") or args.budget
     starved = pages < 10 and (held or stopped == "time-budget")
     if starved:
-        print("\n  NOTE: the site's edge held responses for about "
-              f"{int((hold_ms or 0) / 1000)} s each and the crawl fetched {pages} page(s) "
+        why = (f"the site's edge held responses for about {int((hold_ms or 0) / 1000)} s each"
+               if held else "the site answered slowly")
+        print(f"\n  NOTE: {why} and the crawl fetched {pages} page(s) "
               f"before its {budget_used:.0f}s budget ran out. The report below is honest about "
               "that but thin. For a full sample rerun with a larger budget and cap, e.g.\n"
               f"    python tools/run_audit.py {args.target} --budget 900 --cap 1500\n",
@@ -381,8 +383,9 @@ def main(argv=None) -> int:
                 "No browser renderer was available, so JavaScript dependency is "
                 "inferred from raw HTML rather than measured.",
             ]) + ([
-                f"The site's edge held every response for about {int((hold_ms or 0) / 1000)} s "
-                f"and the crawl fetched {pages} page(s) inside its {budget_used:.0f}s budget; the sample "
+                (f"The site's edge held every response for about {int((hold_ms or 0) / 1000)} s"
+                 if held else "The site answered slowly")
+                + f" and the crawl fetched {pages} page(s) inside its {budget_used:.0f}s budget; the sample "
                 f"is too small for a site-wide verdict. Rerun with --budget 900 --cap 1500 for a full "
                 f"sample. What was fetched is analysed honestly below."
             ] if (starved and not not_sampled) else [

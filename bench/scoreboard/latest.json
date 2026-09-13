@@ -187,7 +187,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.7,
+      "seconds": 3.8,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -287,7 +287,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.2,
+      "seconds": 4.3,
       "findings": [
         {
           "check_id": "PARSE-010",
@@ -522,7 +522,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 10.9,
+      "seconds": 12.9,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -631,7 +631,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 106.9,
+      "seconds": 106.2,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -706,7 +706,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 6.5,
+      "seconds": 5.7,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -841,7 +841,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 12.6,
+      "seconds": 11.7,
       "findings": [
         {
           "check_id": "PARSE-010",
@@ -964,7 +964,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 6.6,
+      "seconds": 6.2,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -1089,7 +1089,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.5,
+      "seconds": 4.1,
       "findings": [
         {
           "check_id": "READ-013",
@@ -1209,7 +1209,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 8.4,
+      "seconds": 7.8,
       "findings": [
         {
           "check_id": "PARSE-004",
@@ -1338,7 +1338,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 15.4,
+      "seconds": 12.7,
       "findings": [
         {
           "check_id": "REACH-008",
@@ -1458,7 +1458,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.2,
+      "seconds": 4.5,
       "findings": [
         {
           "check_id": "READ-013",
@@ -1593,7 +1593,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 12.2,
+      "seconds": 11.8,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -1703,7 +1703,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.9,
+      "seconds": 2.5,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -1811,7 +1811,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 6.2,
+      "seconds": 5.8,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -1902,14 +1902,14 @@
       "engagement_score": 91,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 21,
+        "total_findings": 22,
         "critical": 0,
         "high": 1,
         "medium": 11,
-        "low": 9,
+        "low": 10,
         "by_category": {
           "discoverability": 17,
-          "engagement": 4
+          "engagement": 5
         },
         "by_mechanism": {
           "reach": 2,
@@ -1917,7 +1917,7 @@
           "parse": 6,
           "quote": 1,
           "trust": 3,
-          "stay": 4
+          "stay": 5
         }
       },
       "skills_run": [
@@ -1931,7 +1931,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 6.9,
+      "seconds": 6.7,
       "findings": [
         {
           "check_id": "PARSE-004",
@@ -2017,6 +2017,11 @@
           "check_id": "STAY-003",
           "severity": "low",
           "title": "No clear next action"
+        },
+        {
+          "check_id": "STAY-007",
+          "severity": "low",
+          "title": "An interstitial blocks the page on arrival"
         },
         {
           "check_id": "STAY-009",
@@ -2209,7 +2214,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 9.4,
+      "seconds": 10.2,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -2309,7 +2314,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.2,
+      "seconds": 2.9,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -2403,7 +2408,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.2,
+      "seconds": 2.5,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -2508,7 +2513,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 18.0,
+      "seconds": 20.9,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -2617,7 +2622,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.2,
+      "seconds": 3.6,
       "findings": [
         {
           "check_id": "PARSE-005",
@@ -2732,7 +2737,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.1,
+      "seconds": 3.5,
       "findings": [
         {
           "check_id": "REACH-007",
@@ -2867,7 +2872,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 29.2,
+      "seconds": 34.0,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -3001,7 +3006,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.5,
+      "seconds": 2.9,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -3126,7 +3131,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.5,
+      "seconds": 5.0,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -3259,7 +3264,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.0,
+      "seconds": 2.5,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -3349,7 +3354,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.0,
+      "seconds": 2.2,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -3494,7 +3499,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.1,
+      "seconds": 4.2,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -4138,7 +4143,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 7.4,
+      "seconds": 7.6,
       "findings": [
         {
           "check_id": "PARSE-003",
@@ -4278,7 +4283,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.9,
+      "seconds": 3.8,
       "findings": [
         {
           "check_id": "PARSE-004",
@@ -4421,17 +4426,17 @@
       "pages": 20,
       "discoverability": 66,
       "disc_grade": "C",
-      "engagement_score": 100,
+      "engagement_score": 95,
       "eng_grade": "A",
       "summary": {
-        "total_findings": 9,
+        "total_findings": 10,
         "critical": 0,
         "high": 1,
-        "medium": 3,
+        "medium": 4,
         "low": 5,
         "by_category": {
           "discoverability": 8,
-          "engagement": 1
+          "engagement": 2
         },
         "by_mechanism": {
           "reach": 2,
@@ -4439,7 +4444,7 @@
           "parse": 2,
           "quote": 1,
           "trust": 1,
-          "stay": 1
+          "stay": 2
         }
       },
       "skills_run": [
@@ -4453,7 +4458,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 13.1,
+      "seconds": 15.2,
       "findings": [
         {
           "check_id": "REACH-002",
@@ -4474,6 +4479,11 @@
           "check_id": "READ-016",
           "severity": "medium",
           "title": "Corrupted character encoding (mojibake) in page text"
+        },
+        {
+          "check_id": "STAY-007",
+          "severity": "medium",
+          "title": "An interstitial blocks the page on arrival"
         },
         {
           "check_id": "PARSE-011",
@@ -4543,7 +4553,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.2,
+      "seconds": 2.8,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -4693,7 +4703,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 10.7,
+      "seconds": 12.1,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -4837,7 +4847,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 2.4,
+      "seconds": 2.5,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -4962,7 +4972,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 28.5,
+      "seconds": 26.9,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -5092,7 +5102,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 46.7,
+      "seconds": 42.2,
       "findings": [
         {
           "check_id": "REACH-011",
@@ -5332,7 +5342,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.4,
+      "seconds": 6.0,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -5612,7 +5622,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 17.3,
+      "seconds": 17.9,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -5772,7 +5782,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 37.9,
+      "seconds": 35.8,
       "findings": [
         {
           "check_id": "PARSE-001",
@@ -5897,7 +5907,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 6.3,
+      "seconds": 5.4,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -6032,7 +6042,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 4.5,
+      "seconds": 4.6,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6177,7 +6187,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 38.9,
+      "seconds": 34.8,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6297,7 +6307,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.6,
+      "seconds": 3.3,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6407,7 +6417,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 20.0,
+      "seconds": 18.8,
       "findings": [
         {
           "check_id": "STAY-010",
@@ -6566,7 +6576,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 5.1,
+      "seconds": 5.2,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6691,7 +6701,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 78.8,
+      "seconds": 52.8,
       "findings": [
         {
           "check_id": "REACH-006",
@@ -6836,7 +6846,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 36.1,
+      "seconds": 25.5,
       "findings": [
         {
           "check_id": "REACH-014",
@@ -7064,7 +7074,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 89.3,
+      "seconds": 66.0,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -7313,7 +7323,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 8.9,
+      "seconds": 6.7,
       "findings": [
         {
           "check_id": "REACH-005",
@@ -7448,7 +7458,7 @@
       "misses": [],
       "not_yet_implemented": [],
       "false_positives": [],
-      "seconds": 3.4,
+      "seconds": 3.3,
       "findings": [
         {
           "check_id": "REACH-002",

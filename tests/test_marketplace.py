@@ -1479,3 +1479,30 @@ def test_reach_010_grades_a_sister_edition_canonical_low(tmp_path):
     assert not mod._same_brand("www.nykaa.com", "www.nike.in")
     src = open(CHECK_ACCESS, encoding="utf-8").read()
     assert 'sev = "low" if sibling else "high"' in src
+
+
+def test_review_fixes_initialism_no_probe_and_unbound_coverage(tmp_path):
+    """Code review of the sweep commit: 'MIT' vs 'Massachusetts Institute of
+    Technology' still differed because 'of' was initialled; an empty sample
+    with no probe asserted a browser baseline that was never tried; and
+    run_audit crashed on a bundle with no coverage.json."""
+    import shutil
+    check_quote = os.path.join(SKILLS, "answerability-audit", "scripts", "check_answerability.py")
+    src = open(check_quote, encoding="utf-8").read()
+    assert '"of", "and", "the", "for"' in src
+    # the no-probe branch says the probe did not run instead of asserting a baseline
+    a_src = open(CHECK_ACCESS, encoding="utf-8").read()
+    assert 'if state in ("refused", "challenged") and (not probe or not baseline):' in a_src
+    assert '"No origin variant answered a connection' in a_src
+    # run_audit: cov_doc is bound before the try
+    r_src = open(os.path.join(REPO, "tools", "run_audit.py"), encoding="utf-8").read()
+    assert 'cov_doc = manifest.get("coverage") or {}' in r_src
+    # and a bundle with no coverage.json still produces a report
+    src_b = bundle("clean")
+    dst = tmp_path / "b"
+    shutil.copytree(src_b, dst)
+    os.remove(dst / "coverage.json")
+    proc = run(os.path.join(REPO, "tools", "run_audit.py"), "https://x.test", "--bundle", str(dst),
+               "--out", str(tmp_path / "out"))
+    assert proc.returncode == 0, proc.stderr[-800:]
+    assert (tmp_path / "out" / "report.json").exists()

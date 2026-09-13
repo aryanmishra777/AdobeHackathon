@@ -2166,6 +2166,7 @@ class Collector:
                        else "refused" if any((p.get("status") or 0) >= 400 for p in self.pages)
                        else "timed-out" if self.stopped == "unreachable-timeout"
                        else "unresolved" if self.stopped == "dns-failure"
+                       else "unreachable" if self.stopped == "unreachable"
                        else "empty"),
         }
         _write_json(os.path.join(self.out, "coverage.json"), coverage)

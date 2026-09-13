@@ -1347,7 +1347,10 @@ def check_quote_010(b: Bundle) -> list:
     rf = _optional("rapidfuzz")
 
     def initials(x):
-        return "".join(w[0] for w in x.split() if w)
+        # "massachusetts institute of technology" -> "mit": the small words
+        # an initialism leaves out are left out here too
+        small = {"of", "and", "the", "for", "at", "in", "de", "du", "des", "la", "le", "&"}
+        return "".join(w[0] for w in x.split() if w and w not in small)
 
     def alike(x, y):
         if x in y or y in x or squash(x) in squash(y) or squash(y) in squash(x):
