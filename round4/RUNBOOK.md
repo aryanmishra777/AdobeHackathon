@@ -85,19 +85,35 @@ Budget roughly 2–4 minutes of wall clock; trim the idle stretches in the edit.
 
 `PARSE-002 — Structured data is present but does not parse` on grammarly.com is
 a **verified true positive**, not a parser artefact. Checked against the raw
-HTML in the bundle:
+HTML in the bundle, 11 sampled pages carry JSON-LD and 10 of them ship exactly
+one empty block:
 
-- `/plagiarism-checker`: 3 `application/ld+json` blocks in the source, **1 of
-  them empty**; the collector captured all 3 and parsed 2.
-- `/citations`: 1 block, and it is empty in the source.
+| page | blocks | empty | parses |
+|---|---|---|---|
+| `/premium` → `/pro` | 1 | **1** | 0 |
+| `/paraphrasing-tool` | 1 | **1** | 0 |
+| `/features` | 1 | **1** | 0 |
+| `/trust` | 1 | **1** | 0 |
+| `/plagiarism-checker` | 3 | 1 | 2 |
+| `/citations` | 2 | 0 | 2 |
 
-So the site ships `<script type="application/ld+json"></script>` with nothing
-inside. A person sees a perfect page; a crawler asking "what is this page
-about?" gets an empty answer. That contrast is the whole pitch of the
-marketplace, and it is provable on camera in one command:
+On **seven** pages the *only* structured-data block is empty — including
+`/premium`, the page that sells the product. So the site ships
+`<script type="application/ld+json"></script>` with nothing inside. A person
+sees a perfect page; a crawler asking "what is this page, what does it cost"
+gets an empty answer.
+
+Provable on camera in one command — **`-L` is required**, `/premium` 301s to
+`/pro` and plain `curl` returns 79 bytes of redirect:
 
 ```
-curl -s https://www.grammarly.com/citations | grep -A2 'application/ld+json'
+curl -sL https://www.grammarly.com/premium | grep -o 'application/ld+json[^>]*></script>'
+```
+
+Verified output — the tag closes immediately, so the block is empty:
+
+```
+application/ld+json"></script>
 ```
 
 Second drill-in if there is time: `PARSE-012` — `/paraphrasing-tool` carries 15
@@ -110,7 +126,7 @@ question-shaped headings with answers and declares no `FAQPage` entity.
 - Splicing two takes of the trial run together. Trimming idle waiting is
   explicitly allowed; a cut that joins a URL from one run to findings from
   another is an integrity failure.
-- A URL, harness or model in the video that does not match `REPLAY_<Team>.txt`.
+- A URL, harness or model in the video that does not match `REPLAY_Copper_Bottle.txt`.
 - Quoting a number on camera that the submission does not support. Verified and
   safe to say: **91 checks**, **all 91 carry false-positive guards**, **26 fix
   files**, **6 mechanisms**, **64-site corpus**, **16-point GEO/SEO separation**.

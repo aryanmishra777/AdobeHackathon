@@ -95,8 +95,9 @@ at `supersession_rules`.
 
 ## Part 2 — Live trial run (≤ 2:00)
 
-Site: **<SITE>** — never used in development. See `round4/RUNBOOK.md` for the
-pre-flight checks to run *before* the camera rolls.
+Site: **https://www.grammarly.com/** — never used in development (not in the
+64-site corpus, the 15-site unseen sweep, or the 8 hand-audited sites). See
+`round4/RUNBOOK.md` for the pre-flight checks to run *before* the camera rolls.
 
 ### 0:00 – 0:15 · Harness, model, wiring
 
@@ -117,7 +118,7 @@ python round4/verify_wiring.py
 Type into Claude Code, on camera, verbatim:
 
 ```
-audit <SITE>
+audit https://www.grammarly.com/
 ```
 
 > No flags, no path — the agent picks the entrypoint skill from its description.
@@ -130,10 +131,35 @@ audit <SITE>
 
 ### 1:10 – 1:50 · Drill into one finding with real evidence
 
-<FINDING_WALKTHROUGH — filled once the site is chosen>
+Target: **PARSE-002 — "Structured data is present but does not parse"**, high,
+site-wide, 10 of 25 pages. Verified true before recording (see RUNBOOK).
 
-Show, in this order: the finding in `report.md` → the **raw evidence file in the
-bundle** it points at → the `verification` command → the `suggested_action`.
+> Top finding, high severity: ten of eighteen structured-data blocks on this
+> site fail to parse. Here's the evidence the report points at — the raw HTML we
+> actually fetched.
+
+Open the bundle file the finding cites, `pages/p007/raw.html`, and show the
+block. Then prove it against the live site:
+
+```
+curl -sL https://www.grammarly.com/premium | grep -o 'application/ld+json[^>]*></script>'
+```
+
+> The tag closes immediately. The block is empty. On seven of these pages the
+> *only* structured-data block is empty — including `/premium`, the page that
+> sells the product. A person sees a perfect page. A crawler asking "what is
+> this, what does it cost" gets nothing back.
+
+Then the fix, read off the report:
+
+> And the action isn't generic advice — it names the mechanism: inspect the
+> template rendering the `ld+json` block, escape the dynamic fields, validate
+> with a strict linter. Effort small, owner engineering. The rationale is the
+> part I'd put to a CTO — they're *paying the engineering cost of structured
+> data without receiving any of the machine-readability benefit*.
+
+**[cut if long]** Second finding, one line: `/paraphrasing-tool` carries fifteen
+question-shaped headings with answers and declares no `FAQPage` entity.
 
 ### 1:50 – 2:00 · Sorted by impact
 
@@ -149,6 +175,6 @@ bundle** it points at → the `verification` command → the `suggested_action`.
 - The run must be **one continuous session**. Trimming idle waiting is allowed
   and expected; splicing two takes is an integrity failure.
 - The URL typed on camera, the harness, and the model must match
-  `REPLAY_<TeamName>.txt` exactly.
+  `REPLAY_Copper_Bottle.txt` exactly.
 - Do not edit anything under `brand-ai-readiness-audit/` before or after
   recording. The engine is frozen at the Round 3 submission.
