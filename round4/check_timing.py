@@ -62,10 +62,13 @@ def main() -> int:
     rows = []
     for part, name, lines in beats(text):
         n = len(re.sub(r"[`*_\[\]]", "", " ".join(lines)).split())
-        if part in words:
+        # A "Spare" beat is a line held back for the case where delivery runs
+        # early. Counting it would inflate the pace the script demands.
+        spare = name.lower().startswith("spare")
+        if part in words and not spare:
             words[part] += n
         label = name.split("·")[-1].strip() if "·" in name else name
-        rows.append((part, n, label))
+        rows.append((part, n, "(spare) " + label if spare else label))
 
     required = words[1] / PART1_CAP * 60 if words[1] else 0.0
     pace = args.wpm or required
