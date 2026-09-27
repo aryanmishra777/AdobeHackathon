@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 980" role="img"
+     aria-label="How a literature signal becomes a check, a recommendation, or nothing at all">
+  <title>From paper to check — and what we refused to ship</title>
+  <desc>Forty-five studies were triaged by one test. Signals with a controlled
+  measurement whose absence is a defect ship as checks. Signals with a real
+  effect that is instance-dependent ship as proactive recommendations, never as
+  defects. Signals with no measured effect, or a measured negative effect, are
+  not shipped, and the reason is recorded.</desc>
+
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5a5a5a"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1600" height="980" fill="#ffffff"/>
+
+  <text x="40" y="52" font-family="sans-serif" font-size="31" font-weight="700" fill="#1a1a1a">
+    From paper to check — and what we refused to ship
+  </text>
+  <text x="40" y="84" font-family="sans-serif" font-size="18" fill="#5a5a5a">
+    Every threshold traceable to a measurement, or labelled a judgment call. The ledger is docs/EVIDENCE.md.
+  </text>
+
+  <!-- evidence spine -->
+  <rect x="40" y="140" width="200" height="728" rx="10" fill="#f4f6f8" stroke="#c8c8c8"/>
+  <text x="140" y="186" font-family="sans-serif" font-size="23" font-weight="700" fill="#1a1a1a" text-anchor="middle">45 studies</text>
+  <text x="140" y="214" font-family="sans-serif" font-size="23" font-weight="700" fill="#1a1a1a" text-anchor="middle">reviewed</text>
+  <line x1="70" y1="238" x2="210" y2="238" stroke="#c8c8c8"/>
+  <text x="140" y="266" font-family="sans-serif" font-size="15" fill="#5a5a5a" text-anchor="middle">9 primary sources</text>
+  <text x="140" y="302" font-family="sans-serif" font-size="16" fill="#1a1a1a" text-anchor="middle">Aggarwal et al.</text>
+  <text x="140" y="330" font-family="sans-serif" font-size="16" fill="#1a1a1a" text-anchor="middle">Yu et al.</text>
+  <text x="140" y="358" font-family="sans-serif" font-size="16" fill="#1a1a1a" text-anchor="middle">Kargaev</text>
+  <text x="140" y="386" font-family="sans-serif" font-size="16" fill="#1a1a1a" text-anchor="middle">Martinez</text>
+  <text x="140" y="414" font-family="sans-serif" font-size="16" fill="#1a1a1a" text-anchor="middle">Liu et al.</text>
+  <text x="140" y="442" font-family="sans-serif" font-size="16" fill="#1a1a1a" text-anchor="middle">Chen et al.</text>
+  <text x="140" y="470" font-family="sans-serif" font-size="16" fill="#1a1a1a" text-anchor="middle">Yuan et al.</text>
+  <text x="140" y="498" font-family="sans-serif" font-size="16" fill="#1a1a1a" text-anchor="middle">Dupret &amp; Lalmas</text>
+  <text x="140" y="526" font-family="sans-serif" font-size="16" fill="#1a1a1a" text-anchor="middle">O'Brien &amp; Toms</text>
+  <line x1="70" y1="556" x2="210" y2="556" stroke="#c8c8c8"/>
+  <text x="140" y="586" font-family="sans-serif" font-size="15" fill="#5a5a5a" text-anchor="middle">one triage test,</text>
+  <text x="140" y="608" font-family="sans-serif" font-size="15" fill="#5a5a5a" text-anchor="middle">three exits</text>
+
+  <!-- connectors -->
+  <line x1="240" y1="247" x2="330" y2="247" stroke="#5a5a5a" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="285" y="238" font-family="sans-serif" font-size="14" fill="#5a5a5a" text-anchor="middle">shipped</text>
+  <line x1="240" y1="482" x2="330" y2="482" stroke="#5a5a5a" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="285" y="473" font-family="sans-serif" font-size="14" fill="#5a5a5a" text-anchor="middle">advisory</text>
+  <line x1="240" y1="739" x2="330" y2="739" stroke="#5a5a5a" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="285" y="730" font-family="sans-serif" font-size="14" fill="#5a5a5a" text-anchor="middle">refused</text>
+
+  <!-- LANE A -->
+  <rect x="340" y="140" width="1220" height="215" rx="10" fill="#f2f7fd" stroke="#1f6feb" stroke-width="2"/>
+  <text x="364" y="178" font-family="sans-serif" font-size="22" font-weight="700" fill="#1f6feb">Controlled measurement, and its absence is a defect  →  ships as a CHECK</text>
+  <text x="364" y="202" font-family="sans-serif" font-size="15" fill="#5a5a5a">91 checks, each specified in references/checks.yaml before it was coded. All 91 carry false-positive guards.</text>
+
+  <text x="364" y="244" font-family="sans-serif" font-size="17" fill="#1a1a1a">27.1% of the URLs engines retrieve are inaccessible  <tspan fill="#5a5a5a">(Martinez)</tspan></text>
+  <text x="1536" y="244" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" fill="#1f6feb" text-anchor="end">→ crawl-access-audit · REACH is stage one</text>
+
+  <text x="364" y="286" font-family="sans-serif" font-size="17" fill="#1a1a1a">Removing heading hierarchy costs 9% of top-20 retrieval  <tspan fill="#5a5a5a">(Yu et al.)</tspan></text>
+  <text x="1536" y="286" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" fill="#1f6feb" text-anchor="end">→ render-extractability-audit · READ-009</text>
+
+  <text x="364" y="328" font-family="sans-serif" font-size="17" fill="#1a1a1a">Retrieval window 150–300 words  <tspan fill="#5a5a5a">(Liu et al., via Yu et al.)</tspan></text>
+  <text x="1536" y="328" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" fill="#1f6feb" text-anchor="end">→ site-evidence-collector · target 225, cap 300</text>
+
+  <!-- LANE B -->
+  <rect x="340" y="375" width="1220" height="215" rx="10" fill="#fdf8ef" stroke="#9a6700" stroke-width="2"/>
+  <text x="364" y="413" font-family="sans-serif" font-size="22" font-weight="700" fill="#9a6700">Real effect, but instance-dependent  →  ships as a RECOMMENDATION, never a defect</text>
+  <text x="364" y="437" font-family="sans-serif" font-size="15" fill="#5a5a5a">C-SEO Bench: only 3 of 54 method × domain combinations significant. "This page has no table" is not a defect.</text>
+
+  <text x="364" y="479" font-family="sans-serif" font-size="17" fill="#1a1a1a">Verbatim quotation  <tspan font-weight="700" fill="#9a6700">+41% PAWC</tspan>  <tspan fill="#5a5a5a">(Aggarwal et al.)</tspan></text>
+  <text x="1536" y="479" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" fill="#9a6700" text-anchor="end">→ answerability-audit · QUOTE-P06</text>
+
+  <text x="364" y="521" font-family="sans-serif" font-size="17" fill="#1a1a1a">Tables and lists  <tspan font-weight="700" fill="#9a6700">+17.3% citations, d=0.64</tspan>  <tspan fill="#5a5a5a">(Yu et al.)</tspan></text>
+  <text x="1536" y="521" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" fill="#9a6700" text-anchor="end">→ render-extractability-audit · READ-P03</text>
+
+  <text x="364" y="563" font-family="sans-serif" font-size="17" fill="#1a1a1a">Answer in first 30% of DOM — 44.2% of citations  <tspan fill="#b32d2e">correlational, so phrased as such</tspan></text>
+  <text x="1536" y="563" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" fill="#9a6700" text-anchor="end">→ answerability-audit · QUOTE-P08</text>
+
+  <!-- LANE C -->
+  <rect x="340" y="610" width="1220" height="258" rx="10" fill="#fdf3f3" stroke="#b32d2e" stroke-width="2"/>
+  <text x="364" y="648" font-family="sans-serif" font-size="22" font-weight="700" fill="#b32d2e">No measured effect, or a measured negative  →  NOT SHIPPED, and the reason is recorded</text>
+  <text x="364" y="672" font-family="sans-serif" font-size="15" fill="#5a5a5a">This lane is why the report can be trusted: we can say what we declined to sell you.</text>
+
+  <text x="364" y="714" font-family="sans-serif" font-size="17" fill="#1a1a1a">Keyword stuffing  <tspan font-weight="700" fill="#b32d2e">−8.3% PAWC</tspan>  <tspan fill="#5a5a5a">(Aggarwal et al.)</tspan></text>
+  <text x="1536" y="714" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" fill="#b32d2e" text-anchor="end">no check exists, deliberately</text>
+
+  <text x="364" y="756" font-family="sans-serif" font-size="17" fill="#1a1a1a">JSON-LD lifts citations —  <tspan font-weight="700" fill="#b32d2e">0 of 45 studies</tspan> show a controlled effect</text>
+  <text x="1536" y="756" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" fill="#b32d2e" text-anchor="end">PARSE reports extractability only</text>
+
+  <text x="364" y="798" font-family="sans-serif" font-size="17" fill="#1a1a1a">Body-only rewrites  <tspan font-weight="700" fill="#b32d2e">−6% net citations</tspan>  <tspan fill="#5a5a5a">(SAGEO Arena, via Martinez)</tspan></text>
+  <text x="1536" y="798" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" fill="#b32d2e" text-anchor="end">every content fix says: keep headings aligned</text>
+
+  <text x="364" y="840" font-family="sans-serif" font-size="17" fill="#1a1a1a">Page properties predict engagement —  <tspan font-weight="700" fill="#b32d2e">0 of 13 papers</tspan></text>
+  <text x="1536" y="840" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="15" fill="#b32d2e" text-anchor="end">STAY axis labelled usability-proxy, in 3 places</text>
+
+  <!-- boundary footer -->
+  <rect x="40" y="898" width="1520" height="62" rx="10" fill="#fafafa" stroke="#c8c8c8" stroke-dasharray="5 4"/>
+  <text x="64" y="926" font-family="sans-serif" font-size="17" font-weight="700" fill="#1a1a1a">Five of seven causal factors sit outside any site crawl</text>
+  <text x="64" y="949" font-family="sans-serif" font-size="15" fill="#5a5a5a">search activation · earned media · competitor pool · engine routing · off-site placement — named in audit-boundary.md and in coverage.limitations on every report</text>
+</svg>

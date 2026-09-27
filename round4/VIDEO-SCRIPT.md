@@ -35,9 +35,12 @@ Word counts are sized for ~135 wpm. Beats marked **[cut if long]** can go.
 > deterministic or model-judged, an evidence template, a verification command a
 > human can run, and binding false-positive guards. All 91 have guards.
 
-**On screen:** `marketplace.json`, then
-`skills/crawl-access-audit/references/checks.yaml` scrolled to one entry so the
-`false_positive_guards:` block is visible.
+**On screen:** hold `round4/methodology-1-signals.svg` for the whole beat — it
+carries the papers, the effect sizes, the three exits and the owning module, so
+you can narrate against it instead of listing. Cut to
+`skills/crawl-access-audit/references/checks.yaml`, scrolled to one entry with
+the `false_positive_guards:` block visible, on the last sentence. Diagram
+explains; the file proves.
 
 ### Beat 2 · How we assigned severities (1:05 – 2:05)
 
@@ -62,8 +65,11 @@ Word counts are sized for ~135 wpm. Beats marked **[cut if long]** can go.
 > just asked about you — is a high-severity defect. Same HTTP status, opposite
 > meaning. Getting that backwards discredits the whole report.
 
-**On screen:** `severity-rubric.md`, then `merge_findings.py` at the severity
-function, then `false-positive-gates.md`.
+**On screen:** `round4/methodology-2-severity.svg`, top half — the six-stage
+chain and the two red clamps hanging off it. The GPTBot / ChatGPT-User panel at
+the foot of that diagram is the intentionality beat; point at it rather than
+describing it. Cut to `merge_findings.py` at the severity function on "computed,
+never chosen".
 
 ### Beat 3 · How we derived the suggested actions (2:05 – 3:00)
 
@@ -88,8 +94,9 @@ function, then `false-positive-gates.md`.
 > carries them, and an axis nothing measured is reported "not assessed", never
 > graded.
 
-**On screen:** `finding.schema.json`, `ls references/fixes/`, `subskills.json`
-at `supersession_rules`.
+**On screen:** `round4/methodology-2-severity.svg`, lower half — FINDING versus
+PROACTIVE RECOMMENDATION feeding one `priority_plan`. Cut to
+`ls references/fixes/` (26 files) and `subskills.json` at `supersession_rules`.
 
 ---
 
