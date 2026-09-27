@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img"
+     aria-label="How a literature signal becomes a check, a computed severity and a prioritised fix">
+  <title>Signal to severity to fix</title>
+  <desc>One triage test sends every signal from the literature to one of three
+  exits: a check, a recommendation, or nothing. A check that fires then earns a
+  computed severity through a fixed chain with two clamps that can stop it
+  moving. Defects become findings with a fix; measured but instance-dependent
+  signals become recommendations. Both are ranked by impact over effort.</desc>
+
+  <defs>
+    <marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#5a5a5a"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1600" height="900" fill="#ffffff"/>
+
+  <text x="40" y="44" font-family="sans-serif" font-size="29" font-weight="700" fill="#1a1a1a">Signal → severity → fix</text>
+  <text x="40" y="74" font-family="sans-serif" font-size="16" fill="#5a5a5a">45 studies reviewed · 9 primary sources: Aggarwal · Yu · Kargaev · Martinez · Liu · Chen · Yuan · Dupret &amp; Lalmas · O'Brien &amp; Toms</text>
+
+  <!-- ===== BAND 1 · TRIAGE ===== -->
+  <rect x="40" y="104" width="493" height="288" rx="10" fill="#f2f7fd" stroke="#1f6feb" stroke-width="2"/>
+  <text x="60" y="136" font-family="sans-serif" font-size="18" font-weight="700" fill="#1f6feb">Measured, absence is a defect</text>
+  <text x="60" y="160" font-family="sans-serif" font-size="14" fill="#5a5a5a">ships as a CHECK</text>
+  <text x="60" y="206" font-family="sans-serif" font-size="15" fill="#1a1a1a">27.1% of retrieved URLs inaccessible (Martinez)</text>
+  <text x="60" y="224" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12.5" fill="#1f6feb">→ crawl-access-audit · REACH is stage one</text>
+  <text x="60" y="262" font-family="sans-serif" font-size="15" fill="#1a1a1a">Heading hierarchy −9% top-20 retrieval (Yu)</text>
+  <text x="60" y="280" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12.5" fill="#1f6feb">→ render-extractability-audit · READ-009</text>
+  <text x="60" y="318" font-family="sans-serif" font-size="15" fill="#1a1a1a">Retrieval window 150–300 words (Liu)</text>
+  <text x="60" y="336" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12.5" fill="#1f6feb">→ site-evidence-collector · target 225, cap 300</text>
+  <line x1="60" y1="354" x2="513" y2="354" stroke="#bcd6f6"/>
+  <text x="60" y="376" font-family="sans-serif" font-size="14" font-weight="700" fill="#1f6feb">91 checks · all 91 carry false-positive guards</text>
+
+  <rect x="553" y="104" width="493" height="288" rx="10" fill="#fdf8ef" stroke="#9a6700" stroke-width="2"/>
+  <text x="573" y="136" font-family="sans-serif" font-size="18" font-weight="700" fill="#9a6700">Measured, instance-dependent</text>
+  <text x="573" y="160" font-family="sans-serif" font-size="14" fill="#5a5a5a">ships as a RECOMMENDATION, never a defect</text>
+  <text x="573" y="206" font-family="sans-serif" font-size="15" fill="#1a1a1a">Verbatim quotation <tspan font-weight="700" fill="#9a6700">+41% PAWC</tspan> (Aggarwal)</text>
+  <text x="573" y="224" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12.5" fill="#9a6700">→ answerability-audit · QUOTE-P06</text>
+  <text x="573" y="262" font-family="sans-serif" font-size="15" fill="#1a1a1a">Tables &amp; lists <tspan font-weight="700" fill="#9a6700">+17.3%, d=0.64</tspan> (Yu)</text>
+  <text x="573" y="280" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12.5" fill="#9a6700">→ render-extractability-audit · READ-P03</text>
+  <text x="573" y="318" font-family="sans-serif" font-size="15" fill="#1a1a1a">Answer in first 30% of DOM (Kargaev)</text>
+  <text x="573" y="336" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12.5" fill="#9a6700">→ QUOTE-P08 · correlational, so phrased as such</text>
+  <line x1="573" y1="354" x2="1026" y2="354" stroke="#e8d6b0"/>
+  <text x="573" y="376" font-family="sans-serif" font-size="14" font-weight="700" fill="#9a6700">C-SEO Bench: only 3 of 54 combinations significant</text>
+
+  <rect x="1066" y="104" width="493" height="288" rx="10" fill="#fdf3f3" stroke="#b32d2e" stroke-width="2"/>
+  <text x="1086" y="136" font-family="sans-serif" font-size="18" font-weight="700" fill="#b32d2e">No effect, or a measured negative</text>
+  <text x="1086" y="160" font-family="sans-serif" font-size="14" fill="#5a5a5a">NOT SHIPPED — and the reason is recorded</text>
+  <text x="1086" y="206" font-family="sans-serif" font-size="15" fill="#1a1a1a">Keyword stuffing <tspan font-weight="700" fill="#b32d2e">−8.3% PAWC</tspan> (Aggarwal)</text>
+  <text x="1086" y="224" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12.5" fill="#b32d2e">no check exists, deliberately</text>
+  <text x="1086" y="262" font-family="sans-serif" font-size="15" fill="#1a1a1a">JSON-LD lifts citations: <tspan font-weight="700" fill="#b32d2e">0 of 45 studies</tspan></text>
+  <text x="1086" y="280" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12.5" fill="#b32d2e">PARSE reports extractability, never ranking</text>
+  <text x="1086" y="318" font-family="sans-serif" font-size="15" fill="#1a1a1a">Page traits predict engagement: <tspan font-weight="700" fill="#b32d2e">0 of 13</tspan></text>
+  <text x="1086" y="336" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12.5" fill="#b32d2e">STAY axis labelled usability-proxy, in 3 places</text>
+  <line x1="1086" y1="354" x2="1539" y2="354" stroke="#f0c9c9"/>
+  <text x="1086" y="376" font-family="sans-serif" font-size="14" font-weight="700" fill="#b32d2e">5 of 7 causal factors are off-site · audit-boundary.md</text>
+
+  <!-- ===== BAND 2 · SEVERITY CHAIN ===== -->
+  <text x="40" y="424" font-family="sans-serif" font-size="17" font-weight="700" fill="#1a1a1a">A check that fires earns its severity — computed, never chosen</text>
+
+  <rect x="40" y="438" width="225" height="84" rx="9" fill="#f4f6f8" stroke="#c8c8c8"/>
+  <text x="152" y="466" font-family="sans-serif" font-size="15" font-weight="700" fill="#1a1a1a" text-anchor="middle">Check fires</text>
+  <text x="152" y="486" font-family="sans-serif" font-size="12.5" fill="#5a5a5a" text-anchor="middle">from the one shared bundle</text>
+  <text x="152" y="506" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="11.5" fill="#1f6feb" text-anchor="middle">scripts/check_*.py</text>
+
+  <rect x="299" y="438" width="225" height="84" rx="9" fill="#f4f6f8" stroke="#c8c8c8"/>
+  <text x="411" y="466" font-family="sans-serif" font-size="15" font-weight="700" fill="#1a1a1a" text-anchor="middle">Base severity</text>
+  <text x="411" y="486" font-family="sans-serif" font-size="12.5" fill="#5a5a5a" text-anchor="middle">the check's own severity_rule</text>
+  <text x="411" y="506" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="11.5" fill="#1f6feb" text-anchor="middle">references/checks.yaml</text>
+
+  <rect x="558" y="438" width="225" height="84" rx="9" fill="#f4f6f8" stroke="#c8c8c8"/>
+  <text x="670" y="466" font-family="sans-serif" font-size="15" font-weight="700" fill="#1a1a1a" text-anchor="middle">Modifiers</text>
+  <text x="670" y="486" font-family="sans-serif" font-size="12.5" fill="#5a5a5a" text-anchor="middle">scope up, low confidence down</text>
+  <text x="670" y="506" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="11.5" fill="#1f6feb" text-anchor="middle">severity-rubric.md</text>
+
+  <rect x="817" y="438" width="225" height="84" rx="9" fill="#f4f6f8" stroke="#c8c8c8"/>
+  <text x="929" y="466" font-family="sans-serif" font-size="15" font-weight="700" fill="#1a1a1a" text-anchor="middle">Six FP gates</text>
+  <text x="929" y="486" font-family="sans-serif" font-size="12.5" fill="#5a5a5a" text-anchor="middle">applicability · guards · intent</text>
+  <text x="929" y="506" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="11.5" fill="#1f6feb" text-anchor="middle">false-positive-gates.md</text>
+
+  <rect x="1076" y="438" width="225" height="84" rx="9" fill="#f4f6f8" stroke="#c8c8c8"/>
+  <text x="1188" y="466" font-family="sans-serif" font-size="15" font-weight="700" fill="#1a1a1a" text-anchor="middle">Supersession</text>
+  <text x="1188" y="486" font-family="sans-serif" font-size="12.5" fill="#5a5a5a" text-anchor="middle">root cause outranks symptom</text>
+  <text x="1188" y="506" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="11.5" fill="#1f6feb" text-anchor="middle">subskills.json</text>
+
+  <rect x="1335" y="438" width="225" height="84" rx="9" fill="#1f6feb" stroke="#1f6feb"/>
+  <text x="1447" y="470" font-family="sans-serif" font-size="17" font-weight="700" fill="#ffffff" text-anchor="middle">SEVERITY</text>
+  <text x="1447" y="494" font-family="sans-serif" font-size="13" fill="#cfe0fb" text-anchor="middle">critical · high · medium · low</text>
+
+  <line x1="265" y1="480" x2="296" y2="480" stroke="#5a5a5a" stroke-width="2" marker-end="url(#m)"/>
+  <line x1="524" y1="480" x2="555" y2="480" stroke="#5a5a5a" stroke-width="2" marker-end="url(#m)"/>
+  <line x1="783" y1="480" x2="814" y2="480" stroke="#5a5a5a" stroke-width="2" marker-end="url(#m)"/>
+  <line x1="1042" y1="480" x2="1073" y2="480" stroke="#5a5a5a" stroke-width="2" marker-end="url(#m)"/>
+  <line x1="1301" y1="480" x2="1332" y2="480" stroke="#5a5a5a" stroke-width="2" marker-end="url(#m)"/>
+
+  <rect x="40" y="534" width="740" height="46" rx="8" fill="#fdf3f3" stroke="#b32d2e"/>
+  <text x="60" y="553" font-family="sans-serif" font-size="14" font-weight="700" fill="#b32d2e">severity_locked — a registry guard forbids movement</text>
+  <text x="60" y="571" font-family="sans-serif" font-size="13" fill="#1a1a1a">REACH-003 stays low however wide its scope · REACH-015 never above medium from timing alone</text>
+
+  <rect x="820" y="534" width="740" height="46" rx="8" fill="#fdf3f3" stroke="#b32d2e"/>
+  <text x="840" y="553" font-family="sans-serif" font-size="14" font-weight="700" fill="#b32d2e">Model-judged ceiling — gate 3</text>
+  <text x="840" y="571" font-family="sans-serif" font-size="13" fill="#1a1a1a">a finding a model judged may never be critical unless a deterministic finding corroborates it</text>
+
+  <!-- ===== BAND 3 · OUTPUT ===== -->
+  <rect x="40" y="606" width="740" height="76" rx="9" fill="#f2f7fd" stroke="#1f6feb" stroke-width="2"/>
+  <text x="60" y="632" font-family="sans-serif" font-size="16" font-weight="700" fill="#1f6feb">FINDING — a defect, with the fix attached</text>
+  <text x="60" y="654" font-family="sans-serif" font-size="13.5" fill="#1a1a1a">suggested_action: steps · effort · owner · impact_rationale</text>
+  <text x="60" y="672" font-family="sans-serif" font-size="13.5" fill="#5a5a5a">worded from 26 files under references/fixes/ · shape fixed by finding.schema.json</text>
+
+  <rect x="820" y="606" width="740" height="76" rx="9" fill="#fdf8ef" stroke="#9a6700" stroke-width="2"/>
+  <text x="840" y="632" font-family="sans-serif" font-size="16" font-weight="700" fill="#9a6700">PROACTIVE RECOMMENDATION — an opportunity</text>
+  <text x="840" y="654" font-family="sans-serif" font-size="13.5" fill="#1a1a1a">emitted where no defect was found · never given a severity</text>
+  <text x="840" y="672" font-family="sans-serif" font-size="13.5" fill="#5a5a5a">the lane that stops "add a table" being reported as a bug</text>
+
+  <line x1="410" y1="682" x2="410" y2="702" stroke="#5a5a5a" stroke-width="2" marker-end="url(#m)"/>
+  <line x1="1190" y1="682" x2="1190" y2="702" stroke="#5a5a5a" stroke-width="2" marker-end="url(#m)"/>
+
+  <rect x="40" y="706" width="1520" height="52" rx="9" fill="#f4f6f8" stroke="#c8c8c8"/>
+  <text x="60" y="730" font-family="sans-serif" font-size="16" font-weight="700" fill="#1a1a1a">priority_plan — ranked by impact ÷ effort, grouping the findings that share one fix</text>
+  <text x="60" y="750" font-family="sans-serif" font-size="13.5" fill="#5a5a5a">one robots.txt edit can clear four findings, so it is ranked once, not four times · each entry carries why_first</text>
+
+  <!-- ===== BAND 4 · THE CONTRAST ===== -->
+  <rect x="40" y="778" width="1520" height="100" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="60" y="804" font-family="sans-serif" font-size="16" font-weight="700" fill="#1a1a1a">The distinction the whole marketplace turns on — same status code, opposite meaning</text>
+  <rect x="60" y="816" width="720" height="48" rx="7" fill="#fdf8ef" stroke="#9a6700"/>
+  <text x="76" y="838" font-family="sans-serif" font-size="14.5" font-weight="700" fill="#9a6700">403 to GPTBot — a training crawler, a licensing choice</text>
+  <text x="76" y="856" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12.5" fill="#9a6700">REACH-003 · low · locked · a test bans "error" "defect" "bug" "problem"</text>
+  <rect x="820" y="816" width="720" height="48" rx="7" fill="#fdf3f3" stroke="#b32d2e"/>
+  <text x="836" y="838" font-family="sans-serif" font-size="14.5" font-weight="700" fill="#b32d2e">403 to ChatGPT-User — a retrieval agent, a user just asked</text>
+  <text x="836" y="856" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12.5" fill="#b32d2e">REACH-005 · high to critical · you are absent from the answer</text>
+</svg>
