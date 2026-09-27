@@ -203,7 +203,7 @@ would be exactly the confident false positive the rubric punishes.
 | `freshness-corroboration-audit` | Mayank | complete — 15/15 checks |
 | `engagement-audit` | Mayank | complete — 16/16 checks |
 
-**All 91 checks are implemented**, plus 18 proactive recommendations. Every
+**All 91 checks are implemented**, plus 24 proactive recommendations. Every
 check has its ID, severity rule, required evidence, human verification step and
 its false-positive guards written down in a registry before it was coded.
 

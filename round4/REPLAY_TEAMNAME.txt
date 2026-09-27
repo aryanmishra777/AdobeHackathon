@@ -1,0 +1,99 @@
+TEST_SITE_URLS:   https://www.grammarly.com/
+LLM_MODEL:        Claude Opus 5 (model id: claude-opus-5)
+AGENT_HARNESS:    Claude Code v2.1.283
+ENV_SETUP:        Python 3.10+ (ours: 3.14.7). The marketplace is stdlib-only and
+                  runs with zero third-party packages installed. We ran it WITH the
+                  optional extras, which turn some checks from inferred into
+                  measured; install them to match our run exactly:
+
+                    unzip brand-ai-readiness-audit.zip
+                    pip install -r brand-ai-readiness-audit/requirements-optional.txt
+                    python -m playwright install chromium
+
+                  Extras active in the recorded run (the engine records what it
+                  actually used in run.json#extras, so you can compare):
+                    playwright 1.62.0 (playwright-chromium 151.0.7922.34)
+                    trafilatura 2.2.0   protego 0.6.2      pysbd 0.3.4
+                    dateparser 1.4.3    json5 0.15.0       phonenumbers 9.0.39
+                    ftfy 6.3.1          tldextract 5.3.2   rapidfuzz 3.14.6
+                    langdetect 1.0.9    brotli 1.2.0       zstandard 0.25.0
+                    beautifulsoup4 4.15.0
+
+                  Without the extras the audit still completes; READ-001 falls back
+                  to inference instead of a browser measurement and says so in its
+                  own evidence text. That is the documented stdlib path, not a
+                  failure.
+
+TEST_STEPS:
+ 1. Install the submitted skills where the harness discovers them (macOS/Linux):
+
+      mkdir -p ~/.claude/skills
+      cp -r brand-ai-readiness-audit/skills/* ~/.claude/skills/
+
+    Windows PowerShell:
+
+      New-Item -ItemType Directory -Force "$HOME\.claude\skills"
+      Copy-Item -Recurse -Force "brand-ai-readiness-audit\skills\*" "$HOME\.claude\skills\"
+
+ 2. Start Claude Code in an empty working directory and give it this prompt,
+    verbatim (no flags, no file paths -- the harness selects the entrypoint skill
+    from its description alone):
+
+      audit https://www.grammarly.com/
+
+    If your harness does not activate the skill from that alone, the explicit
+    form is equivalent and was used in development:
+
+      audit https://www.grammarly.com/ for AI discoverability and engagement
+
+ 3. The agent activates audit-orchestrator (declared entrypoint in
+    marketplace.json). It runs site-evidence-collector exactly once -- one
+    polite, robots-respecting crawl into .audit/www.grammarly.com/run-01/ --
+    then dispatches the six analysis skills over that one bundle, merges the
+    candidates with audit-orchestrator/scripts/merge_findings.py, applies the
+    severity rubric and false-positive gates, and writes the report. Findings
+    appear in report.md grouped by mechanism, each carrying its evidence, the
+    bundle files it came from, a copy-pasteable verification command, and a fix
+    with an owner and an effort estimate.
+
+EXPECTED_OUTPUT:  .audit/www.grammarly.com/report.json
+                  (human-readable twin: .audit/www.grammarly.com/report.md)
+
+FALLBACK_RUN_PATH: Claude Code is a paid harness. If you cannot run it, the
+                  submitted package alone reproduces the same evidence and the
+                  same deterministic findings with no agent and no harness --
+                  only Python. From the unzipped package:
+
+                    S=brand-ai-readiness-audit/skills
+                    python $S/site-evidence-collector/scripts/collect.py \
+                        https://www.grammarly.com/ --out bundle
+                    for c in crawl-access-audit/scripts/check_access \
+                             render-extractability-audit/scripts/check_render \
+                             structured-data-audit/scripts/check_structured_data \
+                             answerability-audit/scripts/check_answerability \
+                             freshness-corroboration-audit/scripts/check_trust \
+                             engagement-audit/scripts/check_engagement; do
+                      python $S/$c.py bundle --stdout > "$(basename $c).json"
+                    done
+
+                  Each file is one mechanism's candidate findings with the same
+                  evidence and severities the agent run reports. What the agent
+                  adds on top is the model-judged checks and the written report;
+                  the deterministic findings are identical, which is why a replay
+                  reaches the same substance.
+
+NOTES_ON_DETERMINISM:
+                  Page sampling is a pure function of the site: home page first,
+                  then sitemap entries in file order, then breadth-first with
+                  section round-robin. No randomness and no time-dependent
+                  ordering, so the same site yields the same sample. What can
+                  differ between your replay and ours is the site itself (it is
+                  live), and the wording a different model chooses for the
+                  model-judged checks. The deterministic findings, their
+                  evidence and their severities should match.
+
+INTEGRITY:        The engine used in the video is the Round 3 submission,
+                  unmodified. round4/verify_wiring.py (outside the submission)
+                  prints a SHA-256 fingerprint over the 63 skill files the
+                  harness loads and over the same files inside the submitted
+                  zip; the video shows them matching before the run starts.
